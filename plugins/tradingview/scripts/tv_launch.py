@@ -58,16 +58,28 @@ MAC_CANDIDATES = [
 WIN_CANDIDATES = [
     Path(sys.platform) / "TradingView" / "TradingView.exe",  # placeholder
 ]
+# Linux candidates (snap, official .deb, Flatpak) — checked in order
+LINUX_CANDIDATES = [
+    Path("/snap/bin/tradingview"),
+    Path("/var/lib/snapd/snap/bin/tradingview"),
+    Path("/opt/TradingView/tradingview"),
+    Path("/opt/TradingView/TradingView"),
+]
 
 
 def find_binary() -> Path | None:
     """Return the TradingView binary path, or None if not found."""
-    candidates = WIN_CANDIDATES if IS_WINDOWS else MAC_CANDIDATES
+    if IS_WINDOWS:
+        candidates = WIN_CANDIDATES
+    elif platform.system() == "Linux":
+        candidates = LINUX_CANDIDATES
+    else:
+        candidates = MAC_CANDIDATES
     for p in candidates:
         if p.exists():
             return p
     # Spotlight fallback (macOS only)
-    if not IS_WINDOWS:
+    if platform.system() == "Darwin":
         try:
             result = subprocess.run(
                 ["mdfind", "kMDItemCFBundleIdentifier == 'com.tradingview.tradingviewapp'"],
@@ -135,11 +147,23 @@ def main() -> None:
     # 2. Find binary
     binary = find_binary()
     if not binary:
+        if platform.system() == "Linux":
+            hint = (
+                "   Install via snap:  sudo snap install tradingview\n"
+                "   Or .deb: https://www.tradingview.com/desktop/ (Download For Linux)\n"
+                f"   Launch manually: /snap/bin/tradingview --remote-debugging-port={port}"
+            )
+        elif platform.system() == "Darwin":
+            hint = (
+                "   Install from: https://www.tradingview.com/desktop/\n"
+                f"   Or launch manually: /Applications/TradingView.app/Contents/MacOS/TradingView "
+                f"--remote-debugging-port={port}"
+            )
+        else:
+            hint = f"   Install from: https://www.tradingview.com/desktop/"
         print(
             "❌ TradingView Desktop binary not found.\n"
-            "   Install from: https://www.tradingview.com/desktop/\n"
-            f"   Or launch manually: /Applications/TradingView.app/Contents/MacOS/TradingView "
-            f"--remote-debugging-port={port}"
+            + hint
         )
         sys.exit(1)
 
