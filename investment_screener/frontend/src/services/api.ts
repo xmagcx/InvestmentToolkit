@@ -860,3 +860,111 @@ export const deleteUniverseTicker = async (ticker: string): Promise<{ deleted: s
     return data;
 };
 
+// ─── Portfolio Maintainer API ─────────────────────────────────────────────────
+
+export type MaintainerAccountType = 'TFSA' | 'RRSP' | 'CASH';
+
+export interface MaintainerAccount {
+    accountId: string;
+    name: string;
+    type: string;
+    currency: string;
+    cash: number;
+}
+
+export interface MaintainerPosition {
+    accountId: string;
+    ticker: string;
+    qty: number;
+    avgCost: number | null;
+    currency: string;
+}
+
+export interface MaintainerTransactionRequest {
+    accountId: string;
+    ticker: string;
+    side: 'BUY' | 'SELL';
+    qty: number;
+    price: number;
+    commission?: number;
+}
+
+export interface MaintainerTransactionResult {
+    position: { ticker: string; qty: number; avgCost: number | null } | null;
+    cash: number;
+    currency: string;
+}
+
+export const fetchMaintainerAccounts = async (): Promise<MaintainerAccount[]> => {
+    const res = await fetch('/api/portfolio-maintainer/accounts');
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to fetch maintainer accounts');
+    }
+    return res.json();
+};
+
+export const createMaintainerAccount = async (name: string, type: MaintainerAccountType, currency?: string): Promise<MaintainerAccount> => {
+    const res = await fetch('/api/portfolio-maintainer/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, type, currency }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create account');
+    return data;
+};
+
+export const updateMaintainerAccount = async (accountId: string, patch: { name?: string; currency?: string }): Promise<MaintainerAccount> => {
+    const res = await fetch(`/api/portfolio-maintainer/accounts/${encodeURIComponent(accountId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update account');
+    return data;
+};
+
+export const setMaintainerInitialCash = async (accountId: string, amount: number): Promise<{ accountId: string; cash: number }> => {
+    const res = await fetch(`/api/portfolio-maintainer/accounts/${encodeURIComponent(accountId)}/cash`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to set initial cash');
+    return data;
+};
+
+export const fetchMaintainerPositions = async (): Promise<MaintainerPosition[]> => {
+    const res = await fetch('/api/portfolio-maintainer/positions');
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to fetch maintainer positions');
+    }
+    return res.json();
+};
+
+export const submitMaintainerTransaction = async (req: MaintainerTransactionRequest): Promise<MaintainerTransactionResult> => {
+    const res = await fetch('/api/portfolio-maintainer/transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Transaction failed');
+    return data;
+};
+
+export const deleteMaintainerPosition = async (accountId: string, ticker: string): Promise<{ deleted: string }> => {
+    const res = await fetch(
+        `/api/portfolio-maintainer/position/${encodeURIComponent(accountId)}/${encodeURIComponent(ticker)}`,
+        { method: 'DELETE' }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete position');
+    return data;
+};
+
+

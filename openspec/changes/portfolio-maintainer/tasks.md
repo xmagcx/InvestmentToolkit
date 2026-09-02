@@ -43,9 +43,9 @@ Chain strategy: pending
 
 ## Phase 3: Frontend (PR 3)
 
-- [ ] 3.1 GREEN: `api.ts` typed fetchers — accounts/positions/transaction/delete (A-8)
-- [ ] 3.2 GREEN: `PortfolioMaintainerPage.tsx` mirrors UniversePage (slate-800/surface) — accounts, positions table, buy/sell form, delete-confirm dialog (A-9)
-- [ ] 3.3 GREEN: `App.tsx` route `portfolio-maintainer`; `Sidebar.tsx` NAV_ITEMS + lucide icon (A-7)
+- [x] 3.1 GREEN: `api.ts` typed fetchers — accounts/positions/transaction/delete (A-8)
+- [x] 3.2 GREEN: `PortfolioMaintainerPage.tsx` mirrors UniversePage (slate-800/surface) — accounts, positions table, buy/sell form, delete-confirm dialog (A-9)
+- [x] 3.3 GREEN: `App.tsx` route `portfolio-maintainer`; `Sidebar.tsx` NAV_ITEMS + lucide icon (A-7)
 
 ## Phase 4: Verification
 

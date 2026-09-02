@@ -30,6 +30,7 @@ import ThirteenFPage from './pages/ThirteenFPage';
 import ThesesPage from './pages/ThesesPage';
 import DailyBriefPage from './pages/DailyBriefPage';
 import UniversePage from './pages/UniversePage';
+import PortfolioMaintainerPage from './pages/PortfolioMaintainerPage';
 
 function App() {
   return (
@@ -48,6 +49,7 @@ function App() {
               <Route path="13f" element={<ThirteenFPage />} />
               <Route path="daily-brief" element={<DailyBriefPage />} />
               <Route path="universe" element={<UniversePage />} />
+              <Route path="portfolio-maintainer" element={<PortfolioMaintainerPage />} />
               <Route path="settings" element={<Settings />} />
             </Route>
           </Routes>
