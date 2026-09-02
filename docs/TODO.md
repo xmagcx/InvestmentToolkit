@@ -27,13 +27,32 @@ CHANGE-02 is proposed. CHANGE-00 and CHANGE-01 can proceed without them.
 ```mermaid
 flowchart LR
     C0["CHANGE-00<br/>TV field depth spike"] --> C1["CHANGE-01<br/>Fundamentals source layer"]
-    C1 --> C2["CHANGE-02<br/>Quality gate"]
-    C1 --> C3["CHANGE-03<br/>Valuation rank"]
+    C1 --> C2["CHANGE-02<br/>Quality gates + scoring"]
+    C1 --> C3["CHANGE-03<br/>Valuation scoring"]
+    C8["CHANGE-08<br/>Confirmation signals"] --> C4
     C2 --> C4["CHANGE-04<br/>Screen orchestration"]
     C3 --> C4
     C4 --> C5["CHANGE-05<br/>Universe screen UI"]
     C4 --> C6["CHANGE-06<br/>Backtest validation"]
 ```
+
+CHANGE-08 has no dependency on CHANGE-01 and can be built in parallel from the start.
+
+## Design correction applied in revision 2
+
+The original scoping treated all eleven source criteria as sequential hard gates. Per **F23** in
+[`docs/oportunity.md`](./oportunity.md), that is now **three hard gates plus a weighted score across
+four axes**. The instruction driving the change: make the screen less strict and genuinely aimed at
+quality undervalued businesses rather than a filter that returns nothing.
+
+The three non-negotiable gates:
+
+1. **Sector eligible** — the ratios are undefined for banks, insurers, REITs, utilities
+2. **Returns not manufactured by leverage** — Buffett tenet 7 and Smith criterion 3 converge here
+3. **Cash is real** — FCF / Net Income not chronically broken; Buffett tenet 8 and Smith's cash conversion converge here
+
+Everything else is scored on four axes: **Quality, Growth, Valuation, Confirmation**. Terminal
+states gain a fourth band, `VALUE_TRAP_RISK`, for cheap candidates whose quality is unproven.
 
 ---
 
@@ -129,23 +148,30 @@ rule and no provenance record. `standardize_metrics.py` exists specifically to p
 
 ## CHANGE-02 — `quality-gate-engine`
 
-**Depends on:** CHANGE-01. **Blocked by** open decisions F4 and F9.
+**Depends on:** CHANGE-01. **Blocked by** open decisions §5.5, F4, F9 and F23.
 
 ### Intent
 
-Factors **F4, F9, F10, F11, F12, F13, F16**. Implements Block A and Block B as a **pass/fail gate**,
-never a score. Resolves the A4 blocker through the substitute chain rather than waiting for
-ten years of data.
+Factors **F4, F9, F10, F11, F12, F13, F16, F23, F27, F28**. Implements the **three hard gates**
+plus the **Quality and Growth scoring axes**. Resolves the A4 blocker through the substitute chain
+rather than waiting for ten years of data.
+
+**Revised from revision 1:** this is no longer an all-pass/fail gate. Only sector eligibility,
+leverage-free returns and cash reality are binary. Consistency, margins, reinvestment and growth
+become scored contributions.
 
 ### In Scope
 
-- New `py_services/quality_gate.py` returning per-criterion `PASS` / `FAIL` / `NOT_EVALUABLE` with the reason and the evidence used
-- **F9** — sector eligibility check runs first. Banks, insurers, REITs and utilities short-circuit to `NOT_APPLICABLE` before any ratio is computed. Reuses or extends `sector_overrides.py`
+- New `py_services/quality_gate.py` exposing two distinct outputs: **hard gate result** (`ELIGIBLE` / `NOT_APPLICABLE` / `DISCARD`) and **scored axes** (Quality, Growth), each with per-criterion evidence
+- **F9** — sector eligibility runs first. Banks, insurers, REITs and utilities short-circuit to `NOT_APPLICABLE` before any ratio is computed. Reuses or extends `sector_overrides.py`
+- **F23 gate 2** — returns not manufactured by leverage. Net debt sanity plus unlevered return check (Buffett tenet 7 / Smith criterion 3)
+- **F23 gate 3** — cash reality. FCF / Net Income not chronically broken across the available window
 - **F4** — one canonical ROCE/ROIC definition, chosen by the open decision, encoded once and documented in the module header
-- **F12** — surface the existing Piotroski F-Score from `fetch_financials.py` as the primary A4 substitute. **Read the existing implementation; do not reimplement it**
-- **F10** — new dispersion metrics (standard deviation of revenue growth, EPS growth, and margins) over the available window, computed from the `hist_*` arrays already produced
-- **F13** — cash-based ROCE alongside the accrual figure; flag divergence when conversion is weak
-- **F16** — `owner_earnings()` using D&A as the maintenance-capex proxy, with the approximation documented in the docstring. A3 failures re-test against owner earnings before discarding
+- **F12** — surface the existing Piotroski F-Score from `fetch_financials.py` as the primary A4 substitute, **scored not gated**. Read the existing implementation; do not reimplement it
+- **F10 + F28** — dispersion metrics (standard deviation of revenue growth, EPS growth and margins) from the `hist_*` arrays already produced. F28 specifically measures whether gross margin **holds or expands through a downturn**, the observable fingerprint of pricing power
+- **F13** — cash-based ROCE alongside the accrual figure; divergence lowers the Quality score rather than failing the candidate
+- **F16** — `owner_earnings()` = `net income + D&A − capex − additional working capital`, using D&A as the maintenance-capex proxy with the approximation documented. A3 shortfalls re-test against owner earnings before penalizing
+- **F27** — one-dollar principle: cumulative retained earnings versus change in market capitalization over the same multi-year window
 - **A4 strict path** where EDGAR provides ten years; substitute path elsewhere; the record states which path ran
 
 ### Out of Scope
@@ -157,12 +183,14 @@ ten years of data.
 ### Acceptance
 
 - [ ] A bank ticker returns `NOT_APPLICABLE` without computing ROIC
+- [ ] **Only the three declared gates can produce `DISCARD`.** A candidate weak on consistency or growth is scored down, not discarded (**F23**)
 - [ ] A US ticker with ten years of EDGAR data runs the strict A4 test and records `path: strict`
 - [ ] A TSX ticker runs the Piotroski + dispersion substitute and records `path: substitute`
-- [ ] A ticker failing A3 on FCF but passing on owner earnings returns `PASS` with the retest noted
+- [ ] A ticker short on FCF growth but strong on owner earnings scores accordingly, with the retest noted
 - [ ] Missing data returns `NOT_EVALUABLE`, **never** `PASS` (**F18**)
-- [ ] The gate returns pass/fail per criterion — no composite score anywhere in the output (**F11**)
+- [ ] Quality and Growth axes are returned **separately**, never pre-collapsed into one number (**F11**)
 - [ ] Piotroski values match those already produced by `fetch_financials.py` for the same ticker
+- [ ] One-dollar principle returns `NOT_EVALUABLE` when the window is too short rather than a misleading value
 
 ### Test requirements (strict TDD)
 
@@ -174,10 +202,10 @@ ten years of data.
 
 | Field | Value |
 |---|---|
-| Estimated changed lines | 600–800 |
+| Estimated changed lines | 700–900 |
 | 400-line budget risk | **High** |
-| Chained PRs recommended | **Yes** — suggested split: (a) sector exclusion + canonical ROIC, (b) A4 substitute chain (F12 + F10), (c) owner earnings (F16) |
-| Decision needed before apply | **Yes** — F4 and F9 |
+| Chained PRs recommended | **Yes** — suggested split: (a) three hard gates + canonical ROIC, (b) A4 substitute chain (F12 + F10 + F28), (c) owner earnings + one-dollar principle (F16 + F27) |
+| Decision needed before apply | **Yes** — §5.5 portfolio tension, F4, F9, F23 weights |
 
 ---
 
@@ -187,9 +215,13 @@ ten years of data.
 
 ### Intent
 
-Factors **F7, F8, F11, F14, F15, F18**. Implements Block C as a **percentile ranking**, not a
+Factors **F7, F8, F11, F14, F15, F18, F23**. Implements Block C as a **percentile ranking**, never a
 threshold gate. Greenblatt ranks; he does not threshold. Ranking is robust to the definitional
 disagreement F4 cannot fully eliminate.
+
+Adds the Buffett valuation leg absent from revision 1: **DCF on owner earnings with an explicit
+margin of safety** (tenets 11–12). Buffett rejected P/E and P/B as primary criteria in 1992, so
+neither may drive the valuation axis.
 
 ### In Scope
 
@@ -200,6 +232,8 @@ disagreement F4 cannot fully eliminate.
 - **C3 via F15** — Acquirer's Multiple: EV / operating earnings constructed **top-down from the income statement**, not from reported EBIT, per Carlisle's standardization rationale
 - **F8** — sector- and cycle-adjusted acceptance bands, consuming `market_regime.py` / `macro_regime.py`, following Burry's stated practice of varying the acceptable multiple by industry and cycle position
 - **F18** — self-historical C3 is explicitly reported as `NOT_EVALUABLE`; it is never silently approximated
+- **Buffett tenets 11–12** — margin of safety as the gap between price and DCF-derived intrinsic value, computed on **owner earnings** (from CHANGE-02) rather than FCF. Reuses `dcf_scenarios.py`. Discount rate is the risk-free rate or a ~10% opportunity cost, configurable
+- Reference point for the FCF-yield leg: Fundsmith's published portfolio weighted average of **3.7% against 2.8% for the S&P 500** — a comparative benchmark, not a threshold
 
 ### Out of Scope
 
@@ -245,7 +279,9 @@ universe group (future phase — this delivers data foundation only)."*
 ### In Scope
 
 - New `py_services/screen_universe.py` orchestrating: resolve → sector filter → quality gate → valuation rank → classify
-- Three output states matching the source decision tree: `DISCARD`, `WATCHLIST`, `PRIORITY_BUY`, plus `NOT_APPLICABLE`
+- **Four terminal states plus `NOT_APPLICABLE`** (F23): `PRIORITY_BUY` (quality and undervalued), `WATCHLIST` (quality, fully valued), **`VALUE_TRAP_RISK`** (cheap, quality unproven — flagged for manual review rather than silently discarded), and `DISCARD`
+- **Weighted composite across four axes** — Quality, Growth, Valuation, Confirmation. Quality and Valuation dominate; Confirmation is capped (F26) so it can never move a candidate across a band on its own
+- Weights live in configuration, not in code, so they can be tuned against backtest results without a code change
 - Schema decision for persisting screen results in `domain_model.sqlite` ([rule #21](../AGENTS.md)) — per-run results with timestamp, per-criterion outcome, provenance, and path taken
 - **F22** — rejection reasons persisted, not discarded. Why a candidate failed is calibration data
 - **F19** — declared structural bias emitted with every run: anti-momentum, anti-turnaround, penalizes growth capex
@@ -263,6 +299,9 @@ universe group (future phase — this delivers data foundation only)."*
 - [ ] Rejected candidates persist with their failing criterion and the evidence used
 - [ ] Re-running does not overwrite history; results are append-only per run
 - [ ] Non-evaluable criteria never contribute to a `PRIORITY_BUY` classification
+- [ ] **Confirmation signals alone cannot change a band** — verifiable by removing them from a fixture run and asserting the band is unchanged (**F26**)
+- [ ] `VALUE_TRAP_RISK` is reachable and distinguishable from `DISCARD`
+- [ ] Weight changes in configuration alter classification without touching code
 - [ ] Every result is traceable to source and vintage per criterion (**F21**)
 - [ ] Run output is consumable by `backtest_harness.py`
 
@@ -400,6 +439,81 @@ is a velocity prerequisite, not cosmetic cleanup.
 
 ---
 
+## CHANGE-08 — `confirmation-signals`
+
+**Independent of CHANGE-01.** Can be built in parallel from the start. Consumed by CHANGE-04.
+
+### Intent
+
+Factors **F24, F25, F26**. Adds the two behavioral signals that no accounting-derived criterion can
+provide: **superinvestor consensus** and **insider net buying**. Both are corroboration, never
+gates.
+
+Every other criterion in this program derives from statements the company itself authors. A
+director buying with personal money is the one signal that cannot be produced by accounting
+policy. Superinvestor consensus matters here specifically because **Buffett and Terry Smith are
+both among the 82 tracked managers** — the authors of the framework this screen implements.
+
+### In Scope
+
+**Superinvestor consensus (F24)**
+
+- Add `superinvestor` to `requirements.in` (MIT, no API key, v0.2.0 July 2026), recompile
+- New `py_services/superinvestor_signal.py` wrapping `.stock(symbol)`: extract `ownership_count`, `ownership_rank`, `avg_hold_price`, net `quarterly_activity`, and whether Berkshire or Fundsmith appear in `holders`
+- Derive a **direction** signal: rising ownership with positive net activity differs from a large but shrinking consensus
+- Compare `avg_hold_price` against current price — entering below or above the smart-money basis
+- **Fail-soft required.** The library scrapes DataRoma rather than using an official API, and DataRoma returns **HTTP 406** to non-browser user agents. A scrape failure must degrade to `SIGNAL_UNAVAILABLE`, never break a screen run
+- Cache aggressively — the underlying data changes quarterly
+
+**Insider net buying (F25)**
+
+- New `py_services/insider_signal.py` consuming SEC EDGAR `https://data.sec.gov/submissions/CIK{cik}.json`, filtered on `form: "4"`, then parsing the filing XML
+- **Filter on transaction code `P`** (open-market purchase). Discard `A` (award) and `M` (option exercise) — compensation, not conviction
+- **Cluster detection**: several distinct insiders buying within one window is the signal; a single filer is noise
+- Weight by role and by transaction size
+- Reuse the `_throttled_get()` + `cache_get`/`cache_set` + `USER_AGENT` pattern already proven in `edgar_facts.py`
+- **Sells are recorded but weighted near zero.** Insiders sell for diversification, tax and liquidity; they buy for one reason. The asymmetry is well established
+
+**Shared (F26)**
+
+- Both signals carry an explicit vintage. 13F is 45 days stale; Form 4 is 2 business days
+- Combined contribution to the composite is **capped** so neither can move a candidate across a band alone
+- Absence of a signal is `NOT_PRESENT`, never a penalty. Most quality businesses have no recent insider buying
+
+### Out of Scope
+
+- **`stocksera`.** Evaluated and rejected: last PyPI release March 2022, and the hosted API returns HTTP 404 on the root, the documented `/accounts/developers/` signup path, and `/api/insider_trading/`. The client is a thin wrapper over a service that no longer responds
+- **Canadian insiders (SEDI).** Separate system, separate parser. Later change if the signal proves valuable
+- Congressional trading (`senate()` / `house()`) — available only through the dead stocksera service; a direct source would be a separate evaluation
+- Replacing the existing `/13f` module. This is additive
+
+### Acceptance
+
+- [ ] A DataRoma scrape failure returns `SIGNAL_UNAVAILABLE` and the screen run completes normally
+- [ ] Option exercises and awards are excluded from the insider buy signal; only code `P` counts
+- [ ] A single insider purchase scores materially lower than a cluster of the same total value
+- [ ] Absence of both signals never lowers a candidate's band
+- [ ] Both signals report their vintage and are rejected as stale beyond a configured threshold
+- [ ] Removing both signals from a fixture run leaves every band unchanged (**F26** cap verification)
+- [ ] A non-US ticker returns `NOT_AVAILABLE` for the insider signal without an error
+
+### Test requirements (strict TDD)
+
+- `tests/py_services/test_superinvestor_signal.py` — scrape-failure degradation, direction derivation, price-versus-basis comparison
+- `tests/py_services/test_insider_signal.py` — transaction-code filtering, cluster detection, non-US handling, throttling
+- Both network boundaries stubbed at the client only. Signal logic runs unmocked per [rule #1](../AGENTS.md)
+
+### Review workload forecast
+
+| Field | Value |
+|---|---|
+| Estimated changed lines | 450–600 |
+| 400-line budget risk | Medium-high |
+| Chained PRs recommended | **Yes** — one PR per signal; they share nothing but the cap policy |
+| Decision needed before apply | **Yes** — F24/F26 weight cap, and whether DataRoma scraping fragility is acceptable for a non-blocking signal |
+
+---
+
 ## Out of scope for this program
 
 Recorded so they are not silently absorbed.
@@ -407,6 +521,9 @@ Recorded so they are not silently absorbed.
 | Item | Reason |
 |---|---|
 | **PyIndicators adoption** | Contributes nothing to fundamentals. Real but separate value: local technical indicator computation replacing TV CDP batch sweeps ([pitfall #7](../AGENTS.md)). Propose independently |
+| **`stocksera` adoption** | Hosted API dead — 404 on every documented path, last release March 2022. Insider data comes from SEC EDGAR directly instead (CHANGE-08) |
+| **Self-hosting Stocksera** | The GitHub source is alive, but standing up and maintaining that service is an infrastructure project, not a dependency |
+| **SEDI / Canadian insiders** | Separate filing system and parser. Revisit only if the US insider signal proves its value |
 | **F17 snapshot accumulation** | Deferred. Alpha Architect's evidence is that relative-to-own-history value does not outperform absolute value |
 | **Scheduler / automation** | No scheduler exists in the repository. Introducing one is a standalone architectural decision |
 | **Track-record page** | Separate gap from `docs/modules.md`. The data already exists in `intelligence.sqlite` |
@@ -417,9 +534,19 @@ Recorded so they are not silently absorbed.
 ## Sequencing recommendation
 
 1. **CHANGE-00** — spike first. Every downstream scope depends on its answer.
-2. **Answer the six open decisions** in [`docs/oportunity.md` §8](./oportunity.md).
-3. **CHANGE-01** — foundation.
+2. **Answer the eight open decisions** in [`docs/oportunity.md` §8](./oportunity.md). The largest is §5.5: Smith's Filter 7 excludes microchips by name and his cyclical exclusion reaches `energy_infra`. Adopt Smith in full, adopt the convergent core only, or apply per pillar?
+3. **CHANGE-01** — foundation. **CHANGE-08** can start in parallel; it has no dependency on the source layer.
 4. **CHANGE-02** and **CHANGE-03** in parallel; both depend only on CHANGE-01.
-5. **CHANGE-04** — integration.
+5. **CHANGE-04** — integration; consumes 02, 03 and 08.
 6. **CHANGE-05** and **CHANGE-06** in parallel.
 7. **CHANGE-07** as needed, before CHANGE-05 if `ScreenerTable.tsx` blocks it.
+
+### Cheapest first steps, if the full program is too large to start
+
+Three items deliver most of the value and depend on nothing:
+
+| Step | Effort | Why |
+|---|---|---|
+| Surface the **Piotroski F-Score** already computed in `fetch_financials.py` (F12) | Near zero | Resolves the ten-year-history blocker with data already on hand |
+| Adopt the **three-gate relaxed model** (F23) as the design | Zero — a decision | Determines whether the screen returns candidates or an empty set |
+| Add **owner earnings** (F16) | Small — inputs already retrieved | Stops the screen rejecting exactly the compounders the strategy is looking for |

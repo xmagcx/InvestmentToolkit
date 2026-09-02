@@ -8,6 +8,14 @@ to capabilities that already exist in this repository, and marks what is missing
 - **Companion document:** [`docs/TODO.md`](./TODO.md) — OpenSpec requirements derived from this catalog
 - **Related module inventory:** [`docs/modules.md`](./modules.md)
 
+### Revision 2 — what changed
+
+1. **Relaxed gating (F23).** The screen moves from eleven sequential hard cuts to **three hard gates plus a weighted score**. The original tree rejected nearly everything, and rejected on source disagreement rather than business quality. The objective is a ranked shortlist of quality businesses trading below fair value, not an empty result set.
+2. **Buffett + Smith combined checklist (§5).** Both frameworks stated as published, with their six convergences and — more usefully — their six direct contradictions, including one that rejects part of the current portfolio.
+3. **Behavioral confirmation signals (F24–F26).** Superinvestor consensus and insider net buying, added as capped confirmation, never as gates.
+4. **Two new libraries evaluated (§2.2).** `superinvestor` is usable; `stocksera` is not — its hosted API returns 404 on every documented path.
+5. **Two new quality factors (F27, F28).** Buffett's one-dollar principle and pricing power measured through margin stability.
+
 ---
 
 ## 1. Source Checklist
@@ -80,6 +88,40 @@ Uses TradingView's official scanner API. Relevant fields confirmed present in th
 | Historical slices | `free_cash_flow_ttm_h`, `total_revenue_fq_h` (type `num_slice`), `earnings_fq_h` (type `interface`) — **depth undocumented, must be probed empirically** |
 
 Coverage: ~70 countries including TSX, which EDGAR does not cover.
+
+**`superinvestor` (PyPI) — applicable, with caveats.**
+
+MIT, no API key, v0.2.0 published July 2026. Wraps [DataRoma](https://www.dataroma.com), which aggregates SEC 13F filings for **82 curated superinvestors** including Buffett (Berkshire), Terry Smith (Fundsmith), Klarman (Baupost), Li Lu (Himalaya), Ackman, Einhorn.
+
+| Method | Returns |
+|---|---|
+| `.buys(period="q"\|"6m", n)` | Stocks bought by multiple superinvestors, with `buy_count` |
+| `.sells(period, n)` | Same, sell side |
+| `.holdings(n)` | Grand consensus portfolio ranked by `ownership_count`, plus `max_pct` and `avg_hold_price` |
+| `.stock(symbol)` | `ownership_count`, `ownership_rank`, `avg_hold_price`, `quarterly_activity` (buy / add / reduce / sell / net, with counts and share deltas), and per-holder detail (`manager`, `firm`, `portfolio_pct`, `activity`, `activity_pct`, `position_value`) |
+| `.managers()` | The 82 tracked investors with portfolio value and top holdings |
+
+The `.stock()` method is the useful one for this program: it answers "is the smart-money flow into this name positive or negative, and is Buffett or Smith among the holders".
+
+**Risks:** it scrapes DataRoma rather than consuming an official API, and the project states it is not affiliated. A DataRoma request with a non-browser user agent returns **HTTP 406**, confirming bot filtering — the library is one layout or policy change away from breaking. Underlying data is 13F, so it inherits the **45-day lag** and shows only long US equity positions.
+
+**`stocksera` (PyPI) — not usable. The hosted API appears dead.**
+
+On paper it is the best fit for insider data: `insider_trading(ticker, date_from, date_to, limit)`, `latest_insider_trading_summary()`, plus `senate()` and `house()` congressional trades, `sec_fillings()`, `short_volume()`, `ftd()`, `borrowed_shares()`, and news sentiment.
+
+In practice:
+
+| Check | Result |
+|---|---|
+| Last PyPI release | **0.1.21, 27 March 2022** — nearly four years stale |
+| `stocksera.pythonanywhere.com/` | HTTP 404 |
+| `/accounts/developers/` (the documented signup path) | HTTP 404 |
+| `/api/insider_trading/` | HTTP 404 |
+| `github.com/guanquann/Stocksera` | HTTP 200 — source still present |
+
+Every documented endpoint of the hosted service returns 404, and the API requires a key obtained from a signup page that no longer resolves. The client is a thin wrapper over that service, so the package cannot function. Self-hosting from the GitHub source is a separate infrastructure project, not a dependency.
+
+**Conclusion for insider data: use SEC EDGAR directly.** Form 3/4/5 filings are available free via `https://data.sec.gov/submissions/CIK{cik}.json` filtered on `form: "4"`. `edgar_facts.py` already implements the throttling, caching and mandatory `USER_AGENT` the SEC requires — the pattern is solved, only the client is missing. Limitation: US filers only. Canadian insiders report to **SEDI**, a separate system with a separate parser.
 
 **`coding-kitties/PyIndicators` — not applicable to this objective.**
 
@@ -356,6 +398,114 @@ trusted. Subject to F3 — restated inputs invalidate the exercise.
 
 - **Existing:** `backtest_harness.py`, `grade_predictions.py`
 
+### 3.5 Behavioral Confirmation and Calibration of Strictness
+
+These factors were added after the original catalog. F23 responds to a direct instruction to make
+the screen **less strict and genuinely aimed at quality undervalued businesses**, rather than a
+filter so tight that nothing survives it.
+
+#### F23 — Few hard gates, everything else scored ⭐
+
+The original decision tree is a chain of binary cuts. Eleven sequential hard thresholds over data
+drawn from three disagreeing sources produce a screen that rejects almost everything, and rejects
+it for the wrong reasons — a 14.9% ROIC computed by one source and 15.4% by another decides the
+outcome, not the business.
+
+Both reference frameworks are looser than the source checklist in exactly this way. Greenblatt
+**ranks** rather than thresholds. Terry Smith publishes his six criteria **qualitatively**; the
+numeric cutoffs circulating under his name are third-party reconstructions, not Fundsmith
+publications. Buffett's twelve tenets are explicitly described by Hagstrom as principles where
+*"not all of Buffett's purchases display all these tenets"*.
+
+**Proposed model:** three non-negotiable gates, everything else contributes to a composite score.
+
+| Non-negotiable gate | Rationale |
+|---|---|
+| **Sector eligible** (F9) | The ratios are undefined for banks, insurers, REITs and utilities. Not a judgement, a definitional issue |
+| **Returns not manufactured by leverage** | Buffett tenet 7 and Smith criterion 3 converge exactly here. A high return produced by a shrunken equity denominator is not quality |
+| **Cash is real** | FCF / Net Income not chronically broken. Buffett tenet 8 and Smith's cash conversion converge here. Protects against accounting-only quality |
+
+Everything else — growth rates, consistency, margins, valuation, confirmation — becomes a weighted
+score with bands. A business failing one growth criterion while excelling on five others should
+surface as a candidate, not vanish.
+
+- **Existing:** `compute_conviction_scores.py` already implements banded scoring (−6..+6); `framework_score.py` already produces a 0–100 composite with bands
+- **Gap:** The proposed tree does not use either
+
+#### F24 — Superinvestor consensus as a confirmation signal
+
+The thesis behind the `superinvestor` library: *"If one investor buys a stock, it could mean
+anything. If ten legendary investors independently buy the same stock, pay attention."*
+
+Relevant because two of the eighty-two tracked managers are **Buffett and Terry Smith** — the exact
+frameworks this program is built on. A candidate that passes the local screen *and* appears in
+Fundsmith's or Berkshire's holdings is independently corroborated by the authors of the method.
+
+**Rules that must accompany it:**
+
+- **Confirmation, never a gate.** 13F data is 45 days stale and shows only long US equity positions. Requiring it would reject every non-US candidate and every idea earlier than the crowd — which is where the return is
+- **Consensus count, not a single name.** `ownership_count` and net `quarterly_activity` matter; one manager's position does not
+- **Direction beats level.** A rising `ownership_count` with positive net activity is a different signal from a large but shrinking consensus
+- `avg_hold_price` versus current price indicates whether you would be entering below or above the smart-money basis
+
+- **Gap:** No superinvestor data anywhere in the repository
+- **Adjacent existing capability:** the `/13f` module already tracks one fund's filings from local JSON. This generalizes it to 82 and automates the fetch
+
+#### F25 — Insider net buying as a confirmation signal
+
+Every other criterion in this catalog derives from financial statements the company itself
+authors. A director buying with personal money in the open market is the one signal in the set
+that **cannot be produced by accounting policy**.
+
+**Rules that must accompany it:**
+
+- **Buys inform; sells barely do.** Insiders sell for diversification, tax, divorce or a house. They buy for one reason. Filter on transaction code `P` (open-market purchase); discard `A` (award) and `M` (option exercise), which are compensation rather than conviction
+- **Clusters, not individuals.** Several insiders buying within one window is the signal; a single filer is noise
+- **Weight by role and size** relative to the filer's known compensation
+- **Confirmation, never a gate.** Most quality businesses have no recent insider buying at all. Absence is not evidence
+
+- **Source:** SEC EDGAR `submissions` API, Form 4. Free, US only
+- **Gap:** Nothing in the repository touches Forms 3/4/5. `edgar_facts.py` consumes only the XBRL `companyfacts` endpoint
+- **Canada:** insiders file to SEDI, a separate system. Out of scope initially
+
+#### F26 — Lag discipline on confirmation signals
+
+Both confirmation sources are lagging and asymmetric, in different ways:
+
+| Signal | Lag | Granularity |
+|---|---|---|
+| 13F / superinvestor | 45 days after quarter end | Quarterly snapshot, no transaction dates |
+| Form 4 / insider | 2 business days | Individual transaction with date, price, quantity |
+
+They must be displayed with their vintage (F21) and must never contribute enough weight to move a
+candidate across a band on their own. A 45-day-old quarterly snapshot cannot outvote current
+fundamentals.
+
+#### F27 — One-dollar principle
+
+Buffett tenet 10: for every dollar retained, at least one dollar of market value created. Retain
+$100M in earnings and market capitalization should rise by at least $100M, measured over several
+years rather than quarters.
+
+It is the only criterion in the combined framework that tests **capital allocation outcomes**
+rather than inputs, and it needs no analyst judgement — retained earnings and market value are
+both observable.
+
+- **Gap:** Not computed. Requires cumulative retained earnings and the corresponding change in market capitalization over the same window
+
+#### F28 — Pricing power via margin stability
+
+Buffett tenet 3 defines a franchise as a product that is needed or desired, has no close
+substitute, and is not regulated — which yields **pricing flexibility**. Tenet 9 asks for high
+margins from structural cost discipline rather than one-off restructuring.
+
+Neither is directly observable, but both leave the same fingerprint: **gross margin that holds or
+expands through a downturn**. Fundsmith reports portfolio return on capital, gross margins and
+operating margins as *"all high and steady"* — steady being the operative word.
+
+- **Existing:** `hist_gross_margin`, `hist_operating_margin` and `hist_net_margin` are already computed in `fetch_financials.py`
+- **Gap:** Stability across the series is never measured. Overlaps with F10
+
 ---
 
 ## 4. Blocked Criteria — Resolution Options
@@ -392,7 +542,100 @@ not the multiple that explains value, and forcing it produces noise.
 
 ---
 
-## 5. Guru Method Compatibility
+## 5. The Buffett + Smith Combined Checklist
+
+The strategy target is *quality businesses that are undervalued*. Two frameworks define that most
+directly. This section states what each actually says, where they converge, and — more importantly
+— where they contradict each other.
+
+### 5.1 Buffett — twelve tenets (Hagstrom, *The Warren Buffett Way*)
+
+Distilled from Berkshire annual reports back to 1966. Hagstrom is explicit that *not all of
+Buffett's purchases display all these tenets* — they are principles, not a gate chain.
+
+| # | Tenet | Test or metric |
+|---|---|---|
+| **Business** | | |
+| 1 | Simple and understandable | Circle of competence |
+| 2 | Consistent operating history | *"Severe change and exceptional returns usually don't mix"* |
+| 3 | Favorable long-term prospects | A **franchise**: needed or desired product, no close substitute, not regulated → **pricing flexibility**. Should still work in 25–30 years |
+| **Management** | | |
+| 4 | Rational | **Capital allocation** appropriate to life-cycle stage. Buybacks only below intrinsic value |
+| 5 | Candid with shareholders | Reports let a literate reader estimate value, obligations, and managerial performance |
+| 6 | Resists the institutional imperative | No mindless peer imitation, no activity for its own sake |
+| **Financial** | | |
+| 7 | **ROE, not EPS** | EPS rises merely because retained earnings enlarge the base. Value marketable securities **at cost, not market**; exclude extraordinaries. Must be achieved **with little or no debt** — leverage inflates ROE by shrinking the denominator |
+| 8 | **Owner earnings** | `Net income + D&A − Capex − Additional working capital required`. Guards against "ersatz earnings" and against standard cash flow, which ignores required reinvestment |
+| 9 | High profit margins | Structural cost discipline, not restructuring. Berkshire's own benchmark: after-tax corporate expense **under 1% of operating earnings**, roughly one-tenth of peers its size |
+| 10 | **One-dollar principle** | Each dollar retained creates ≥ one dollar of market value, measured over years |
+| **Value** | | |
+| 11 | What is the business worth | **DCF on owner earnings**, discounted at the risk-free rate or ~10% opportunity cost. **P/E and P/B explicitly rejected in 1992.** *"Approximately right rather than precisely wrong"* |
+| 12 | Margin of safety | Gap between price and estimated intrinsic value. A 25% discount means a subsequent 10% decline in value still leaves the purchase profitable |
+
+### 5.2 Smith — six published criteria (Fundsmith factsheet)
+
+Verbatim from the fund. The three-step process is **buy good companies → don't overpay → do nothing**.
+
+1. High quality businesses that can sustain a **high return on operating capital employed**
+2. Businesses whose advantages are **difficult to replicate**
+3. Businesses that **do not require significant leverage** to generate returns
+4. Businesses with a **high degree of certainty of growth from reinvestment** of cash flows at high rates of return
+5. Businesses **resilient to change, particularly technological innovation**
+6. Businesses whose **valuation is attractive**
+
+Three of the fourteen Owner's Manual filters add information beyond those six:
+
+- **Filter 3** — seeks businesses whose assets are **intangible and difficult to replicate**, because they *"break the rule of mean reversion that states returns must revert to the average as new capital is attracted to business activities earning super-normal returns"*
+- **Filter 7** — resilience means resistance to product obsolescence. *"We do not invest in industries which are subject to rapid technological innovation."* Canals, railroads, aviation, **microchips** and the internet transformed industries and **destroyed capital** for many investors
+- **Filter 13** — *"We are rather more comfortable analysing numbers than we are trying to gain insights into companies by meeting the management"*
+
+**Threshold caveat:** Fundsmith publishes these criteria qualitatively and publishes portfolio
+aggregates, not cutoffs. Numeric thresholds circulating under Smith's name (ROCE ≥ 20%, gross
+margin ≥ 45%, P/E ≤ 35) are **third-party reconstructions**. Stockopedia says so explicitly of its
+own screen. One genuinely published reference point: the portfolio's weighted average FCF yield
+closed a year at **3.7% against 2.8% for the S&P 500**, with return on capital and margins
+described as *"all high and steady"*.
+
+### 5.3 Convergence — the reliable core
+
+Six points survive both frameworks. **This is the combined checklist that actually matters.**
+
+| Concept | Buffett | Smith |
+|---|---|---|
+| **High return on capital, unlevered** | Tenet 7 — ROE achieved with little or no debt | Criterion 3 — no leverage required to generate returns |
+| **Cash reality over accrual** | Tenet 8 — owner earnings | Cash conversion; returns measured in cash |
+| **Durable, hard-to-replicate moat** | Tenet 3 — franchise with pricing flexibility | Criterion 2 + Filter 3 — intangible advantages that break mean reversion |
+| **Reinvestment at high rates** | Tenet 4 + Tenet 10 — rational allocation, one-dollar principle | Criterion 4 — certainty of growth from reinvestment |
+| **Consistency, absence of severe change** | Tenet 2 | Criterion 5 — resilience to change |
+| **Do not overpay** | Tenets 11–12 — DCF plus margin of safety | Criterion 6, Filter 8, step 2 of the process |
+
+### 5.4 Divergence — where they contradict
+
+| # | Conflict | Buffett | Smith |
+|---|---|---|---|
+| 1 | **Tangible vs intangible assets** | Owns BNSF, utilities, insurance — capital-intensive, tangible | Filter 3 explicitly seeks intangible-asset businesses |
+| 2 | **Technology** | Apple became his largest position | Filter 7 avoids rapid technological innovation and names **microchips** as a capital destroyer |
+| 3 | **Assessing management** | 3 of 12 tenets, qualitative, requires reading and judgement | Filter 13 prefers numbers to meeting management |
+| 4 | **Valuation method** | Absolute: DCF on owner earnings with margin of safety. Rejects P/E and P/B | Relative: FCF yield against the market |
+| 5 | **Financials** | Banks and insurance are core to Berkshire; insurance float is the engine | Excluded — they require leverage to generate satisfactory returns |
+| 6 | **Cyclicals** | Buys them at the bottom of the cycle | Avoids them for revenue lumpiness |
+
+### 5.5 The tension this creates for this portfolio
+
+Applied literally, the combined checklist **rejects a significant part of the current portfolio.**
+Smith's Filter 7 names microchips specifically; the `chips_ai` pillar lives there. His cyclical
+exclusion reaches `energy_infra`.
+
+Three honest resolutions:
+
+1. **Adopt Smith in full** and accept that the current portfolio does not pass — meaning change the portfolio
+2. **Adopt the convergent core only** (§5.3) and drop Filter 7, following Buffett with Apple: technology is not disqualified; what matters is whether a franchise with pricing power exists
+3. **Apply per pillar** — full Smith where it fits, convergent core in technology and cyclical pillars, declared explicitly
+
+Option 2 is the most coherent with what already exists, but this is a product decision, not a
+technical one. Neither framework answers it.
+
+### 5.6 Broader method compatibility
 
 | Approach | Compatibility | Rationale |
 |---|---|---|
@@ -406,90 +649,92 @@ not the multiple that explains value, and forcing it produces noise.
 
 ## 6. Proposed Evaluation Flow
 
-Applied to the Candidate Universe (`universe_candidate` table). The design separates a hard
-quality gate from a valuation ranking (F11), excludes structurally incompatible sectors before
-computing anything (F9), and never reports a non-evaluable criterion as passed (F18).
+Applied to the Candidate Universe (`universe_candidate` table).
+
+**This flow is deliberately less strict than the source decision tree.** Per **F23**, only three
+conditions are hard gates; everything else contributes to a weighted score. The original eleven
+sequential binary cuts reject nearly everything, and reject on source disagreement rather than on
+business quality. Both reference frameworks are looser than that: Greenblatt ranks, Smith publishes
+criteria qualitatively, and Hagstrom states that not all of Buffett's purchases display all twelve
+tenets.
+
+The goal is a **ranked shortlist of quality businesses trading below what they are worth**, not a
+filter that returns an empty set.
 
 ```mermaid
 flowchart TD
-    A["Candidate Universe<br/>universe_candidate table"] --> B["Resolve fundamentals<br/>F1 source precedence"]
+    A["Candidate Universe<br/>universe_candidate table"] --> B["Resolve fundamentals<br/>F1 source precedence<br/>EDGAR - TradingView - yfinance"]
 
-    B --> B1["EDGAR<br/>point-in-time, US"]
-    B --> B2["TradingView Screener<br/>global, precomputed"]
-    B --> B3["yfinance<br/>fallback"]
+    B --> C["Normalize<br/>F4 canonical definitions<br/>F5 FX policy<br/>F21 record provenance and vintage"]
 
-    B1 --> C["Normalize<br/>F4 canonical definitions<br/>F5 FX policy"]
-    B2 --> C
-    B3 --> C
+    C --> G1{"GATE 1 - Sector eligible?<br/>F9 excludes banks, insurers,<br/>REITs, utilities<br/>ratios are undefined, not merely weak"}
+    G1 -->|No| XN["NOT APPLICABLE<br/>framework does not apply"]
 
-    C --> D{"F9 — Sector eligible?<br/>excludes banks, insurers,<br/>REITs, utilities"}
-    D -->|No| X1["NOT APPLICABLE<br/>checklist invalid for sector"]
-    D -->|Yes| E["Record provenance and vintage<br/>F21 per-check traceability"]
+    G1 -->|Yes| G2{"GATE 2 - Returns not<br/>manufactured by leverage?<br/>Buffett tenet 7 + Smith criterion 3"}
+    G2 -->|No| XD["DISCARD<br/>with reason recorded"]
 
-    E --> F["QUALITY GATE — pass/fail<br/>F11"]
+    G2 -->|Yes| G3{"GATE 3 - Is the cash real?<br/>FCF / Net Income not<br/>chronically broken<br/>Buffett tenet 8 + Smith conversion"}
+    G3 -->|No| XD
 
-    F --> G{"B1 — ROCE / ROIC<br/>above sector-adjusted threshold?<br/>F4 F8"}
-    G -->|No| X2["DISCARD<br/>inefficient growth"]
-    G -->|Yes| H{"B2 — FCF / Net Income<br/>greater than 100%?<br/>F13"}
-    H -->|No| X2
-    H -->|Yes| I{"B3 — Net Debt / EBITDA<br/>below 2.0x or net cash?"}
-    I -->|No| X2
-    I -->|Yes| J["GROWTH GATE"]
+    G3 -->|Yes| S["SCORING - four weighted axes<br/>F23 no further hard cuts"]
 
-    J --> K{"A1 A2 — Revenue CAGR<br/>above threshold and<br/>EPS growth above revenue growth?"}
-    K -->|No| X3["DISCARD<br/>no growth"]
-    K -->|Yes| L{"A3 — FCF per share CAGR<br/>above threshold?"}
-    L -->|No| M["F16 — Retest on Owner Earnings<br/>heavy growth capex may be<br/>depressing reported FCF"]
-    M -->|Still fails| X3
-    M -->|Passes| N
-    L -->|Yes| N["A4 — Consistency<br/>F12 Piotroski F-Score<br/>F10 growth and margin dispersion<br/>strict 10y only where EDGAR covers"]
+    S --> Q["QUALITY axis<br/>ROCE level, cash-based F13<br/>margin stability F28<br/>Piotroski F-Score F12<br/>one-dollar principle F27<br/>consistency dispersion F10"]
 
-    N --> O{"Consistency<br/>acceptable?"}
-    O -->|No| X4["DISCARD<br/>erratic history"]
-    O -->|Yes| P["VALUATION RANK — ordering, not gate<br/>F7 F11"]
+    S --> GR["GROWTH axis<br/>revenue and EPS CAGR<br/>FCF per share CAGR<br/>reinvestment at high rates<br/>F16 owner earnings retest<br/>when capex depresses FCF"]
 
-    P --> Q["C1 — FCF Yield on EV<br/>percentile rank"]
-    P --> R["C2 — PEG<br/>percentile rank"]
-    P --> S["C3 — EV/EBIT discount<br/>F14 vs sector median<br/>F15 Acquirer's Multiple<br/>self-historical unavailable → F18"]
+    S --> V["VALUATION axis<br/>FCF yield on EV<br/>PEG<br/>EV/EBIT vs sector median F14<br/>Acquirer's Multiple F15<br/>DCF margin of safety Buffett 11-12"]
 
-    Q --> T["Composite valuation rank<br/>sum of percentile ranks"]
-    R --> T
-    S --> T
+    S --> CF["CONFIRMATION axis<br/>capped weight, F26<br/>superinvestor consensus F24<br/>insider net buying F25"]
 
-    T --> U{"Valuation rank<br/>in top quantile?"}
-    U -->|No| V["WATCHLIST<br/>excellent business, expensive"]
-    U -->|Yes| W["PRIORITY BUY<br/>Quality Compounder"]
+    Q --> W["Weighted composite<br/>quality and valuation dominate<br/>confirmation capped so it can<br/>never move a band alone"]
+    GR --> W
+    V --> W
+    CF --> W
 
-    V --> Y["Emit to Portfolio Advisor<br/>F20 input, not verdict<br/>F19 declared bias<br/>F18 non-evaluable flagged"]
-    W --> Y
-    X1 --> Z["Rejection reason recorded<br/>feeds F22 backtest"]
-    X2 --> Z
-    X3 --> Z
-    X4 --> Z
+    W --> BND{"Band"}
+    BND -->|"High quality AND<br/>attractively valued"| P1["PRIORITY - Quality Compounder<br/>undervalued"]
+    BND -->|"High quality,<br/>fully valued"| P2["WATCHLIST<br/>excellent business, wait for price"]
+    BND -->|"Cheap but<br/>quality unproven"| P3["VALUE TRAP RISK<br/>needs manual review"]
+    BND -->|"Neither"| XD
+
+    P1 --> OUT["Emit to Portfolio Advisor<br/>F20 input, never a verdict<br/>F18 non-evaluable flagged<br/>F19 declared bias<br/>F21 source and vintage per criterion"]
+    P2 --> OUT
+    P3 --> OUT
+
+    XN --> LOG["Outcome recorded<br/>F22 feeds backtest calibration"]
+    XD --> LOG
+    OUT --> LOG
 ```
 
 ### Design decisions encoded in the flow
 
-1. **Sector exclusion runs first** (F9). Computing ROIC for a bank wastes work and produces a number that means nothing.
-2. **Quality and growth are gates; valuation is a rank** (F11). A business either has a moat or it does not. Cheapness is relative and always an ordering.
-3. **A3 failure routes to an Owner Earnings retest** (F16) rather than an immediate discard, so heavy-growth-capex compounders are not rejected by construction.
-4. **A4 uses the substitute chain** (F12 + F10), applying the strict ten-year test only where EDGAR provides the data, and recording which path was used (F21).
-5. **C3 degrades gracefully** — sector-relative (F14) or Acquirer's Multiple (F15) when self-historical data does not exist, and marks itself non-evaluable rather than silently passing (F18).
-6. **Rejections are recorded, not discarded** (F22). Why a candidate failed is as valuable for calibration as why one passed.
-
----
+1. **Three hard gates, not eleven** (F23). Sector eligibility, leverage-free returns, and cash reality. The first is definitional; the other two are the points where Buffett and Smith converge exactly. Everything else is scored, so a business that misses one growth threshold while excelling elsewhere still surfaces.
+2. **Sector exclusion runs first** (F9). Computing ROIC for a bank wastes work and produces a number that means nothing.
+3. **Four axes, not one number** (F11). Quality and valuation must be visible separately. A single composite hides whether a candidate is a great business at a fair price or a mediocre one that is very cheap.
+4. **A fourth band: VALUE TRAP RISK.** Cheap with unproven quality is a distinct outcome deserving manual review, not a silent discard. Recording it feeds calibration (F22).
+5. **A3 failure routes to an Owner Earnings retest** (F16) rather than a discard, so heavy-growth-capex compounders are not rejected by construction.
+6. **Confirmation is capped** (F26). Superinvestor consensus is 45 days stale; insider buying is sparse and absent for most quality names. Neither may move a candidate across a band on its own.
+7. **Every outcome is recorded, including rejections** (F22). Why a candidate failed is as valuable for calibration as why one passed.
 
 ## 7. Coverage Summary
 
 | Status | Count | Factors |
 |---|---|---|
 | ✅ Fully covered | 1 | F12 (built, unused) |
-| ⚠️ Partial | 7 | F2, F4, F6, F8, F13, F14, F21, F22 |
-| ❌ Not covered | 13 | F1, F3, F5, F7, F9, F10, F11, F15, F16, F18, F19, F20 |
+| ⚠️ Partial | 9 | F2, F4, F6, F8, F13, F14, F21, F22, F23 |
+| ❌ Not covered | 17 | F1, F3, F5, F7, F9, F10, F11, F15, F16, F18, F19, F20, F24, F25, F26, F27, F28 |
 | 🟡 Deferred | 1 | F17 |
 
-**Immediate leverage:** F12 is complete in `fetch_financials.py` and resolves the A4 blocker with
-data already on hand. It requires exposure, not construction.
+**Immediate leverage, ordered by return on effort:**
+
+| Rank | Factor | Why |
+|---|---|---|
+| 1 | **F12 — Piotroski** | Complete in `fetch_financials.py`, resolves the A4 blocker with data already on hand. Needs exposure, not construction |
+| 2 | **F23 — relax the gating** | Design decision, not engineering. Costs nothing and is what makes the screen return usable candidates instead of an empty set |
+| 3 | **F16 — owner earnings** | OCF, capex and D&A are already retrieved. Changes outcomes: stops rejecting the compounders the strategy is looking for |
+| 4 | **F28 — margin stability** | `hist_gross_margin` and `hist_operating_margin` already computed; only the dispersion measure is missing |
+| 5 | **F24 — superinvestor consensus** | One pip-installable dependency, no API key. Buffett and Smith are both among the 82 tracked |
+| 6 | **F25 — insider buying** | EDGAR client pattern already solved in `edgar_facts.py`; only the Form 4 endpoint and parser are missing |
 
 ---
 
@@ -497,12 +742,14 @@ data already on hand. It requires exposure, not construction.
 
 These require a human decision before any implementation proposal is accepted.
 
-1. **F4** — Which ROIC/ROCE definition becomes canonical: Greenblatt (tangible capital), Smith (cash-based), or TradingView's?
-2. **F1** — Is the proposed precedence (EDGAR → TradingView → yfinance) correct, and is TradingView used for raw inputs only or for its precomputed ratios as well?
-3. **F7** — Does the source decision tree convert to ranking, or does it retain hard thresholds with tolerance bands?
-4. **F9** — Which sectors are excluded, and does the existing `sector_overrides.py` taxonomy cover them?
-5. **F17** — Confirm deferral of snapshot accumulation given the negative evidence.
-6. **C1** — Verify whether `framework_score.fcfYield` is computed on enterprise value or market capitalization.
+1. **§5.5 — the portfolio tension.** Smith's Filter 7 excludes microchips by name and his cyclical exclusion reaches `energy_infra`. Adopt Smith in full, adopt the convergent core only, or apply per pillar? This is the largest decision and it is a product decision, not a technical one.
+2. **F4** — Which ROIC/ROCE definition becomes canonical: Greenblatt (tangible capital), Smith (cash-based), or TradingView's?
+3. **F23** — Confirm the three proposed hard gates (sector eligibility, leverage-free returns, cash reality) and the relative weights of the four scoring axes.
+4. **F1** — Is the proposed precedence (EDGAR → TradingView → yfinance) correct, and is TradingView used for raw inputs only or for its precomputed ratios as well?
+5. **F9** — Which sectors are excluded, and does the existing `sector_overrides.py` taxonomy cover them?
+6. **F24/F26** — What weight cap do confirmation signals receive, and is DataRoma scraping fragility acceptable for a non-blocking signal?
+7. **F17** — Confirm deferral of snapshot accumulation given the negative evidence.
+8. **C1** — Verify whether `framework_score.fcfYield` is computed on enterprise value or market capitalization.
 
 ---
 
@@ -518,5 +765,11 @@ These require a human decision before any implementation proposal is accepted.
 - Piotroski, J. (2000). F-Score, nine-point financial strength methodology
 - Alpha Architect — *Do Relative-Value Strategies Beat Traditional Systematic Value Investing Strategies?*
 - Damodaran, A. — *Choosing the Right Relative Valuation Model* (Stern School)
+- Stockopedia — *Building a Terry Smith Portfolio with UK Shares* (explicitly states its thresholds are the author's reconstruction, not Smith's)
+- Fundsmith — Owner's Manual (14 filters) and factsheet (6 criteria)
+- Trustnet — Fundsmith portfolio FCF yield 3.7% vs S&P 500 2.8%
 - [TradingView-Screener](https://github.com/shner-elmo/TradingView-Screener) — field reference
+- [superinvestor](https://pypi.org/project/superinvestor/) — DataRoma consensus over 82 managers, MIT, v0.2.0 (July 2026)
+- [stocksera](https://pypi.org/project/stocksera/) — evaluated; hosted API returns 404 on all documented paths, last release March 2022
 - [PyIndicators](https://github.com/coding-kitties/PyIndicators) — evaluated, not applicable here
+- SEC EDGAR — `https://data.sec.gov/submissions/CIK{cik}.json`, Forms 3/4/5
