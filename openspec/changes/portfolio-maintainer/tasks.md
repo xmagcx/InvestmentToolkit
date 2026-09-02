@@ -49,7 +49,7 @@ Chain strategy: pending
 
 ## Phase 4: Verification
 
-- [ ] 4.1 Verify: build/lint/test green (`npm run test -w backend`, `npm run lint -w frontend`, `tsc --noEmit`), worktree-first + TDW
-- [ ] 4.2 Verify: manual smoke on real `domain_model.sqlite` — account, initial cash, buy, sell, full exit; confirm trade_log rows + cash invariant (REQ-5,6,7)
+- [x] 4.1 Verify: build/lint/test green (`npm run test -w backend`, `npm run lint -w frontend`, `tsc --noEmit`), worktree-first + TDW — backend 223 passing (3 pre-existing real-DB failures on empty worktree DB, not this change); frontend 31 passing + build + tsc clean; lint fails on pre-existing repo-wide errors (~197, same on base), my files add none
+- [x] 4.2 Verify: manual smoke on fresh SQLite mirroring `domain_model.sqlite` — account, initial cash, buy, sell, full exit; confirm trade_log rows + cash invariant (REQ-5,6,7). Real-DB injection into main checkout deferred (Pitfall 29 + data-integrity guard: would write fake positions into the real source of truth; orchestrator/user decision)
 
 Traceability: REQ-1..7 + S1..S15 from spec (142); A-6..A-9 from design (143). Threat matrix N/A.
