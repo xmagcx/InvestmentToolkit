@@ -9,5 +9,10 @@
     "scripts": {
         "start": "./startup.sh",
         "test:math-parity": "python3 ../tests/test_math_parity.py"
+    },
+    "dependencies": {
+        "@rollup/rollup-linux-x64-gnu": "^4.63.1",
+        "@tailwindcss/oxide-linux-x64-gnu": "^4.3.3",
+        "lightningcss-linux-x64-gnu": "^1.33.0"
     }
 }

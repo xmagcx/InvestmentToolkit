@@ -29,6 +29,7 @@ import TradeLog from './pages/TradeLog';
 import ThirteenFPage from './pages/ThirteenFPage';
 import ThesesPage from './pages/ThesesPage';
 import DailyBriefPage from './pages/DailyBriefPage';
+import UniversePage from './pages/UniversePage';
 
 function App() {
   return (
@@ -46,6 +47,7 @@ function App() {
               <Route path="theses" element={<ThesesPage />} />
               <Route path="13f" element={<ThirteenFPage />} />
               <Route path="daily-brief" element={<DailyBriefPage />} />
+              <Route path="universe" element={<UniversePage />} />
               <Route path="settings" element={<Settings />} />
             </Route>
           </Routes>

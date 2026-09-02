@@ -813,3 +813,50 @@ export const fetchTVQuote = async (ticker: string): Promise<MarketQuote> => {
     return res.json();
 };
 
+// ─── Universe API ─────────────────────────────────────────────────────────────
+
+export interface UniverseCandidate {
+    ticker: string;
+    name: string;
+    source: string;
+    asset_class: string | null;
+    added_at: string;
+}
+
+export interface UniverseUploadSummary {
+    inserted: number;
+    skipped: number;
+    rejected?: string[];
+    errors?: string[];
+}
+
+export const uploadUniverseCsv = async (csv: string): Promise<UniverseUploadSummary> => {
+    const response = await fetch('/api/universe/upload', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ csv }),
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || 'Failed to upload universe CSV');
+    }
+    return data;
+};
+
+export const fetchUniverse = async (): Promise<UniverseCandidate[]> => {
+    const response = await fetch('/api/universe');
+    if (!response.ok) throw new Error('Failed to fetch universe');
+    return await response.json();
+};
+
+export const deleteUniverseTicker = async (ticker: string): Promise<{ deleted: string }> => {
+    const response = await fetch(`/api/universe/${encodeURIComponent(ticker)}`, {
+        method: 'DELETE',
+    });
+    const data = await response.json();
+    if (!response.ok) {
+        throw new Error(data.error || 'Failed to delete universe ticker');
+    }
+    return data;
+};
+

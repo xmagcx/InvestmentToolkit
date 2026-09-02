@@ -486,6 +486,16 @@ def initialize_db(db_path: str) -> sqlite3.Connection:
     );
     """)
 
+    conn.execute("""
+    CREATE TABLE IF NOT EXISTS universe_candidate (
+        ticker      TEXT PRIMARY KEY,
+        name        TEXT NOT NULL,
+        source      TEXT NOT NULL,
+        asset_class TEXT,
+        added_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+    );
+    """)
+
     conn.execute("CREATE INDEX IF NOT EXISTS idx_investment_pillar ON investment(pillar_id);")
     conn.execute(
         "CREATE INDEX IF NOT EXISTS idx_investment_lifecycle ON investment(lifecycle_status);"

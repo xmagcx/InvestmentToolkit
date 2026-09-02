@@ -52,6 +52,7 @@ import stockRouter from './routes/stock';
 import tradingRouter from './routes/trading';
 import thirteenfRouter from './routes/thirteenf';
 import dailybriefRouter from './routes/dailybrief';
+import universeRouter from './routes/universe';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -61,7 +62,7 @@ const port = process.env.PORT || 3001;
 const HOST = '127.0.0.1';
 
 app.use(cors());
-app.use(express.json({ limit: '1mb' }));
+app.use(express.json({ limit: '5mb' }));
 app.use(localAuthMiddleware);
 console.log(`[Auth] Local API token active — read from .runtime/api-token or env LOCAL_API_TOKEN`);
 
@@ -102,6 +103,7 @@ app.use('/api/screener', screenerRouter);   // /api/screener/all-holdings
 app.use('/api/trading', tradingRouter);     // /api/trading/** (preflight, execute, submit, audit)
 app.use('/api/13f', thirteenfRouter);       // /api/13f/summary
 app.use('/api/daily-brief', dailybriefRouter); // /api/daily-brief/latest, /history, /conviction/:ticker
+app.use('/api/universe', universeRouter);      // /api/universe/upload, /, /:ticker
 
 app.listen(Number(port), HOST, () => {
     console.log(`Backend server running on http://${HOST}:${port}`);
