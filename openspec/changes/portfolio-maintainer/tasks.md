@@ -26,20 +26,20 @@ Chain strategy: pending
 
 ## Phase 1: Backend Service (PR 1)
 
-- [ ] 1.1 RED: unit spec avg-cost — first buy 55, commission omitted 25 (REQ-1 S1,S3)
-- [ ] 1.2 RED: unit spec sub buy weighted 56.67, sell keeps avg + cash +115, oversell throw (REQ-1 S2, REQ-2 S1,S2, REQ-3)
-- [ ] 1.3 GREEN: `PortfolioMaintainerService.ts` ctor opens+owns one better-sqlite3 connection (dbPath)
-- [ ] 1.4 GREEN: pure helpers avgMath (first/sub weighted avg), cashMath (buy deduct, sell add, overspend guard) (REQ-1,2,3)
-- [ ] 1.5 GREEN: `buy()`/`sell()` read→recompute→upsert position (currency = base_currency) in `db.transaction()`; full exit DELETE (REQ-1,2,7)
-- [ ] 1.6 GREEN: synthetic `CASH_<cur>` via `resolveInvestmentId('CASH_<cur>','CASH','<cur>')`, avg_cost 1.0; overspend/oversell → `PortfolioMaintainerError` 400 (REQ-3,7)
-- [ ] 1.7 GREEN: write `trade_log_entry` (action BUY|SELL, total_cost, source MANUAL, status EXECUTED, logged_at=now) same txn; skipped on reject (REQ-5)
+- [x] 1.1 RED: unit spec avg-cost — first buy 55, commission omitted 25 (REQ-1 S1,S3)
+- [x] 1.2 RED: unit spec sub buy weighted 56.67, sell keeps avg + cash +115, oversell throw (REQ-1 S2, REQ-2 S1,S2, REQ-3)
+- [x] 1.3 GREEN: `PortfolioMaintainerService.ts` ctor opens+owns one better-sqlite3 connection (dbPath)
+- [x] 1.4 GREEN: pure helpers avgMath (first/sub weighted avg), cashMath (buy deduct, sell add, overspend guard) (REQ-1,2,3)
+- [x] 1.5 GREEN: `buy()`/`sell()` read→recompute→upsert position (currency = base_currency) in `db.transaction()`; full exit DELETE (REQ-1,2,7)
+- [x] 1.6 GREEN: synthetic `CASH_<cur>` via `resolveInvestmentId('CASH_<cur>','CASH','<cur>')`, avg_cost 1.0; overspend/oversell → `PortfolioMaintainerError` 400 (REQ-3,7)
+- [x] 1.7 GREEN: write `trade_log_entry` (action BUY|SELL, total_cost, source MANUAL, status EXECUTED, logged_at=now) same txn; skipped on reject (REQ-5)
 
 ## Phase 2: Routes + Repo + Wiring (PR 2)
 
-- [ ] 2.1 RED: `portfolioMaintainer.spec.ts` (tmp SQLite, mirror universe.spec.ts) — create TFSA defaults CAD, set initial cash → CASH_CAD 5000, USD cash sell no FX, full exit deletes row, rejected op no trade_log (REQ-4, REQ-2 S3, REQ-3 S3, REQ-5 S2, REQ-7 S1)
-- [ ] 2.2 GREEN: `PortfolioRepository.ts` add `listAccounts()`, `getAccount(accountId)`, `deleteAccountInvestment(accountId, investmentId)` (REQ-4,6)
-- [ ] 2.3 GREEN: `portfolioMaintainer.ts` `buildPortfolioMaintainerRoutes(dbPath)` — GET/POST/PATCH accounts, POST /:id/cash, POST /transaction, DELETE /position/:account/:ticker; 400/404 (REQ-1–7)
-- [ ] 2.4 GREEN: `index.ts` `app.use('/api/portfolio-maintainer', portfolioMaintainerRouter)` (A-6)
+- [x] 2.1 RED: `portfolioMaintainer.spec.ts` (tmp SQLite, mirror universe.spec.ts) — create TFSA defaults CAD, set initial cash → CASH_CAD 5000, USD cash sell no FX, full exit deletes row, rejected op no trade_log (REQ-4, REQ-2 S3, REQ-3 S3, REQ-5 S2, REQ-7 S1)
+- [x] 2.2 GREEN: `PortfolioRepository.ts` add `listAccounts()`, `getAccount(accountId)`, `deleteAccountInvestment(accountId, investmentId)` (REQ-4,6)
+- [x] 2.3 GREEN: `portfolioMaintainer.ts` `buildPortfolioMaintainerRoutes(dbPath)` — GET/POST/PATCH accounts, POST /:id/cash, POST /transaction, DELETE /position/:account/:ticker; 400/404 (REQ-1–7)
+- [x] 2.4 GREEN: `index.ts` `app.use('/api/portfolio-maintainer', portfolioMaintainerRouter)` (A-6)
 
 ## Phase 3: Frontend (PR 3)
 
