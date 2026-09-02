@@ -1,0 +1,76 @@
+# SDD Config — InvestmentToolkit
+schema: spec-driven
+
+context: |
+  Multi-language investment analysis suite.
+  Backend: Node.js/Express + TypeScript (port 3001, better-sqlite3).
+  Frontend: React 19 + Vite + Tailwind CSS 4.0 (port 5173).
+  Python bridge: yfinance, pandas, FastAPI, uvicorn, Pydantic.
+  CDP: TradingView Desktop automation (port 9222).
+  Architecture: monorepo npm workspaces + plugins + symlinks.
+  Data layer: domain_model.sqlite (sole source of truth).
+
+strict_tdd: true
+
+testing:
+  test_runners:
+    - name: pytest
+      command: "python3 -m pytest"
+      layers: [unit, integration]
+      cwd: repo_root
+    - name: mocha
+      command: "npm run test -w backend"
+      layers: [unit, integration]
+      cwd: investment_screener
+    - name: vitest
+      command: "npm run test -w frontend"
+      layers: [unit, component]
+      cwd: investment_screener
+    - name: run_tests
+      command: "python3 run_tests.py"
+      layers: [t0_compile, t0.5_smoke, t1_unit]
+      cwd: repo_root
+  quality_tools:
+    linter: "npm run lint -w frontend"
+    type_checker_tsc: "tsc --noEmit (backend+frontend)"
+    formatter: none_configured
+  coverage:
+    frontend: "vitest --coverage"
+    python: "python3 -m pytest --cov"
+    backend: none_configured
+  tdd_policy: "Iron Law — no code or orchestration without failing test first. See .agent/rules/test-driven-development.md"
+  constraints:
+    - "Mocking forbidden on critical runtime paths"
+    - "Replay fixtures over synthetic mocks"
+    - "Observe exit codes, API responses, schemas — not internals"
+
+rules:
+  proposal:
+    - "Include rollback plan for risky changes"
+    - "Verify no impact on domain_model.sqlite schema"
+  specs:
+    - "Use Given/When/Then for scenarios"
+    - "Use RFC 2119 keywords (MUST, SHALL, SHOULD, MAY)"
+  design:
+    - "Include sequence diagrams for complex flows"
+    - "Document architecture decisions with rationale"
+    - "Reference ADRs in docs/architecture/"
+  tasks:
+    - "Group by phase, use hierarchical numbering"
+    - "Keep tasks completable in one session"
+    - "Each task must be independently testable"
+  apply:
+    guidelines:
+      - "Follow existing code patterns"
+      - "No inline Python — extract to py_services/"
+      - "Use requirements.in → pip-compile for Python deps"
+      - "Never use --prefix investment_screener from within it"
+    tdd: true
+    test_command: "python3 run_tests.py --unit"
+  verify:
+    test_command: "python3 run_tests.py --unit"
+    build_command: "npm run build -w backend && npm run build -w frontend"
+    coverage_threshold: 0
+  archive:
+    - "Warn before merging destructive deltas"
+    - "Sync delta specs to openspec/specs/"
