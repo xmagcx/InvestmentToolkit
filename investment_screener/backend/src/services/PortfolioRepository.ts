@@ -289,6 +289,47 @@ export class PortfolioRepository {
         return this.db.prepare('SELECT * FROM account_investment ORDER BY account_id, investment_id').all() as AccountInvestmentRow[];
     }
 
+    /** List all `account` rows. Read helper for the portfolio-maintainer surface
+     * (the manual web entry routes consume this via the maintainer service, which
+     * owns the single transactional connection; this method is a standalone
+     * non-transactional read utility for call sites that do not hold a service). */
+    listAccounts(): Array<{ accountId: string; name: string; type: string | null; currency: string }> {
+        return this.db
+            .prepare('SELECT account_id, account_name, account_type, base_currency FROM account ORDER BY account_id')
+            .all()
+            .map((r: any) => ({
+                accountId: r.account_id,
+                name: r.account_name,
+                type: r.account_type ?? null,
+                currency: r.base_currency,
+            }));
+    }
+
+    /** Read one `account` row by id, or null if absent. */
+    getAccount(accountId: string): { accountId: string; name: string; type: string | null; currency: string } | null {
+        const row = this.db
+            .prepare('SELECT account_id, account_name, account_type, base_currency FROM account WHERE account_id = ?')
+            .get(accountId) as { account_id: string; account_name: string; account_type: string | null; base_currency: string } | undefined;
+        if (!row) return null;
+        return {
+            accountId: row.account_id,
+            name: row.account_name,
+            type: row.account_type ?? null,
+            currency: row.base_currency,
+        };
+    }
+
+    /** Delete one `account_investment` row by (account, investment), returning
+     * whether a row was removed. Standalone non-transactional utility; the
+     * portfolio-maintainer write path uses the service's own transactional
+     * deletePosition instead. */
+    deleteAccountInvestment(accountId: string, investmentId: string): boolean {
+        const res = this.db
+            .prepare('DELETE FROM account_investment WHERE account_id = ? AND investment_id = ?')
+            .run(accountId, investmentId);
+        return res.changes > 0;
+    }
+
     /** Mirrors `investment_price_repository.py::upsert_investment_price` — insert-
      * or-update the single `investment_price` row for `investmentId`. */
     upsertInvestmentPrice(investmentId: string, price: number, currency = 'USD', fetchedAt: string = new Date().toISOString()): void {

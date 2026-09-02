@@ -53,6 +53,7 @@ import tradingRouter from './routes/trading';
 import thirteenfRouter from './routes/thirteenf';
 import dailybriefRouter from './routes/dailybrief';
 import universeRouter from './routes/universe';
+import portfolioMaintainerRouter from './routes/portfolioMaintainer';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -104,6 +105,7 @@ app.use('/api/trading', tradingRouter);     // /api/trading/** (preflight, execu
 app.use('/api/13f', thirteenfRouter);       // /api/13f/summary
 app.use('/api/daily-brief', dailybriefRouter); // /api/daily-brief/latest, /history, /conviction/:ticker
 app.use('/api/universe', universeRouter);      // /api/universe/upload, /, /:ticker
+app.use('/api/portfolio-maintainer', portfolioMaintainerRouter); // /api/portfolio-maintainer/accounts, /positions, /transaction
 
 app.listen(Number(port), HOST, () => {
     console.log(`Backend server running on http://${HOST}:${port}`);

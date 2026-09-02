@@ -255,6 +255,34 @@ export class PortfolioMaintainerService {
             .run(`${accountId}:${investmentId}`, accountId, investmentId, amount, 1, amount, currency, now);
     }
 
+    /** PATCH /accounts/:id — update account name/currency; returns the updated view. */
+    updateAccount(
+        accountId: string,
+        patch: { name?: string; currency?: string }
+    ): AccountView {
+        const account = this.getAccountRow(accountId);
+        const newName = typeof patch.name === 'string' && patch.name.trim() !== '' ? patch.name.trim() : account.account_name;
+        const newCurrency = typeof patch.currency === 'string' && patch.currency.trim() !== ''
+            ? patch.currency.trim().toUpperCase()
+            : account.base_currency;
+        this.db
+            .prepare('UPDATE account SET account_name = ?, base_currency = ? WHERE account_id = ?')
+            .run(newName, newCurrency, accountId);
+        return {
+            accountId,
+            name: newName,
+            type: account.account_type ?? '',
+            currency: newCurrency,
+            cash: this.readCash(accountId, newCurrency),
+        };
+    }
+
+    /** Read the current cash for an account (0 if no CASH_<cur> row yet). */
+    getAccountCash(accountId: string): number {
+        const account = this.getAccountRow(accountId);
+        return this.readCash(accountId, account.base_currency);
+    }
+
     /** REQ-1/S1..S3, REQ-3: record a buy. Read position + cash, recompute avg cost
      * and deduct cash, upsert both + write the audit row — all in one transaction. */
     buy(input: TransactionInput): TransactionResult {
@@ -436,9 +464,13 @@ export class PortfolioMaintainerService {
         }));
     }
 
-    listPositions(accountId?: string): PositionView[] {
-        const rows = accountId
-            ? this.db
+    /** Read view for the UI / routes. Filtered variant returns plain positions;
+     * the unfiltered variant joins account + position currency for GET /positions. */
+    listPositions(accountId: string): PositionView[];
+    listPositions(): Array<{ accountId: string; ticker: string; qty: number; avgCost: number | null; currency: string }>;
+    listPositions(accountId?: string): PositionView[] | Array<{ accountId: string; ticker: string; qty: number; avgCost: number | null; currency: string }> {
+        if (accountId) {
+            return this.db
                 .prepare(`
                     SELECT i.symbol AS ticker, ai.quantity, ai.average_cost
                     FROM account_investment ai
@@ -446,14 +478,22 @@ export class PortfolioMaintainerService {
                     WHERE ai.account_id = ?
                     ORDER BY i.symbol`)
                 .all(accountId)
-            : this.db
-                .prepare(`
-                    SELECT ai.account_id AS accountId, i.symbol AS ticker, ai.quantity, ai.average_cost, ai.currency
-                    FROM account_investment ai
-                    JOIN investment i ON i.investment_id = ai.investment_id
-                    ORDER BY ai.account_id, i.symbol`)
-                .all();
-        return (rows as Array<{ ticker: string; quantity: number; average_cost: number | null; accountId?: string; currency?: string }>)
-            .map(r => ({ ticker: r.ticker, qty: r.quantity, avgCost: r.average_cost ?? null }));
+                .map((r: any) => ({ ticker: r.ticker, qty: r.quantity, avgCost: r.average_cost ?? null }));
+        }
+        return this.db
+            .prepare(`
+                SELECT ai.account_id AS accountId, i.symbol AS ticker, ai.quantity, ai.average_cost, ai.currency
+                FROM account_investment ai
+                JOIN investment i ON i.investment_id = ai.investment_id
+                WHERE i.symbol NOT LIKE 'CASH_%'
+                ORDER BY ai.account_id, i.symbol`)
+            .all()
+            .map((r: any) => ({
+                accountId: r.accountId,
+                ticker: r.ticker,
+                qty: r.quantity,
+                avgCost: r.average_cost ?? null,
+                currency: r.currency,
+            }));
     }
 }
