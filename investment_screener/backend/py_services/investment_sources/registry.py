@@ -3,8 +3,8 @@
 
 Purpose:
     One place that maps a source_code to its connector class, so the CLI, the Express
-    sync route and the scheduler all speak the same codes. Dataroma connectors (S6, S7)
-    are added by appending an entry to SOURCES; nothing else changes.
+    sync route and the scheduler all speak the same codes. A new connector is added by
+    appending an entry to SOURCES; nothing else changes.
 
 Layer:
     Backend / Python Services / Investment Sources
@@ -21,6 +21,9 @@ Key Functions (Index):
 
 Key Input Dependencies:
     - investment_sources.google_sheet_stocks.GoogleSheetStocksSource
+    - investment_sources.dataroma_quarterly_buys.DataromaQuarterlyBuysSource (S6)
+    - investment_sources.dataroma_insider_buys.DataromaInsiderBuysSource (S7)
+    - investment_sources.yfinance_enrichment.YFinanceProfileEnrichment (S10, enriches stocks_origin)
 
 Key Output Dependencies:
     - consumed by sync_cli.py and (later) the Express /api/sources routes
@@ -28,10 +31,16 @@ Key Output Dependencies:
 from __future__ import annotations
 
 from .base import InvestmentSource
+from .dataroma_insider_buys import DataromaInsiderBuysSource
+from .dataroma_quarterly_buys import DataromaQuarterlyBuysSource
 from .google_sheet_stocks import GoogleSheetStocksSource
+from .yfinance_enrichment import YFinanceProfileEnrichment
 
 SOURCES: dict[str, type[InvestmentSource]] = {
     GoogleSheetStocksSource.source_code: GoogleSheetStocksSource,
+    DataromaQuarterlyBuysSource.source_code: DataromaQuarterlyBuysSource,
+    DataromaInsiderBuysSource.source_code: DataromaInsiderBuysSource,
+    YFinanceProfileEnrichment.source_code: YFinanceProfileEnrichment,
 }
 
 
