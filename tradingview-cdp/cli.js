@@ -34,6 +34,7 @@ import * as pine from './core/pine.js';
 import * as chart from './core/chart.js';
 import * as watchlist from './core/watchlist.js';
 import { loadFilterSymbols } from './core/alert_filter.js';
+import { sessionOnly } from './core/session.js';
 
 // --- status ---
 register('status', {
@@ -56,14 +57,14 @@ register('alert', {
       options: {
         filter: { type: 'boolean', short: 'f', description: 'Filter alerts by portfolio/watchlist symbols' },
       },
-      handler: async (opts) => {
+      handler: sessionOnly('alert list', async (opts) => {
         /**
          * With --filter, restricts the list to the symbols you hold or watch, read from the
          * backend (see core/alert_filter.js). Throws an explicit error if the backend is down.
          */
         const symbols = opts.filter ? await loadFilterSymbols() : [];
         return alerts.list(symbols);
-      },
+      }),
     }],
     ['create', {
       description: 'Create a price alert',
@@ -72,18 +73,18 @@ register('alert', {
         condition: { type: 'string', short: 'c', description: 'Condition: crossing, greater_than, less_than' },
         message: { type: 'string', short: 'm', description: 'Alert message' },
       },
-      handler: (opts) => alerts.create({
+      handler: sessionOnly('alert create', (opts) => alerts.create({
         price: Number(opts.price),
         condition: opts.condition || 'crossing',
         message: opts.message,
-      }),
+      })),
     }],
     ['delete', {
       description: 'Delete all alerts',
       options: {
         all: { type: 'boolean', description: 'Delete all alerts' },
       },
-      handler: (opts) => alerts.deleteAlerts({ delete_all: opts.all }),
+      handler: sessionOnly('alert delete', (opts) => alerts.deleteAlerts({ delete_all: opts.all })),
     }],
   ]),
 });
@@ -332,63 +333,63 @@ register('watchlist', {
   subcommands: new Map([
     ['open', {
       description: 'Open a watchlist by name',
-      handler: async (opts, positionals) => {
+      handler: sessionOnly('watchlist open', async (opts, positionals) => {
         const name = positionals[0];
         if (!name) throw new Error('Watchlist name required — e.g. watchlist open "Name"');
         const { getClient } = await import('./connection.js');
         const client = await getClient();
         return watchlist.openWatchlist(client, name);
-      },
+      }),
     }],
     ['get', {
       description: 'Read symbols and prices from the active or named watchlist',
-      handler: async () => {
+      handler: sessionOnly('watchlist get', async () => {
         const { getClient } = await import('./connection.js');
         const client = await getClient();
         return watchlist.getWatchlist(client);
-      },
+      }),
     }],
     ['add', {
       description: 'Add a symbol to a watchlist',
-      handler: async (opts, positionals) => {
+      handler: sessionOnly('watchlist add', async (opts, positionals) => {
         const wName = positionals[0];
         const symbol = positionals[1];
         if (!wName || !symbol) throw new Error('Watchlist name and symbol required — e.g. watchlist add "Name" "SYMBOL"');
         const { getClient } = await import('./connection.js');
         const client = await getClient();
         return watchlist.addWatchlistItem(client, wName, symbol);
-      },
+      }),
     }],
     ['remove', {
       description: 'Remove a symbol from a watchlist',
-      handler: async (opts, positionals) => {
+      handler: sessionOnly('watchlist remove', async (opts, positionals) => {
         const wName = positionals[0];
         const symbol = positionals[1];
         if (!wName || !symbol) throw new Error('Watchlist name and symbol required — e.g. watchlist remove "Name" "SYMBOL"');
         const { getClient } = await import('./connection.js');
         const client = await getClient();
         return watchlist.removeWatchlistItem(client, wName, symbol);
-      },
+      }),
     }],
     ['create', {
       description: 'Create a new watchlist',
-      handler: async (opts, positionals) => {
+      handler: sessionOnly('watchlist create', async (opts, positionals) => {
         const name = positionals[0];
         if (!name) throw new Error('Watchlist name required — e.g. watchlist create "Name"');
         const { getClient } = await import('./connection.js');
         const client = await getClient();
         return watchlist.createWatchlist(client, name);
-      },
+      }),
     }],
     ['delete', {
       description: 'Delete a watchlist',
-      handler: async (opts, positionals) => {
+      handler: sessionOnly('watchlist delete', async (opts, positionals) => {
         const name = positionals[0];
         if (!name) throw new Error('Watchlist name required — e.g. watchlist delete "Name"');
         const { getClient } = await import('./connection.js');
         const client = await getClient();
         return watchlist.deleteWatchlist(client, name);
-      },
+      }),
     }],
   ]),
 });
