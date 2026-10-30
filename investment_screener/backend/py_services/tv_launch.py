@@ -29,7 +29,9 @@ Usage:
 """
 
 import sys
+import os
 import socket
+import shutil
 import subprocess
 import time
 import platform
@@ -56,18 +58,39 @@ MAC_CANDIDATES = [
     Path.home() / "Applications/TradingView.app/Contents/MacOS/TradingView",
 ]
 WIN_CANDIDATES = [
-    Path(sys.platform) / "TradingView" / "TradingView.exe",  # placeholder
+    Path(os.environ.get("LOCALAPPDATA", "")) / "Programs" / "TradingView" / "TradingView.exe",
+    Path(os.environ.get("PROGRAMFILES", "")) / "TradingView" / "TradingView.exe",
 ]
+
+def linux_candidates() -> list[Path]:
+    """Return Linux binary candidates in priority order (PATH, snap, flatpak, opt)."""
+    candidates: list[Path] = []
+    on_path = shutil.which("tradingview")
+    if on_path:
+        candidates.append(Path(on_path))
+    candidates.extend([
+        Path("/snap/bin/tradingview"),
+        Path("/var/lib/flatpak/exports/bin/com.tradingview.TradingViewDesktop"),
+        Path.home() / ".local/share/flatpak/exports/bin/com.tradingview.TradingViewDesktop",
+        Path("/opt/TradingView/tradingview"),
+    ])
+    return candidates
 
 
 def find_binary() -> Path | None:
     """Return the TradingView binary path, or None if not found."""
-    candidates = WIN_CANDIDATES if IS_WINDOWS else MAC_CANDIDATES
+    system = platform.system()
+    if IS_WINDOWS:
+        candidates = WIN_CANDIDATES
+    elif system == "Linux":
+        candidates = linux_candidates()
+    else:
+        candidates = MAC_CANDIDATES
     for p in candidates:
-        if p.exists():
+        if p and p.exists():
             return p
     # Spotlight fallback (macOS only)
-    if not IS_WINDOWS:
+    if system == "Darwin":
         try:
             result = subprocess.run(
                 ["mdfind", "kMDItemCFBundleIdentifier == 'com.tradingview.tradingviewapp'"],
