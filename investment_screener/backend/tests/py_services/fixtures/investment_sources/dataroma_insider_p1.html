@@ -1,0 +1,1322 @@
+<!DOCTYPE html>
+<html lang="en-US">
+<head>
+<!-- Global site tag (gtag.js) - Google Analytics -->
+<script async src="https://www.googletagmanager.com/gtag/js?id=G-53FSPN06Y3"></script>
+<script>
+  window.dataLayer = window.dataLayer || [];
+  function gtag(){dataLayer.push(arguments);}
+  gtag('js', new Date());
+
+  gtag('config', 'G-53FSPN06Y3');
+</script>
+
+<title>Real Time Insider Data - DATAROMA - Investing</title>
+<meta charset="utf-8">
+<meta name="Description" content="Track real time insider trade and transaction information" />
+
+<meta name="viewport" content="width=device-width, initial-scale=1.0">
+<link rel="stylesheet" href="/m/ins/m1.css" type="text/css" />
+<link rel="stylesheet" href="/m/ins/top_menu.css" type="text/css" />
+
+<script async src="https://pagead2.googlesyndication.com/pagead/js/adsbygoogle.js?client=ca-pub-5474305909373653"
+     crossorigin="anonymous"></script><link rel="stylesheet" href="ins_v1.css" type="text/css" />
+</head>
+<body>
+<div id="mb"><div id="logo" unselectable="on">
+DATAROMA
+<div id="l2"></div>
+</div>
+<div id="hlp_blk">
+<table><tr>
+<td> <a href="/m/home.php">Dataroma Value Investing</a></td>
+</tr></table>
+</div><link rel="stylesheet" href="/m/inc/f_pagination.css" type="text/css" /><noscript>
+<br/>
+Viewing this page requires JavaScript to be enabled
+<br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/><br/>
+</noscript>
+<div id="main" style="display:none">
+<script>
+document.getElementById("main").style.display = "block";
+</script><div id="p1">Real Time Insider Transaction Data</div>
+
+<div id="reset"><a href="/m/ins/ins.php">Reset</a></div><form id="crit" name="crit" action="/m/ins/ins.php" method="GET" onsubmit="document.getElementById('sym').value = document.getElementById('sym').value.toUpperCase(); return true;" >
+<fieldset class="">
+<legend>Selection Criteria</legend>
+<div id="c1">
+Timeframe : 
+<label><input type="radio" name="t"  value="d"  />Day&nbsp</label>
+<label><input type="radio" name="t"  value="w"  />Week&nbsp</label>
+<label><input type="radio" name="t"  value="m" checked="checked" />Month</label>
+<label><input type="radio" name="t"  value="q"  />3 Months</label>
+<label><input type="radio" name="t"  value="h"  />6 Months</label>
+<label><input type="radio" name="t"  value="y"  />1 Year</label>
+<label><input type="radio" name="t"  value="y2"  />2 Years</label>
+</div>
+<div id="c2">
+<label><input type="checkbox" name="po" id="po" value="1" checked="checked" /> Purchases only</label>
+<label><input type="checkbox" name="so" id="so" value="1"  /> Sales only</label><br/>
+</div>
+<div id="c3">
+<label><input type="checkbox" name="tp" id="tp" value="1"  /> 10% or greater ownership only</label>
+<label><input type="checkbox" name="s" id="s" value="p"  /> Preferred Stock only</label><br/>
+</div>
+<div id="c4">
+Minimum transaction amount: $ <input type="text" name="am" id="am" size="12" maxlength="12" value="0"/><br/>
+</div>
+<div id="c5">
+Symbol watch list: <span class="gr">(max. 15)</span><br/>
+<input type="text" name="sym" id="sym" size="100" maxlength="100" value=""/>
+<input id="butt" type="submit" value="Go"/>
+</div>
+<input type="hidden" name="o" value="fd" />
+<input type="hidden" name="d" value="d" />
+</fieldset>
+</form><table id="sum">
+<thead>
+<tr>
+<td class="first">Total</td>
+<td>Transactions</td>
+<td>Amount</td>
+</tr>
+</thead><tr class="Buys">
+<td>Buys</td>
+<td>1377</td>
+<td>$1,555,233,965</td>
+</tr>
+<tr class="Sells">
+<td>Sells</td>
+<td>0</td>
+<td>$0</td>
+</tr></table><table id="grid">
+<thead><tr>
+<td class="f_date" title="Filing Date & time (ET)"><div>Filing<a class="up " href="/m/ins/ins.php?t=m&po=1&am=0&sym=&so=&tp=&rid=&o=fd&d=a">&#9650</a><a class="down sel" href="/m/ins/ins.php?t=m&po=1&am=0&sym=&so=&tp=&rid=&o=fd&d=d">&#9660</a></div></td>
+<td class="iss_sym"><div>Symbol<a class="up " href="/m/ins/ins.php?t=m&po=1&am=0&sym=&so=&tp=&rid=&o=is&d=a">&#9650</a><a class="down " href="/m/ins/ins.php?t=m&po=1&am=0&sym=&so=&tp=&rid=&o=is&d=d">&#9660</a></div></td>
+<td class="iss_name">Security</td>
+<td class="rep_name">Reporting Name</td>
+<td class="rel">Relationship</td>
+<td class="t_date" title="Transaction date"><div>Trans. Date<a class="up " href="/m/ins/ins.php?t=m&po=1&am=0&sym=&so=&tp=&rid=&o=td&d=a">&#9650</a><a class="down " href="/m/ins/ins.php?t=m&po=1&am=0&sym=&so=&tp=&rid=&o=td&d=d">&#9660</a></div></td>
+<td class="tran_code">Purchase/Sale</td>
+<td class="sh">Shares</td>
+<td class="pr" title="Average price per share">Price $</td>
+<td class="amt" title="Total transaction amount"><div>Amount $<a class="up " href="/m/ins/ins.php?t=m&po=1&am=0&sym=&so=&tp=&rid=&o=a&d=a">&#9650</a><a class="down " href="/m/ins/ins.php?t=m&po=1&am=0&sym=&so=&tp=&rid=&o=a&d=d">&#9660</a></div></td>
+<td class="dir_ind" title="Direct/Indirect">D/I</td>
+</tr></thead><tbody><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2091395/000151384526000145/xslF345X03/form4.xml">30 Oct 2026 <span class="f_t">18:06</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=NBIS&so=&tp=">NBIS</a></td>
+<td class="iss_name">Nebius Group N.V. <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2091395">GRIMME ARNE</a></td>
+<td class="rel">Director </td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">148</td>
+<td class="pr">169.42</td>
+<td class="amt">25,074</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1889539/000119312526441956/xslF345X03/ownership.xml">30 Oct 2026 <span class="f_t">18:04</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=CRBG&so=&tp=">CRBG</a></td>
+<td class="iss_name">Corebridge Financial Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=905591">NIPPON LIFE INSURANCE CO</a></td>
+<td class="rel">10%</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">245,898</td>
+<td class="pr">35.2646</td>
+<td class="amt">8,671,495</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1510281/000151028126000396/xslF345X03/primary_doc.xml">30 Oct 2026 <span class="f_t">17:52</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=ECF&so=&tp=">ECF</a></td>
+<td class="iss_name">ELLSWORTH GROWTH & INCOME FUND LTD <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1510281">SABA CAPITAL MANAGEMENT, L.P.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">5,975</td>
+<td class="pr">11.87</td>
+<td class="amt">70,923</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1510281/000151028126000395/xslF345X03/primary_doc.xml">30 Oct 2026 <span class="f_t">17:42</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=GRX&so=&tp=">GRX</a></td>
+<td class="iss_name">Gabelli Healthcare & WellnessRx Trust <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1510281">SABA CAPITAL MANAGEMENT, L.P.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">500</td>
+<td class="pr">10.09</td>
+<td class="amt">5,045</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2119844/000129281426005078/xslF345X03/ownership.xml">30 Oct 2026 <span class="f_t">17:28</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VALE&so=&tp=">VALE</a></td>
+<td class="iss_name">Vale S.A. <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2119844">DE SOUZA FUNO ELAINE MARIA</a></td>
+<td class="rel">Accounting Officer</td>
+<td class="t_date">26 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">7</td>
+<td class="pr">11.74</td>
+<td class="amt">82</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2119844/000129281426005078/xslF345X03/ownership.xml">30 Oct 2026 <span class="f_t">17:28</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VALE&so=&tp=">VALE</a></td>
+<td class="iss_name">Vale S.A. <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2119844">DE SOUZA FUNO ELAINE MARIA</a></td>
+<td class="rel">Accounting Officer</td>
+<td class="t_date">22 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">240</td>
+<td class="pr">12.55</td>
+<td class="amt">3,012</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1284379/000165495426009303/xslF345X03/section16.xml">30 Oct 2026 <span class="f_t">15:30</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=PEBK&so=&tp=">PEBK</a></td>
+<td class="iss_name">PEOPLES BANCORP OF NORTH CAROLINA INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1284379">HOWARD DOUGLAS S</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">500</td>
+<td class="pr">43.755</td>
+<td class="amt">21,878</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1771309/000177130926000005/xslF345X03/primary_doc.xml">30 Oct 2026 <span class="f_t">14:50</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=PEO&so=&tp=">PEO</a></td>
+<td class="iss_name">ADAMS NATURAL RESOURCES FUND Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1771309">NELSON JANE MUSSER</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,010</td>
+<td class="pr">29.93</td>
+<td class="amt">30,229</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1614143/000161414326000006/xslF345X03/wk-form4_1793385988.xml">30 Oct 2026 <span class="f_t">14:46</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BFH&so=&tp=">BFH</a></td>
+<td class="iss_name">BREAD FINANCIAL HOLDINGS Inc <span><br/>Preferred</span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1614143">FAWCETT JOHN J.</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">2,000</td>
+<td class="pr">24.71</td>
+<td class="amt">49,420</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1614143/000161414326000006/xslF345X03/wk-form4_1793385988.xml">30 Oct 2026 <span class="f_t">14:46</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BFH&so=&tp=">BFH</a></td>
+<td class="iss_name">BREAD FINANCIAL HOLDINGS Inc <span><br/>Preferred</span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1614143">FAWCETT JOHN J.</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,000</td>
+<td class="pr">24.69</td>
+<td class="amt">74,070</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1591893/000159189326000006/xslF345X03/wk-form4_1793385320.xml">30 Oct 2026 <span class="f_t">14:35</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=OCFC&so=&tp=">OCFC</a></td>
+<td class="iss_name">OCEANFIRST FINANCIAL CORP <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1591893">BARRETT PATRICK SEAN</a></td>
+<td class="rel">Senior EVP & CFO</td>
+<td class="t_date">30 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">5,000</td>
+<td class="pr">17.9</td>
+<td class="amt">89,500</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1323979/000143774926034164/xslF345X03/rdgdoc.xml">30 Oct 2026 <span class="f_t">14:30</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=PKBK&so=&tp=">PKBK</a></td>
+<td class="iss_name">PARKE BANCORP Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1323979">PANTILIONE VITO S</a></td>
+<td class="rel">President & CEO</td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,300</td>
+<td class="pr">32.86</td>
+<td class="amt">42,718</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1774246/000119312526441381/xslF345X03/ownership.xml">30 Oct 2026 <span class="f_t">14:22</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=FFIN&so=&tp=">FFIN</a></td>
+<td class="iss_name">FIRST FINANCIAL BANKSHARES INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1774246">DENNY MICHAEL B.</a></td>
+<td class="rel">Director </td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,245</td>
+<td class="pr">30.76</td>
+<td class="amt">99,816</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1901713/000162828026068526/xslF345X03/wk-form4_1793383336.xml">30 Oct 2026 <span class="f_t">14:02</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BBT&so=&tp=">BBT</a></td>
+<td class="iss_name">Beacon Financial Corp <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1901713">CHARNLEY NINA A</a></td>
+<td class="rel">Director </td>
+<td class="t_date">30 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">350</td>
+<td class="pr">30.57</td>
+<td class="amt">10,700</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1736209/000173620926000011/xslF345X03/form4-10302026_051052.xml">30 Oct 2026 <span class="f_t">13:57</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BMRC&so=&tp=">BMRC</a></td>
+<td class="iss_name">Bank of Marin Bancorp <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1736209">ANDERSON NICOLAS C</a></td>
+<td class="rel">Director </td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">40</td>
+<td class="pr">28.44</td>
+<td class="amt">1,138</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1766850/000121390026114242/xslF345X03/ownership.xml">30 Oct 2026 <span class="f_t">12:56</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=MED&so=&tp=">MED</a></td>
+<td class="iss_name">MEDIFAST INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1766850">KIAI PARSA</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">158</td>
+<td class="pr">12.2417</td>
+<td class="amt">1,934</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1766850/000121390026114242/xslF345X03/ownership.xml">30 Oct 2026 <span class="f_t">12:56</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=MED&so=&tp=">MED</a></td>
+<td class="iss_name">MEDIFAST INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1766850">KIAI PARSA</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">5,399</td>
+<td class="pr">12.2417</td>
+<td class="amt">66,093</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1964493/000196449326000010/xslF345X03/wk-form4_1793374372.xml">30 Oct 2026 <span class="f_t">11:32</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BHRB&so=&tp=">BHRB</a></td>
+<td class="iss_name">Burke & Herbert Financial Services Corp <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1964493">MCLAUGHLIN SHAWN PATRICK</a></td>
+<td class="rel">Director </td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">500</td>
+<td class="pr">71</td>
+<td class="amt">35,500</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2137870/000143774926034087/xslF345X03/rdgdoc.xml">30 Oct 2026 <span class="f_t">10:24</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=USCB&so=&tp=">USCB</a></td>
+<td class="iss_name">USCB FINANCIAL HOLDINGS Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2137870">RODRIGUEZ RAMON M.</a></td>
+<td class="rel">Director </td>
+<td class="t_date">30 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">20</td>
+<td class="amt">20,000</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1587074/000149315226049370/xslF345X03/ownership.xml">30 Oct 2026 <span class="f_t">09:00</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=OTLC&so=&tp=">OTLC</a></td>
+<td class="iss_name">Oncotelic Therapeutics Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1587074">TRIEU VUONG</a></td>
+<td class="rel">CHAIRMAN AND CEO, 10%</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">312,000</td>
+<td class="pr">0.0185</td>
+<td class="amt">5,772</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1587074/000149315226049370/xslF345X03/ownership.xml">30 Oct 2026 <span class="f_t">09:00</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=OTLC&so=&tp=">OTLC</a></td>
+<td class="iss_name">Oncotelic Therapeutics Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1587074">TRIEU VUONG</a></td>
+<td class="rel">CHAIRMAN AND CEO, 10%</td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,044,990</td>
+<td class="pr">0.017</td>
+<td class="amt">17,765</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1764279/000149315226049356/xslF345X03/ownership.xml">30 Oct 2026 <span class="f_t">08:00</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=UXIN&so=&tp=">UXIN</a></td>
+<td class="iss_name">Uxin Ltd <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1764279">DAI KUN</a></td>
+<td class="rel">Chief Executive Officer</td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">7,732</td>
+<td class="pr">0.9696</td>
+<td class="amt">7,497</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2162829/000121390026113987/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">20:51</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=LRN&so=&tp=">LRN</a></td>
+<td class="iss_name">Stride Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1684185">HAGGART DYLAN G.</a></td>
+<td class="rel">Director </td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">792</td>
+<td class="pr">78.52</td>
+<td class="amt">62,188</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1916183/000162828026068348/xslF345X03/wk-form4_1793315053.xml">29 Oct 2026 <span class="f_t">19:04</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=ARCC&so=&tp=">ARCC</a></td>
+<td class="iss_name">ARES CAPITAL CORP <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1916183">HENSON MARY BETH</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">2,500</td>
+<td class="pr">18.46</td>
+<td class="amt">46,150</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1782303/000117857926000022/xslF345X03/form4-10292026_101050.xml">29 Oct 2026 <span class="f_t">18:20</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BOLD&so=&tp=">BOLD</a></td>
+<td class="iss_name">Boundless Bio Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1178579">TANG KEVIN</a></td>
+<td class="rel">10%</td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">10,707</td>
+<td class="pr">2.4</td>
+<td class="amt">25,697</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1510281/000151028126000393/xslF345X03/primary_doc.xml">29 Oct 2026 <span class="f_t">17:48</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=GF&so=&tp=">GF</a></td>
+<td class="iss_name">NEW GERMANY FUND INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1510281">SABA CAPITAL MANAGEMENT, L.P.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">2,504</td>
+<td class="pr">10.2</td>
+<td class="amt">25,541</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1510281/000151028126000392/xslF345X03/primary_doc.xml">29 Oct 2026 <span class="f_t">17:38</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=DSM&so=&tp=">DSM</a></td>
+<td class="iss_name">BNY MELLON STRATEGIC MUNICIPAL BOND FUND Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1510281">SABA CAPITAL MANAGEMENT, L.P.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,992</td>
+<td class="pr">5.43</td>
+<td class="amt">10,817</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1510281/000151028126000391/xslF345X03/primary_doc.xml">29 Oct 2026 <span class="f_t">17:32</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=JOF&so=&tp=">JOF</a></td>
+<td class="iss_name">JAPAN SMALLER CAPITALIZATION FUND INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1510281">SABA CAPITAL MANAGEMENT, L.P.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">15,967</td>
+<td class="pr">11.38</td>
+<td class="amt">181,704</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1915657/000119312526438100/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">17:25</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=DINO&so=&tp=">DINO</a></td>
+<td class="iss_name">HF Sinclair Corp <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1207002">MYERS FRANKLIN</a></td>
+<td class="rel">CEO</td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">10,000</td>
+<td class="pr">110.8</td>
+<td class="amt">1,108,000</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1510281/000151028126000390/xslF345X03/primary_doc.xml">29 Oct 2026 <span class="f_t">17:20</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=MXF&so=&tp=">MXF</a></td>
+<td class="iss_name">MEXICO EQUITY & INCOME FUND INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1510281">SABA CAPITAL MANAGEMENT, L.P.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,121</td>
+<td class="pr">20.13</td>
+<td class="amt">22,566</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1915363/000143774926034002/xslF345X03/rdgdoc.xml">29 Oct 2026 <span class="f_t">17:16</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=HYFM&so=&tp=">HYFM</a></td>
+<td class="iss_name">HYDROFARM HOLDINGS GROUP Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1915363">PARKER MARK S</a></td>
+<td class="rel">President</td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">22,099</td>
+<td class="pr">0.905</td>
+<td class="amt">20,000</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2158277/000118518526005072/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">17:07</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=SCQCU&so=&tp=">SCQCU</a></td>
+<td class="iss_name">SPACCircle Acquisition Corp <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2091020">DAS SOUMEN</a></td>
+<td class="rel">Director , 10%</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">266,590</td>
+<td class="pr">10</td>
+<td class="amt">2,665,900</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1510281/000151028126000389/xslF345X03/primary_doc.xml">29 Oct 2026 <span class="f_t">17:07</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=ECF&so=&tp=">ECF</a></td>
+<td class="iss_name">ELLSWORTH GROWTH & INCOME FUND LTD <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1510281">SABA CAPITAL MANAGEMENT, L.P.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,050</td>
+<td class="pr">11.75</td>
+<td class="amt">12,338</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2128575/000182912626011778/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">16:52</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VRXA&so=&tp=">VRXA</a></td>
+<td class="iss_name">Veraxa Biotech AG - Post de-SPAC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2128575">GRUNINGER MARC</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">9,133</td>
+<td class="pr">1</td>
+<td class="amt">9,133</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2128575/000182912626011778/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">16:52</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VRXA&so=&tp=">VRXA</a></td>
+<td class="iss_name">Veraxa Biotech AG - Post de-SPAC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2128575">GRUNINGER MARC</a></td>
+<td class="rel">Director </td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">867</td>
+<td class="pr">0.98</td>
+<td class="amt">850</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1889539/000119312526437931/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">16:50</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=CRBG&so=&tp=">CRBG</a></td>
+<td class="iss_name">Corebridge Financial Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=905591">NIPPON LIFE INSURANCE CO</a></td>
+<td class="rel">10%</td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">178,129</td>
+<td class="pr">35.1385</td>
+<td class="amt">6,259,186</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1199423/000173361426000005/xslF345X03/primary_doc.xml">29 Oct 2026 <span class="f_t">16:46</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=UTMD&so=&tp=">UTMD</a></td>
+<td class="iss_name">UTAH MEDICAL PRODUCTS INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1199423">CORNWELL KEVIN L</a></td>
+<td class="rel">Chairman, CEO</td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">66.75</td>
+<td class="amt">66,750</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1362190/000089824326000025/xslF345X03/form4-10292026_081053.xml">29 Oct 2026 <span class="f_t">16:44</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=AEYE&so=&tp=">AEYE</a></td>
+<td class="iss_name">AUDIOEYE INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=898243">HAWKINS JAMES B</a></td>
+<td class="rel">Director </td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,000</td>
+<td class="pr">12.3367</td>
+<td class="amt">37,010</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2082866/000121900426000004/xslF345X03/wk-form4_1793306468.xml">29 Oct 2026 <span class="f_t">16:41</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=PNFP&so=&tp=">PNFP</a></td>
+<td class="iss_name">Pinnacle Financial Partners Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1219004">INGRAM DAVID B</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">10,000</td>
+<td class="pr">99.16</td>
+<td class="amt">991,600</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1549966/000101359426001116/xslF345X03/form4.xml">29 Oct 2026 <span class="f_t">16:38</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=SAMG&so=&tp=">SAMG</a></td>
+<td class="iss_name">Silvercrest Asset Management Group Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=938552">EQUINOX PARTNERS INVESTMENT MANAGEMENT LLC</a></td>
+<td class="rel">10%</td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">32,499</td>
+<td class="pr">10.45</td>
+<td class="amt">339,615</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1549966/000101359426001116/xslF345X03/form4.xml">29 Oct 2026 <span class="f_t">16:38</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=SAMG&so=&tp=">SAMG</a></td>
+<td class="iss_name">Silvercrest Asset Management Group Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=938552">EQUINOX PARTNERS INVESTMENT MANAGEMENT LLC</a></td>
+<td class="rel">10%</td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">899</td>
+<td class="pr">10.1</td>
+<td class="amt">9,080</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1251487/000122520826008552/xslF345X03/doc4.xml">29 Oct 2026 <span class="f_t">16:34</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=HBAN&so=&tp=">HBAN</a></td>
+<td class="iss_name">HUNTINGTON BANCSHARES INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1251487">TORGOW GARY</a></td>
+<td class="rel">Director </td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">12,700</td>
+<td class="pr">15.735</td>
+<td class="amt">199,834</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1245377/000119312526437864/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">16:30</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=UPBD&so=&tp=">UPBD</a></td>
+<td class="iss_name">UPBOUND GROUP Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1245377">BROWN JEFFREY J</a></td>
+<td class="rel">Director </td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">2,217</td>
+<td class="pr">17.01</td>
+<td class="amt">37,711</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1245377/000119312526437864/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">16:30</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=UPBD&so=&tp=">UPBD</a></td>
+<td class="iss_name">UPBOUND GROUP Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1245377">BROWN JEFFREY J</a></td>
+<td class="rel">Director </td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">547</td>
+<td class="pr">17.01</td>
+<td class="amt">9,304</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1524472/000152447226000150/xslF345X03/form4.xml">29 Oct 2026 <span class="f_t">16:15</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=XYL&so=&tp=">XYL</a></td>
+<td class="iss_name">Xylem Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1190801">KOCH D CHRISTIAN</a></td>
+<td class="rel">Director </td>
+<td class="t_date">29 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">11,000</td>
+<td class="pr">89.6</td>
+<td class="amt">985,600</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2081867/000133670626000086/xslF345X03/wk-form4_1793304317.xml">29 Oct 2026 <span class="f_t">16:05</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=NPB&so=&tp=">NPB</a></td>
+<td class="iss_name">NORTHPOINTE BANCSHARES INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2081867">CHAUDHARY RAJEEV KUMAR</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,000</td>
+<td class="pr">15.7992</td>
+<td class="amt">47,398</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2119659/000114036126041173/xslF345X03/form4.xml">29 Oct 2026 <span class="f_t">16:05</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=ELVR&so=&tp=">ELVR</a></td>
+<td class="iss_name">Elevra Lithium Ltd <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2119659">CORTES VARGAS CHRISTIAN MAURICIO</a></td>
+<td class="rel">Chief Financial Officer</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">8,000</td>
+<td class="pr">2.67</td>
+<td class="amt">21,360</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2119659/000114036126041173/xslF345X03/form4.xml">29 Oct 2026 <span class="f_t">16:05</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=ELVR&so=&tp=">ELVR</a></td>
+<td class="iss_name">Elevra Lithium Ltd <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2119659">CORTES VARGAS CHRISTIAN MAURICIO</a></td>
+<td class="rel">Chief Financial Officer</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">8,000</td>
+<td class="pr">2.67</td>
+<td class="amt">21,360</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1832871/000007085826000543/xslF345X03/primary_doc.xml">29 Oct 2026 <span class="f_t">15:53</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BMN&so=&tp=">BMN</a></td>
+<td class="iss_name">BlackRock 2037 Municipal Target Term Trust <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=70858">BANK OF AMERICA CORP</a></td>
+<td class="rel">10%</td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,070</td>
+<td class="pr">22.98</td>
+<td class="amt">70,549</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">25 Oct 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">10,000</td>
+<td class="pr">0.0182</td>
+<td class="amt">182</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">05 Oct 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">50,000</td>
+<td class="pr">0.0192</td>
+<td class="amt">960</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">22 Sep 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">24,900</td>
+<td class="pr">0.0134</td>
+<td class="amt">334</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">22 Sep 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">10,000</td>
+<td class="pr">0.0134</td>
+<td class="amt">134</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">15 Sep 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">20,000</td>
+<td class="pr">0.0169</td>
+<td class="amt">338</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">11 Aug 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">10,000</td>
+<td class="pr">0.01</td>
+<td class="amt">100</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">08 Aug 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">11,000</td>
+<td class="pr">0.0095</td>
+<td class="amt">104</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">29 Jun 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">79,605</td>
+<td class="pr">0.0097</td>
+<td class="amt">772</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">29 Jun 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">7,500</td>
+<td class="pr">0.0087</td>
+<td class="amt">65</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">21 Jun 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">25,000</td>
+<td class="pr">0.013</td>
+<td class="amt">325</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">14 Apr 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">200</td>
+<td class="pr">0.1379</td>
+<td class="amt">28</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">12 Apr 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">500</td>
+<td class="pr">0.1483</td>
+<td class="amt">74</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">12 Apr 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,300</td>
+<td class="pr">0.1485</td>
+<td class="amt">193</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">04 Apr 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">2,000</td>
+<td class="pr">0.199</td>
+<td class="amt">398</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">03 Apr 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">0.215</td>
+<td class="amt">215</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">31 Mar 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">200</td>
+<td class="pr">0.21</td>
+<td class="amt">42</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">28 Mar 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">0.2181</td>
+<td class="amt">218</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">24 Mar 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">500</td>
+<td class="pr">0.2231</td>
+<td class="amt">112</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">23 Mar 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">0.2341</td>
+<td class="amt">234</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">12 Jan 2023</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">100</td>
+<td class="pr">0.2135</td>
+<td class="amt">21</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">06 Dec 2022</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,100</td>
+<td class="pr">0.205</td>
+<td class="amt">226</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">05 Dec 2022</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">0.2122</td>
+<td class="amt">212</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">02 Dec 2022</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">0.2724</td>
+<td class="amt">272</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">01 Dec 2022</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">0.448</td>
+<td class="amt">448</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">29 Nov 2022</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">0.2692</td>
+<td class="amt">269</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">28 Nov 2022</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">5,000</td>
+<td class="pr">0.276</td>
+<td class="amt">1,380</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1392431/000165495426009239/xslF345X03/section16.xml">29 Oct 2026 <span class="f_t">15:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=VISM&so=&tp=">VISM</a></td>
+<td class="iss_name">VISIUM TECHNOLOGIES Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1392431">LUCKY MARK BURDON</a></td>
+<td class="rel">CFO and Interim Principal, 10%</td>
+<td class="t_date">18 Nov 2022</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">1,000</td>
+<td class="pr">0.4505</td>
+<td class="amt">450</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1538662/000143774926033873/xslF345X03/rdgdoc.xml">29 Oct 2026 <span class="f_t">11:49</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=OVLY&so=&tp=">OVLY</a></td>
+<td class="iss_name">Oak Valley Bancorp <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1538662">LEONARD DANIEL J</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">125</td>
+<td class="pr">34.37</td>
+<td class="amt">4,296</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1463254/000146325426000008/xslF345X03/wk-form4_1793287492.xml">29 Oct 2026 <span class="f_t">11:24</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=SHBI&so=&tp=">SHBI</a></td>
+<td class="iss_name">SHORE BANCSHARES INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1463254">LAMON JOHN</a></td>
+<td class="rel">Director </td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">338</td>
+<td class="pr">22.94</td>
+<td class="amt">7,754</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2096370/000110465926120006/xslF345X03/tm2628489-1_4seq1.xml">29 Oct 2026 <span class="f_t">09:51</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BFC&so=&tp=">BFC</a></td>
+<td class="iss_name">Bank First Corp <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2096370">SPRANG TODD A.</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">400</td>
+<td class="pr">148.37</td>
+<td class="amt">59,348</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1534574/000153457426000018/xslF345X03/f4_a1eus00000anuuzmad-live.xml">29 Oct 2026 <span class="f_t">09:40</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=TFC&so=&tp=">TFC</a></td>
+<td class="iss_name">TRUIST FINANCIAL CORP <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1534574">LYONS MICHAEL P.</a></td>
+<td class="rel">President & CEO</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">25,000</td>
+<td class="pr">48.362</td>
+<td class="amt">1,209,050</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1652935/000168316826008147/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">09:35</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=ACTU&so=&tp=">ACTU</a></td>
+<td class="iss_name">ACTUATE THERAPEUTICS Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1318470">SCHMITT DANIEL M</a></td>
+<td class="rel">President, CEO and Director</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">140,844</td>
+<td class="pr">0.355</td>
+<td class="amt">50,000</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1993894/000162828026068056/xslF345X03/wk-form4_1793279315.xml">29 Oct 2026 <span class="f_t">09:08</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BBT&so=&tp=">BBT</a></td>
+<td class="iss_name">Beacon Financial Corp <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1993894">CALLAHAN MARY ANNE</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,200</td>
+<td class="pr">30.21</td>
+<td class="amt">96,672</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2091395/000151384526000143/xslF345X03/form4.xml">29 Oct 2026 <span class="f_t">09:06</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=NBIS&so=&tp=">NBIS</a></td>
+<td class="iss_name">Nebius Group N.V. <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2091395">GRIMME ARNE</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">148</td>
+<td class="pr">169.84</td>
+<td class="amt">25,136</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2091395/000151384526000143/xslF345X03/form4.xml">29 Oct 2026 <span class="f_t">09:06</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=NBIS&so=&tp=">NBIS</a></td>
+<td class="iss_name">Nebius Group N.V. <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2091395">GRIMME ARNE</a></td>
+<td class="rel">Director </td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">205</td>
+<td class="pr">159.04</td>
+<td class="amt">32,603</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1843236/000119312526437062/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">08:16</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=API&so=&tp=">API</a></td>
+<td class="iss_name">Agora Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1843236">ZHAO BIN</a></td>
+<td class="rel">Chief Executive Officer</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">9,549</td>
+<td class="pr">4.4675</td>
+<td class="amt">42,660</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1843236/000119312526437062/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">08:16</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=API&so=&tp=">API</a></td>
+<td class="iss_name">Agora Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1843236">ZHAO BIN</a></td>
+<td class="rel">Chief Executive Officer</td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,000</td>
+<td class="pr">4.4735</td>
+<td class="amt">13,420</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1764279/000149315226049183/xslF345X03/ownership.xml">29 Oct 2026 <span class="f_t">08:00</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=UXIN&so=&tp=">UXIN</a></td>
+<td class="iss_name">Uxin Ltd <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1764279">DAI KUN</a></td>
+<td class="rel">Chief Executive Officer</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,500</td>
+<td class="pr">0.9714</td>
+<td class="amt">3,400</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1705520/000119312526436562/xslF345X03/ownership.xml">28 Oct 2026 <span class="f_t">20:54</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=TTMI&so=&tp=">TTMI</a></td>
+<td class="iss_name">TTM TECHNOLOGIES INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1705520">ROKS EDWIN</a></td>
+<td class="rel">President and CEO</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">5,000</td>
+<td class="pr">88.07</td>
+<td class="amt">440,350</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1561100/000119312526436557/xslF345X03/ownership.xml">28 Oct 2026 <span class="f_t">20:52</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=TTMI&so=&tp=">TTMI</a></td>
+<td class="iss_name">TTM TECHNOLOGIES INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1561100">ALI WAJID</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">5,000</td>
+<td class="pr">90.635</td>
+<td class="amt">453,175</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1561100/000119312526436557/xslF345X03/ownership.xml">28 Oct 2026 <span class="f_t">20:52</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=TTMI&so=&tp=">TTMI</a></td>
+<td class="iss_name">TTM TECHNOLOGIES INC <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1561100">ALI WAJID</a></td>
+<td class="rel">Director </td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">5,000</td>
+<td class="pr">89.8571</td>
+<td class="amt">449,286</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2126186/000212618626000002/xslF345X03/primary_doc.xml">28 Oct 2026 <span class="f_t">20:43</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=LONA&so=&tp=">LONA</a></td>
+<td class="iss_name">LeonaBio Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2126186">PORTMAN DAVID J.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">26 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,149,470</td>
+<td class="pr">0.001</td>
+<td class="amt">3,149</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2143558/000122520826008548/xslF345X03/doc4.xml">28 Oct 2026 <span class="f_t">18:55</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=NVA&so=&tp=">NVA</a></td>
+<td class="iss_name">Nova Minerals Corp <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2143558">GIRNUN JOSHUA I.</a></td>
+<td class="rel">Director </td>
+<td class="t_date">26 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">6,780</td>
+<td class="pr">2.95</td>
+<td class="amt">20,001</td>
+<td class="dir_ind">D</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1551047/000139834426019008/xslF345X03/fp0101558-1_4.xml">28 Oct 2026 <span class="f_t">17:46</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BPRE&so=&tp=">BPRE</a></td>
+<td class="iss_name">Bluerock Private Real Estate Fund <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1111908">KAMFAR RAMIN</a></td>
+<td class="rel">Director </td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">69,658</td>
+<td class="pr">12.4825</td>
+<td class="amt">869,506</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1551047/000139834426019008/xslF345X03/fp0101558-1_4.xml">28 Oct 2026 <span class="f_t">17:46</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=BPRE&so=&tp=">BPRE</a></td>
+<td class="iss_name">Bluerock Private Real Estate Fund <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1111908">KAMFAR RAMIN</a></td>
+<td class="rel">Director </td>
+<td class="t_date">26 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">109,019</td>
+<td class="pr">12.4769</td>
+<td class="amt">1,360,219</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1510281/000151028126000388/xslF345X03/primary_doc.xml">28 Oct 2026 <span class="f_t">17:43</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=DSM&so=&tp=">DSM</a></td>
+<td class="iss_name">BNY MELLON STRATEGIC MUNICIPAL BOND FUND Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1510281">SABA CAPITAL MANAGEMENT, L.P.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">13,695</td>
+<td class="pr">5.63</td>
+<td class="amt">77,103</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2130094/000110465926119719/xslF345X03/tm2628406-1_4seq1.xml">28 Oct 2026 <span class="f_t">17:39</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=GOLD&so=&tp=">GOLD</a></td>
+<td class="iss_name">Gold.com Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2025889">TETHER GLOBAL INVESTMENTS FUND, S.I.C.A.F., S.A.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">28 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">27,633</td>
+<td class="pr">39.3942</td>
+<td class="amt">1,088,580</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2130094/000110465926119719/xslF345X03/tm2628406-1_4seq1.xml">28 Oct 2026 <span class="f_t">17:39</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=GOLD&so=&tp=">GOLD</a></td>
+<td class="iss_name">Gold.com Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2025889">TETHER GLOBAL INVESTMENTS FUND, S.I.C.A.F., S.A.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">39,692</td>
+<td class="pr">39.4445</td>
+<td class="amt">1,565,631</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/2130094/000110465926119719/xslF345X03/tm2628406-1_4seq1.xml">28 Oct 2026 <span class="f_t">17:39</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=GOLD&so=&tp=">GOLD</a></td>
+<td class="iss_name">Gold.com Inc <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=2025889">TETHER GLOBAL INVESTMENTS FUND, S.I.C.A.F., S.A.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">26 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">32,675</td>
+<td class="pr">38.9609</td>
+<td class="amt">1,273,047</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col2">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1510281/000151028126000387/xslF345X03/primary_doc.xml">28 Oct 2026 <span class="f_t">17:37</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=GRX&so=&tp=">GRX</a></td>
+<td class="iss_name">Gabelli Healthcare & WellnessRx Trust <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1510281">SABA CAPITAL MANAGEMENT, L.P.</a></td>
+<td class="rel">10%</td>
+<td class="t_date">27 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">300</td>
+<td class="pr">9.99</td>
+<td class="amt">2,997</td>
+<td class="dir_ind">I</td>
+</tr><tr class="col1">
+<td class="f_date"><a target="_blank" href="https://www.sec.gov/Archives/edgar/data/1319629/000119312526436418/xslF345X03/ownership.xml">28 Oct 2026 <span class="f_t">17:30</span></a></td>
+<td class="iss_sym"><a href="/m/ins/ins.php?t=y2&po=1&am=0&sym=HXL&so=&tp=">HXL</a></td>
+<td class="iss_name">HEXCEL CORP <span></span></td>
+<td class="rep_name"><a href="/m/ins/ins.php?t=y2&rid=1319629">KEATING NEAL J.</a></td>
+<td class="rel">Director </td>
+<td class="t_date">26 Oct 2026</td>
+<td class="tran_code green">Purchase <span></span></td>
+<td class="sh">3,000</td>
+<td class="pr">80.67</td>
+<td class="amt">242,010</td>
+<td class="dir_ind">D</td>
+</tr></tbody></table><div id="pages"><a href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=1">Prev </a><a class="sel" href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=1">1</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=2">2</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=3">3</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=4">4</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=5">5</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=6">6</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=7">7</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=8">8</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=9">9</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=10">10</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=11">11</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=12">12</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=13">13</a><a  href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=14">14</a><a href="/m/ins/ins.php?t=m&po=1&am=0&sym=&o=fd&d=d&L=2"> Next</a></div><p id="fn">
+* D/I = Direct / Indirect<br/>
+* 10% = Entity with 10% or higher ownership stake<br/>
+* <span>A</span> = Amendment Filing (SEC Form 4/A)
+</p></div><link rel="stylesheet" href="/m/ins/footer.css" type="text/css" />
+
+<div class="cleared"></div>
+
+<div id="foot">
+<a href="/m/ins/ins.php">Home</a>
+<a href="/m/contact.php">Contact us</a>
+<a href="/m/inc/tos.php">Terms of Service</a>
+<a href="/m/inc/privacy.php">Privacy</a>
+</div>
+
+</div>
+</body>
+</html>
