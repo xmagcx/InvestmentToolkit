@@ -15,6 +15,9 @@
  *   - _cacheKey(scriptName, args) - Generates a cache key for deduplication
  *   - spawnPythonScript(scriptName, args) - Deduplicated entry point for running a Python analytical script
  *   - _spawnRaw(scriptName, args) - Spawns a child process for a given Python script, returning parsed JSON
+ *   - runPythonScriptFresh(scriptRelPath, args, timeoutMs) - One un-deduplicated, un-cached run
+ *     that resolves {exitCode, json} even on a non-zero exit when stdout is JSON (for commands
+ *     whose failure is data, e.g. investment_sources/sync_cli.py)
  * 
  * Key Input Dependencies:
  *   - investment_screener/backend/py_services/ (location of executable Python scripts)
@@ -67,6 +70,78 @@ export const spawnPythonScript = async (scriptName: string, args: string[]): Pro
 
     _inflight.set(key, promise);
     return promise;
+};
+
+export interface FreshPythonRun {
+    exitCode: number;
+    json: any;
+    stdout: string;
+    stderr: string;
+}
+
+/**
+ * Run a Python script once, with no in-flight deduplication and no stale-result cache.
+ *
+ * `spawnPythonScript` is built for repeatable reads: it reuses an in-flight promise and, on
+ * failure, serves the last successful payload. Both behaviours are wrong for a command that
+ * writes (a source sync): two callers must not share one run, and a failure must never look
+ * like an old success. A non-zero exit that still printed JSON resolves normally — a failed
+ * sync is a SyncResult, not an exception. `scriptRelPath` is resolved inside py_services
+ * unless it is already absolute.
+ */
+export const runPythonScriptFresh = (
+    scriptRelPath: string,
+    args: string[],
+    timeoutMs: number
+): Promise<FreshPythonRun> => {
+    const scriptPath = path.isAbsolute(scriptRelPath) ? scriptRelPath : path.join(PY_SERVICES_DIR, scriptRelPath);
+    const pythonCommand = process.platform === 'win32' ? 'python' : 'python3';
+
+    return new Promise<FreshPythonRun>((resolve, reject) => {
+        console.log(`[Bridge] Spawning (fresh): ${pythonCommand} ${scriptPath} ${args.join(' ')}`);
+        const child = spawn(pythonCommand, [scriptPath, ...args]);
+
+        let stdout = '';
+        let stderr = '';
+        let timedOut = false;
+
+        const timer = setTimeout(() => {
+            timedOut = true;
+            child.kill('SIGTERM');
+            reject(new Error(`Python script '${scriptRelPath}' timed out after ${Math.round(timeoutMs / 1000)}s`));
+        }, timeoutMs);
+
+        child.stdout.on('data', chunk => { stdout += chunk.toString(); });
+        child.stderr.on('data', chunk => { stderr += chunk.toString(); });
+
+        child.on('close', code => {
+            clearTimeout(timer);
+            if (timedOut) return;
+            const exitCode = code ?? -1;
+            let json: any = null;
+            if (stdout.trim()) {
+                try {
+                    json = JSON.parse(stdout.trim());
+                } catch {
+                    json = null;
+                }
+            }
+            if (json === null && exitCode !== 0) {
+                reject(new Error(`Python script '${scriptRelPath}' exited with code ${exitCode}: ${stderr.trim() || '(no stderr)'}`));
+                return;
+            }
+            if (json === null && stdout.trim()) {
+                reject(new Error(`Failed to parse Python output as JSON: ${stdout.slice(0, 500)}`));
+                return;
+            }
+            resolve({ exitCode, json, stdout, stderr });
+        });
+
+        child.on('error', err => {
+            clearTimeout(timer);
+            reject(new Error(`Failed to spawn Python process: ${err.message}`));
+        });
+    });
 };
 
 const _spawnRaw = async (scriptName: string, args: string[]): Promise<any> => {

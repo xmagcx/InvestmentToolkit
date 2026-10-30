@@ -27,6 +27,8 @@ import PortfolioPage from './pages/PortfolioPage';
 import TradeLog from './pages/TradeLog';
 import ThesesPage from './pages/ThesesPage';
 import DailyBriefPage from './pages/DailyBriefPage';
+import SourcesPage from './pages/SourcesPage';
+import RecentBuysPage from './pages/RecentBuysPage';
 
 function App() {
   return (
@@ -45,6 +47,8 @@ function App() {
               <Route path="trade-log" element={<TradeLog />} />
               <Route path="theses" element={<ThesesPage />} />
               <Route path="daily-brief" element={<DailyBriefPage />} />
+              <Route path="sources" element={<SourcesPage />} />
+              <Route path="recent-buys" element={<RecentBuysPage />} />
               <Route path="settings" element={<Settings />} />
             </Route>
           </Routes>

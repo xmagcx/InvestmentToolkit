@@ -14,6 +14,7 @@
  * 
  * Key Input Dependencies:
  *   - ../../../.env
+ *   - env SOURCE_SYNC_SCHEDULER / SOURCE_SYNC_INTERVALS (investment-source scheduler, see SourceScheduler.ts)
  *
  * Key Output Dependencies:
  *   None (starts API server listening on localhost port 3001)
@@ -30,6 +31,7 @@
  *   - app.use('/api/screener', screenerRouter)
  *   - app.use('/api/trading', tradingRouter)
  *   - app.use('/api/daily-brief', dailybriefRouter)
+ *   - app.use('/api', sourcesRouter) - /api/sources/**, /api/stocks-origin, /api/recent-buys/**
  */
 import { getRecommendations } from './utils/helpers';
 
@@ -52,6 +54,8 @@ import screenerRouter from './routes/screener';
 import stockRouter from './routes/stock';
 import tradingRouter from './routes/trading';
 import dailybriefRouter from './routes/dailybrief';
+import sourcesRouter from './routes/sources';
+import { SourceScheduler } from './services/SourceScheduler';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -102,7 +106,10 @@ app.use('/api', stockRouter);               // /api/stock/:ticker, /api/portfoli
 app.use('/api/screener', screenerRouter);   // /api/screener/all-holdings
 app.use('/api/trading', tradingRouter);     // /api/trading/** (preflight, execute, submit, audit)
 app.use('/api/daily-brief', dailybriefRouter); // /api/daily-brief/latest, /history, /conviction/:ticker
+app.use('/api', sourcesRouter);             // /api/sources/**, /api/stocks-origin, /api/recent-buys/**
 
 app.listen(Number(port), HOST, () => {
     console.log(`Backend server running on http://${HOST}:${port}`);
+    // Scheduled investment-source syncs (S8). Disabled with SOURCE_SYNC_SCHEDULER=off.
+    new SourceScheduler().start();
 });
