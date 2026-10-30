@@ -256,6 +256,12 @@ def _expected_fingerprint(migrations: list[Migration], up_to: int) -> dict:
 
 
 _CREATE_RE = re.compile(r"^\s*CREATE\s+(?:UNIQUE\s+)?(TABLE|INDEX)\s+(?:IF\s+NOT\s+EXISTS\s+)?(\w+)", re.I)
+# The same CREATE carrying the IF NOT EXISTS guard. Re-running a guarded CREATE over an object
+# that already exists is a no-op, which is what lets an adopting database keep such an object
+# and still apply the migration that declares it.
+_GUARDED_CREATE_RE = re.compile(
+    r"^\s*CREATE\s+(?:UNIQUE\s+)?(TABLE|INDEX)\s+IF\s+NOT\s+EXISTS\s+[\"`]?(\w+)", re.I
+)
 
 
 def _statements(sql: str) -> list[str]:
@@ -269,6 +275,104 @@ def _statements(sql: str) -> list[str]:
             out.append(buf.strip())
             buf = ""
     return out
+
+
+def _declared_by_later_migrations(migrations: list[Migration], after: int) -> dict[str, tuple[int, bool]]:
+    """Object name -> (first later migration that creates it, whether that CREATE is guarded)."""
+    declared: dict[str, tuple[int, bool]] = {}
+    for m in migrations:
+        if m.version <= after:
+            continue
+        for stmt in _statements(m.sql):
+            guarded = _GUARDED_CREATE_RE.match(stmt)
+            if guarded:
+                declared.setdefault(guarded.group(2), (m.version, True))
+                continue
+            plain = _CREATE_RE.match(stmt)
+            if plain:
+                declared.setdefault(plain.group(2), (m.version, False))
+    return declared
+
+
+def _adoption_tolerances(
+    migrations: list[Migration], actual: dict, baseline: dict, after: int
+) -> tuple[set[str], set[tuple[str, str]], list[str]]:
+    """Objects an adopting database may already hold, plus the reasons it may not hold them.
+
+    A database written before this ledger existed can legitimately contain an object a *later*
+    migration declares: a feature branch built it by hand in `db_client.py` before the schema
+    became migration-owned. Keeping that object is safe only when the migration that creates it
+    is guarded with IF NOT EXISTS and the live shape is exactly what that migration builds, so
+    applying it afterwards cannot fail and cannot silently change the file. Anything else is
+    drift and still refuses adoption.
+    """
+    declared = _declared_by_later_migrations(migrations, after)
+    baseline_indexes = {tuple(pair) for pair in baseline["__indexes__"]}
+    tables: set[str] = set()
+    indexes: set[tuple[str, str]] = set()
+    problems: list[str] = []
+    expected_cache: dict[int, dict] = {}
+
+    def expected_at(in_: int) -> dict:
+        if in_ not in expected_cache:
+            expected_cache[in_] = _expected_fingerprint(migrations, in_)
+        return expected_cache[in_]
+
+    def verdict(name: str, table: str | None = None) -> str | None:
+        """None when `name` can be kept as found, otherwise the problem with it."""
+        spec = declared.get(name)
+        if spec is None:
+            return f"unexpected table or index set: {name}"
+        version, guarded = spec
+        if not guarded:
+            return (
+                f"{name}: migration {version:04d} creates it without IF NOT EXISTS, so this "
+                "database cannot keep the copy it already holds; guard that CREATE"
+            )
+        if table is None:
+            return None  # shape is compared by the caller
+        if (name, table) not in {tuple(pair) for pair in expected_at(version)["__indexes__"]}:
+            return f"{name}: migration {version:04d} does not create it on {table}"
+        return None
+
+    for name, shape in actual.items():
+        if name == "__indexes__":
+            continue
+        if name in baseline:
+            if baseline[name] != shape:
+                problems.append(f"{name}: present with a shape 0001_baseline.sql does not build")
+            continue
+        problem = verdict(name)
+        if problem:
+            problems.append(problem)
+        elif expected_at(declared[name][0])[name] != shape:
+            problems.append(
+                f"{name}: present with a shape migration {declared[name][0]:04d} does not build"
+            )
+        else:
+            tables.add(name)
+
+    for pair in map(tuple, actual["__indexes__"]):
+        if pair in baseline_indexes:
+            continue
+        problem = verdict(pair[0], table=pair[1])
+        if problem:
+            problems.append(problem)
+        else:
+            indexes.add(pair)
+
+    return tables, indexes, problems
+
+
+def _prune_fingerprint(shape: dict, tables: set[str], indexes: set[tuple[str, str]]) -> dict:
+    """`shape` without the tolerated objects, so the baseline diff stops at real drift only."""
+    pruned: dict = {}
+    for name, value in shape.items():
+        if name == "__indexes__":
+            pruned[name] = [pair for pair in value if tuple(pair) not in indexes]
+        elif name not in tables:
+            pruned[name] = value
+    return pruned
 
 
 def _create_missing_from_baseline(conn: sqlite3.Connection, baseline_sql: str) -> None:
@@ -327,6 +431,7 @@ def _record(
     kind: str,
     started: float,
     backup_file: str | Path | None = None,
+    also_tables: tuple[str, ...] = (),
 ) -> None:
     conn.execute(
         "INSERT INTO schema_migrations (version, name, description, kind, checksum, applied_at, "
@@ -335,7 +440,8 @@ def _record(
         (
             m.version, m.name, m.description, kind, m.checksum,
             datetime.now(timezone.utc).isoformat(), _applied_by(), _git_commit(),
-            int((time.monotonic() - started) * 1000), ", ".join(m.tables),
+            int((time.monotonic() - started) * 1000),
+            ", ".join(sorted(set(m.tables) | set(also_tables))),
             str(backup_file) if backup_file else None,
         ),
     )
@@ -407,14 +513,25 @@ def migrate(
         try:
             _create_missing_from_baseline(conn, migrations[0].sql)
             _legacy_self_heal(conn)
-            problems = _diff(_expected_fingerprint(migrations, 1), _fingerprint(conn))
+            baseline = _expected_fingerprint(migrations, migrations[0].version)
+            actual = _fingerprint(conn)
+            kept, kept_indexes, problems = _adoption_tolerances(
+                migrations, actual, baseline, migrations[0].version
+            )
+            problems = problems or _diff(baseline, _prune_fingerprint(actual, kept, kept_indexes))
             if problems:
                 raise SchemaError(
                     "existing database does not match 0001_baseline.sql; refusing to adopt it "
                     "(nothing was changed):\n  " + "\n  ".join(problems)
                 )
             _ensure_ledger(conn)
-            _record(conn, migrations[0], kind="adopted", started=started)
+            _record(
+                conn,
+                migrations[0],
+                kind="adopted",
+                started=started,
+                also_tables=tuple(sorted(kept)),
+            )
             conn.execute(f"PRAGMA user_version = {migrations[0].version}")
             conn.commit()
         except BaseException:

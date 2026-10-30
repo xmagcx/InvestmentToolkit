@@ -287,3 +287,107 @@ def test_cli_status_and_history_show_descriptions(tmp_path, capsys):
     assert "pending: none" in capsys.readouterr().out
     assert schema_migrator.main(["--db", path, "--history", "--json"]) == 0
     assert _json.loads(capsys.readouterr().out)[0]["name"] == "baseline"
+
+
+# --- adopting a database that already holds a later migration's table -----------------
+#
+# A branch that pre-dates the migrator can build a table by hand in db_client.py. When the
+# same file is then opened by a checkout where that table is a numbered migration, adoption
+# must keep the data and let the migration be a no-op, as long as the live shape is exactly
+# what that migration builds and the migration guards its CREATE with IF NOT EXISTS.
+
+
+def _baseline_plus(tmp_path: Path, version: int, name: str, sql: str) -> Path:
+    """Real 0001_baseline.sql plus one synthetic migration, for adoption tests."""
+    d = tmp_path / "with_later"
+    d.mkdir()
+    (d / "0001_baseline.sql").write_text((Path(schema_migrator.MIGRATIONS_DIR) / "0001_baseline.sql").read_text())
+    _write(d, f"{version:04d}_{name}.sql", sql)
+    return d
+
+
+def _legacy_with_table(path: str, ddl: str) -> None:
+    """A pre-migrator database that already holds an extra hand-built table."""
+    make_legacy_db(path)
+    raw = sqlite3.connect(path)
+    raw.execute(ddl)
+    raw.commit()
+    raw.close()
+
+
+SOLAR_DDL = "CREATE TABLE IF NOT EXISTS solar (id INTEGER PRIMARY KEY, name TEXT NOT NULL)"
+
+
+def test_legacy_file_holding_a_later_migrations_table_is_adopted(tmp_path):
+    path = str(tmp_path / "branchy.sqlite")
+    _legacy_with_table(path, SOLAR_DDL)
+    raw = sqlite3.connect(path)
+    raw.execute("INSERT INTO solar (id, name) VALUES (1, 'kept')")
+    raw.commit()
+    raw.close()
+
+    conn = sqlite3.connect(path)
+    assert migrate(conn, db_path=path, directory=_baseline_plus(tmp_path, 2, "solar", SOLAR_DDL + ";\n")) == [1, 2]
+    assert conn.execute("SELECT name FROM solar WHERE id=1").fetchone()[0] == "kept"
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == 2
+    adopted = schema_migrator.history(conn)[0]
+    assert adopted["kind"] == "adopted"
+    assert "solar" in adopted["tables_touched"], "an adopted object must be recorded on the adoption row"
+
+
+def test_legacy_file_with_an_undeclared_extra_table_is_still_refused(tmp_path):
+    path = str(tmp_path / "rogue.sqlite")
+    _legacy_with_table(path, "CREATE TABLE rogue (id INTEGER PRIMARY KEY)")
+
+    with pytest.raises(SchemaError, match="unexpected table or index set: rogue"):
+        initialize_db(path)
+
+
+def test_legacy_file_with_a_declared_but_differently_shaped_table_is_refused(tmp_path):
+    path = str(tmp_path / "mismatch.sqlite")
+    _legacy_with_table(path, "CREATE TABLE solar (id INTEGER PRIMARY KEY, name TEXT NOT NULL, extra TEXT)")
+
+    conn = sqlite3.connect(path)
+    with pytest.raises(SchemaError, match="solar: present with a shape migration 0002 does not build"):
+        migrate(conn, db_path=path, directory=_baseline_plus(tmp_path, 2, "solar", SOLAR_DDL + ";\n"))
+
+
+def test_legacy_file_holding_a_table_its_migration_creates_unguarded_is_refused(tmp_path):
+    path = str(tmp_path / "unguarded.sqlite")
+    _legacy_with_table(path, SOLAR_DDL)
+
+    conn = sqlite3.connect(path)
+    with pytest.raises(SchemaError, match="without IF NOT EXISTS"):
+        migrate(
+            conn,
+            db_path=path,
+            directory=_baseline_plus(
+                tmp_path, 2, "solar", "CREATE TABLE solar (id INTEGER PRIMARY KEY, name TEXT NOT NULL);\n"
+            ),
+        )
+
+
+def test_legacy_file_already_holding_universe_candidate_adopts_and_migrates(tmp_path):
+    """The real case: a database last opened on the opportunity-screener branch (ADR-032)."""
+    path = str(tmp_path / "branch.sqlite")
+    _legacy_with_table(
+        path,
+        """CREATE TABLE universe_candidate (
+            ticker      TEXT PRIMARY KEY,
+            name        TEXT NOT NULL,
+            source      TEXT NOT NULL,
+            asset_class TEXT,
+            added_at    TEXT NOT NULL DEFAULT CURRENT_TIMESTAMP
+        )""",
+    )
+    raw = sqlite3.connect(path)
+    raw.execute("INSERT INTO universe_candidate (ticker, name, source) VALUES ('AAPL', 'Apple', 'Inc.')")
+    raw.commit()
+    raw.close()
+
+    conn = initialize_db(path)
+    assert [r[0] for r in conn.execute("SELECT version FROM schema_migrations ORDER BY version")] == [
+        m.version for m in discover()
+    ]
+    assert conn.execute("SELECT name FROM universe_candidate WHERE ticker='AAPL'").fetchone()[0] == "Apple"
+    assert conn.execute("PRAGMA user_version").fetchone()[0] == discover()[-1].version

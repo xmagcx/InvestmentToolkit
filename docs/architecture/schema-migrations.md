@@ -85,6 +85,19 @@ the three retired late columns are added, and the result is compared with `0001_
 not, adoption is **refused and the file is left exactly as found**, with the differences listed.
 This was dry-run against a copy of the live database: all 20 tables kept identical row counts.
 
+An extra object **is** tolerated when it belongs to a migration the adopter has not applied yet
+(ADR-039). All three conditions must hold:
+
+1. a migration numbered after the baseline declares it;
+2. that migration creates it with `CREATE ... IF NOT EXISTS`, so applying it later is a no-op;
+3. the live shape — columns, types, defaults, foreign keys and index attachment — is exactly
+   what that migration builds.
+
+The kept object is listed in the `adopted` row's `tables_touched`. This is how a table built by
+hand on a branch that pre-dated the migrator (`universe_candidate`, ADR-032 on
+`feat/opportunity-screener-research`) survives adoption without weakening the drift check: any
+other difference still refuses the file.
+
 ## Backups
 
 `py_services/domain_model/db_backup.py` uses SQLite's online backup API. Copying only the

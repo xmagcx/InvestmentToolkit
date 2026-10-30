@@ -98,3 +98,9 @@ All development and agent orchestration must be isolated in dedicated git worktr
 
 ### 30. Deprecated JSON Data Stores Retired
 `target-portfolio.json` and `portfolio.json` are permanently retired. `domain_model.sqlite` is the sole source of truth for portfolio holdings, thesis targets, pillars, price levels, and standing decisions. Automated test `plugins/toolkit-manager/.apm/skills/managing-the-toolkit/tests/test_no_retired_file_access.py` strictly prevents new reads or writes to retired JSON paths.
+
+### 31. A Table Built by Hand on a Branch Blocks Adoption on `main`
+A branch that pre-dates `schema_migrator.py` can create a table in `db_client.py` with `CREATE TABLE IF NOT EXISTS`. Opening that same gitignored database on `main` then fails with `existing database does not match 0001_baseline.sql; refusing to adopt it: unexpected table or index set: <table>`, because the baseline never declares it.
+
+Fix it forward, never by editing the baseline or dropping the table: add a migration that declares the same table with `CREATE ... IF NOT EXISTS`, in the exact shape the branch built (columns, types, defaults, foreign keys). `_adoption_tolerances` then keeps the existing rows, records the object in the `adopted` row's `tables_touched`, and the new migration is a no-op over that file. Any shape difference, undeclared object, or unguarded `CREATE` still refuses adoption (ADR-039). When the owning branch merges, delete its hand-written DDL.
+
