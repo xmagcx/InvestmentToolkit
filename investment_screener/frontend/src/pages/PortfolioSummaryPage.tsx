@@ -76,9 +76,9 @@ function PeriodCard({ label, perf }: { label: string; perf: { change: number; ch
         <div className="bg-slate-900/80 border border-slate-800 rounded-xl px-4 py-3 shadow-lg flex items-center gap-4">
             <span className="text-xs font-bold uppercase tracking-widest text-slate-400 w-7 shrink-0">{label}</span>
             {perf ? (
-                <div className="flex items-baseline gap-3">
-                    <span className={`font-mono text-xl font-bold ${deltaClass(perf.change)}`}>{fmtPct(perf.changePct)}</span>
-                    <span className={`font-mono text-sm font-semibold ${deltaClass(perf.change)}`}>
+                <div className="flex flex-wrap items-baseline gap-x-3 gap-y-0.5">
+                    <span className={`font-mono text-xl font-bold whitespace-nowrap ${deltaClass(perf.change)}`}>{fmtPct(perf.changePct)}</span>
+                    <span className={`font-mono text-sm font-semibold whitespace-nowrap ${deltaClass(perf.change)}`}>
                         {fmtSigned(perf.change, 'USD')}
                     </span>
                 </div>
