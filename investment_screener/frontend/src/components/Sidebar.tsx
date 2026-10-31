@@ -9,7 +9,7 @@
  * Layer: Frontend / UI / Layout
  */
 import { useState, useEffect } from 'react';
-import { Settings, History, Grid3X3, BarChart3, Search, RefreshCcw, TableProperties, PieChart, ScrollText, BookOpen, Zap, Eye, EyeOff, Database, ShoppingCart } from 'lucide-react';
+import { Settings, History, Grid3X3, BarChart3, Search, RefreshCcw, TableProperties, PieChart, ScrollText, BookOpen, Zap, Eye, EyeOff, Database, ShoppingCart, Wallet } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useRecentTickers } from '../hooks/useRecentTickers';
 import { syncAndRefreshPortfolio, fetchSyncStatus } from '../services/api';
@@ -25,6 +25,7 @@ const NAV_ITEMS = [
     { name: 'Investment Theses', icon: BookOpen,        path: '/theses' },
     { name: 'Fuentes',           icon: Database,        path: '/sources' },
     { name: 'Compras recientes', icon: ShoppingCart,    path: '/recent-buys' },
+    { name: 'Portafolio',        icon: Wallet,          path: '/portfolio-maintainer' },
 ];
 
 export default function Sidebar() {

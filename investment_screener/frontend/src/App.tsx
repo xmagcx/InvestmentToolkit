@@ -29,6 +29,7 @@ import ThesesPage from './pages/ThesesPage';
 import DailyBriefPage from './pages/DailyBriefPage';
 import SourcesPage from './pages/SourcesPage';
 import RecentBuysPage from './pages/RecentBuysPage';
+import PortfolioMaintainerPage from './pages/PortfolioMaintainerPage';
 
 function App() {
   return (
@@ -49,6 +50,7 @@ function App() {
               <Route path="daily-brief" element={<DailyBriefPage />} />
               <Route path="sources" element={<SourcesPage />} />
               <Route path="recent-buys" element={<RecentBuysPage />} />
+              <Route path="portfolio-maintainer" element={<PortfolioMaintainerPage />} />
               <Route path="settings" element={<Settings />} />
             </Route>
           </Routes>

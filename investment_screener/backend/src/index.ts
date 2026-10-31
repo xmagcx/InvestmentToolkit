@@ -56,6 +56,7 @@ import tradingRouter from './routes/trading';
 import dailybriefRouter from './routes/dailybrief';
 import sourcesRouter from './routes/sources';
 import { SourceScheduler } from './services/SourceScheduler';
+import portfolioMaintainerRouter from './routes/portfolioMaintainer';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -107,6 +108,7 @@ app.use('/api/screener', screenerRouter);   // /api/screener/all-holdings
 app.use('/api/trading', tradingRouter);     // /api/trading/** (preflight, execute, submit, audit)
 app.use('/api/daily-brief', dailybriefRouter); // /api/daily-brief/latest, /history, /conviction/:ticker
 app.use('/api', sourcesRouter);             // /api/sources/**, /api/stocks-origin, /api/recent-buys/**
+app.use('/api/portfolio-maintainer', portfolioMaintainerRouter); // /api/portfolio-maintainer/accounts, /positions, /transactions, /transaction
 
 app.listen(Number(port), HOST, () => {
     console.log(`Backend server running on http://${HOST}:${port}`);
