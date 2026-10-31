@@ -3,7 +3,7 @@
 ## Overview
 Investment **screener and recommendation** suite built around **TradingView CDP automation** (port 9222, works without a TradingView login) for live prices, chart telemetry and TA sweeps, backed by a React 19 dashboard (port 5173) and Node.js/Express backend (port 3001). Holdings are kept by hand in portfolio profiles (Portafolio page, `/api/portfolio-maintainer`). **Broker integration is disabled by default** (`BROKER_INTEGRATION=off`, ADR-041): no broker sync, no order flow. yfinance serves strictly as a background fundamentals data bridge and offline fallback.
 
-**Startup**: `python3 run_investment_toolkit.py` — creates venv, installs deps, launches frontend + backend + TradingView Desktop (CDP port 9222).
+**Startup**: `python3 run_investment_toolkit.py` — creates venv, installs deps, launches frontend + backend + TradingView Desktop (CDP port 9222), and runs `daily_brief.py` in the background on every start (log `.runtime/daily_brief.log`; `--no-daily-brief` skips it).
 
 ## Architecture
 Complete repository structure, data flows, and subsystem architecture live in [`architecture.md`](architecture.md). ADRs and deep-dive specs live in [`docs/architecture/`](docs/architecture/).
