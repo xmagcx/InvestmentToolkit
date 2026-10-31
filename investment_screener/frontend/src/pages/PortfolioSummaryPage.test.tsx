@@ -1,12 +1,12 @@
 /**
  * @vitest-environment jsdom
- * Purpose: the redesigned portfolio summary (specs S1/S2) leads with the consolidated
- * USD total and the FX rate used, shows each profile in ITS base currency, excludes
- * unpriced tickers from value while listing them, degrades to a partial total when FX
- * is unavailable, keeps positions and the allocation chart collapsed (the chart is only
- * fetched when opened), refreshes prices with feedback, and reports load errors.
+ * Purpose: the portfolio summary as an analyst table (specs S1/S2, artboard
+ * "03 Tabla de analista"): a header card with the consolidated USD total, the FX
+ * details and the refresh action, ONE table with a row per profile (in its base
+ * currency) expandable to its positions plus a "Total consolidado" row in USD,
+ * and a right rail with the 1D/1S/1M/3M performance and the strategy donut.
  * Layer: Frontend integration. Usage: npx vitest run src/pages/PortfolioSummaryPage.test.tsx.
- * Key Input Dependencies: services/api.ts is mocked; StrategyAllocationChart is stubbed.
+ * Key Input Dependencies: services/api.ts is mocked.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
@@ -23,10 +23,6 @@ vi.mock('../services/api', async () => {
         refreshPrices: vi.fn(),
     };
 });
-
-vi.mock('../components/StrategyAllocationChart', () => ({
-    default: () => <div data-testid="allocation-chart" />,
-}));
 
 const api = await import('../services/api');
 
@@ -69,9 +65,19 @@ const performance = {
 };
 
 const allocation = {
-    allocation: [{ id: 'cash', name: 'Caja', valueUSD: 2596.44, pct: 17, holdings: [] }],
+    allocation: [
+        { id: 'dividends', name: 'Dividendos', valueUSD: 5254.9, pct: 34.4, holdings: [] },
+        { id: 'cash', name: 'Caja', valueUSD: 2596.44, pct: 17, holdings: [] },
+    ],
     totalUSD: 15268.14,
 };
+
+function profileRow(name: string | RegExp): HTMLElement {
+    return screen.getByRole('button', { name }).closest('tr') as HTMLElement;
+}
+
+/** The page is ready when the table closes with its consolidated total row. */
+const ready = () => screen.findByText('Total consolidado');
 
 describe('PortfolioSummaryPage', () => {
     beforeEach(() => {
@@ -86,43 +92,75 @@ describe('PortfolioSummaryPage', () => {
         vi.clearAllMocks();
     });
 
-    it('leads with the consolidated USD total and the FX rate used', async () => {
+    it('leads with the consolidated USD total, the FX details and the compact totals', async () => {
         render(<PortfolioSummaryPage />);
-        expect(await screen.findByText('15.268,14')).toBeTruthy();
-        expect(screen.getByText(/1 USD = 948,20 CLP/)).toBeTruthy();
-        expect(screen.getByText(/tradingview/i)).toBeTruthy();
+        await ready();
+        const header = screen.getByRole('region', { name: 'Resumen de portafolio' });
+        expect(within(header).getByText('15.268,14')).toBeTruthy();
+        expect(screen.getByText(/1 USD = 948,20 CLP · tradingview/)).toBeTruthy();
+        expect(screen.getByText(/Solo los perfiles cuya moneda base no es USD se convierten/)).toBeTruthy();
         expect(screen.getByText('11.948,68 USD')).toBeTruthy();   // invertido
-        expect(screen.getByText('+723,02 USD')).toBeTruthy();     // P/L no realizado
-        expect(screen.getByText('2.596,44 USD')).toBeTruthy();    // caja disponible
+        expect(screen.getByText(/\+723,02 USD \(\+6,05 %\)/)).toBeTruthy();  // P/L no realizado
+        expect(screen.getByText(/\+63,80 \(\+0,42 %\) hoy/)).toBeTruthy();
     });
 
-    it('shows a CLP profile in CLP with its USD equivalent and no CAD anywhere', async () => {
-        const { container } = render(<PortfolioSummaryPage />);
-        expect(await screen.findByText('5.832.700')).toBeTruthy();     // 4.982.700 + 850.000 CLP
-        expect(screen.getByText(/6\.151,34 USD/)).toBeTruthy();
-        expect(screen.getByText('−261.300 CLP (−4,98 %)')).toBeTruthy();
-        expect(container.textContent).not.toMatch(/CAD|CA\$/);
-    });
-
-    it('keeps positions collapsed and expands them on click', async () => {
+    it('renders one table row per profile with its currency badge and USD value', async () => {
         render(<PortfolioSummaryPage />);
-        await screen.findByText('15.268,14');
-        expect(screen.queryByText('AAPL')).toBe(null);
-        fireEvent.click(screen.getByRole('button', { name: /Ver 1 posición/ }));
+        await ready();
+        expect(screen.getByText(/Perfiles y sus posiciones · valores en la moneda base de cada perfil/)).toBeTruthy();
+
+        const racional = profileRow(/Racional/);
+        expect(within(racional).getByText('USD')).toBeTruthy();
+        expect(within(racional).getAllByText('9.116,80').length).toBe(2); // valor perfil + en USD
+
+        const ahorro = profileRow(/Ahorro Chile/);
+        expect(within(ahorro).getByText('CLP')).toBeTruthy();
+        expect(within(ahorro).getByText('5.832.700')).toBeTruthy();
+        expect(within(ahorro).getByText('−261.300')).toBeTruthy();
+        expect(within(ahorro).getByText('6.151,34')).toBeTruthy();
+    });
+
+    it('expands the first profile by default, keeps the rest collapsed and toggles', async () => {
+        render(<PortfolioSummaryPage />);
+        await ready();
+
+        const first = screen.getByRole('button', { name: /Racional/ });
+        const second = screen.getByRole('button', { name: /Ahorro Chile/ });
+        expect(first.getAttribute('aria-expanded')).toBe('true');
+        expect(second.getAttribute('aria-expanded')).toBe('false');
         expect(screen.getByText('AAPL')).toBeTruthy();
+        expect(screen.queryByText('CHILE')).toBe(null);
+
+        fireEvent.click(second);
+        expect(second.getAttribute('aria-expanded')).toBe('true');
+        expect(screen.getByText('CHILE')).toBeTruthy();
+
+        fireEvent.click(first);
+        expect(first.getAttribute('aria-expanded')).toBe('false');
+        expect(screen.queryByText('AAPL')).toBe(null);
     });
 
-    it('lists an unpriced ticker as "Sin precio" and excludes it from the value', async () => {
+    it('warns about unpriced positions and shows them as "Sin precio"', async () => {
         render(<PortfolioSummaryPage />);
-        await screen.findByText('15.268,14');
-        expect(screen.getByText(/CENCOSUD sin precio/)).toBeTruthy();
-        fireEvent.click(screen.getByRole('button', { name: /Ver 2 posiciones/ }));
-        expect(screen.getByText('Sin precio')).toBeTruthy();
-        // The unpriced position contributes no value: the card still shows the priced total.
-        expect(screen.getByText('5.832.700')).toBeTruthy();
+        await ready();
+        expect(screen.getByText(/1 de 2 posiciones sin precio \(CENCOSUD\): queda fuera del valor de mercado y del P\/L\./)).toBeTruthy();
+
+        fireEvent.click(screen.getByRole('button', { name: /Ahorro Chile/ }));
+        const unpriced = screen.getByText('CENCOSUD').closest('tr') as HTMLElement;
+        expect(within(unpriced).getByText('Sin precio')).toBeTruthy();
     });
 
-    it('marks the total as partial when a profile has no FX rate', async () => {
+    it('closes the table with a consolidated total row in USD', async () => {
+        render(<PortfolioSummaryPage />);
+        const total = (await ready()).closest('tr') as HTMLElement;
+        expect(within(total).getByText('12.671,70')).toBeTruthy();  // acciones
+        expect(within(total).getByText('2.596,44')).toBeTruthy();   // caja
+        expect(within(total).getByText('11.948,68')).toBeTruthy();  // invertido
+        expect(within(total).getByText('+723,02')).toBeTruthy();    // P/L
+        expect(within(total).getByText('15.268,14')).toBeTruthy();  // en USD
+    });
+
+    it('marks the total as partial and the profile USD value as unknown when FX is missing', async () => {
         vi.mocked(api.fetchProfilesSummary).mockResolvedValue({
             ...summary,
             profiles: [summary.profiles[0], { ...summary.profiles[1], usdRate: null, valueUsd: null }],
@@ -131,26 +169,37 @@ describe('PortfolioSummaryPage', () => {
             fxUnavailable: ['CLP'],
         });
         render(<PortfolioSummaryPage />);
-        // Without the CLP profile the total equals the USD profile's own total, so the
-        // hero is queried inside its own region instead of by a page-wide unique string.
-        const hero = await screen.findByRole('region', { name: 'Valor total consolidado' });
-        expect(within(hero).getByText('9.116,80')).toBeTruthy();
-        expect(screen.getByText(/Total parcial/)).toBeTruthy();
-        expect(screen.getByText('Sin tasa de cambio')).toBeTruthy();
+        await screen.findByText(/Total parcial/);
+        expect(screen.getByText(/sin tasa de cambio para CLP/)).toBeTruthy();
+        const ahorro = profileRow(/Ahorro Chile/);
+        expect(within(ahorro).getAllByText('—').length).toBeGreaterThan(0);
     });
 
-    it('fetches the strategy allocation only when the section is opened', async () => {
+    it('shows the USD performance rail with "Sin datos" for missing periods', async () => {
         render(<PortfolioSummaryPage />);
-        await screen.findByText('15.268,14');
-        expect(api.fetchStrategyAllocation).not.toHaveBeenCalled();
-        fireEvent.click(screen.getByRole('button', { name: /Asignación por estrategia/ }));
-        await waitFor(() => expect(screen.getByTestId('allocation-chart')).toBeTruthy());
-        expect(vi.mocked(api.fetchStrategyAllocation).mock.calls.length).toBe(1);
+        await ready();
+        const rail = screen.getByRole('region', { name: 'Rendimiento (USD)' });
+        expect(within(rail).getByText('+0,42 %')).toBeTruthy();
+        expect(within(rail).getByText('+63,80')).toBeTruthy();
+        expect(within(rail).getByText('−1,10 %')).toBeTruthy();
+        expect(within(rail).getAllByText('Sin datos').length).toBe(2);   // 1M y 3M
+        expect(within(rail).getByText(/YTD/)).toBeTruthy();
+    });
+
+    it('shows the strategy allocation donut legend', async () => {
+        render(<PortfolioSummaryPage />);
+        await ready();
+        const alloc = await screen.findByRole('region', { name: 'Asignación por estrategia' });
+        await waitFor(() => expect(within(alloc).getByText('Dividendos')).toBeTruthy());
+        expect(within(alloc).getByText('66,9 %')).toBeTruthy(); // share of the slices' sum, not the API pct
+        expect(within(alloc).getByText('5.254,90 USD')).toBeTruthy();
+        expect(within(alloc).getByText('Caja')).toBeTruthy();
+        expect(within(alloc).getByText('2.596,44 USD')).toBeTruthy();
     });
 
     it('refreshes prices with a loading state, feedback and a reload of the summary', async () => {
         render(<PortfolioSummaryPage />);
-        await screen.findByText('15.268,14');
+        await ready();
         fireEvent.click(screen.getByRole('button', { name: /Actualizar precios/ }));
         expect(screen.getByRole('button', { name: /Actualizando/ }).hasAttribute('disabled')).toBe(true);
         await waitFor(() => expect(screen.getByText(/4 precios actualizados/)).toBeTruthy());
