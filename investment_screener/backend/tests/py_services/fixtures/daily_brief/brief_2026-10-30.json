@@ -1,0 +1,309 @@
+{
+ "date": "2026-10-30",
+ "timestamp": "2026-10-31T02:28:57.829523+00:00",
+ "overnight_gaps": [
+  {
+   "ticker": "APP",
+   "prev_close": 252.83,
+   "current": 228.5,
+   "change_pct": -9.62,
+   "direction": "DOWN",
+   "market_state": "POSTPOST"
+  },
+  {
+   "ticker": "VITL",
+   "prev_close": 9.28,
+   "current": 8.67,
+   "change_pct": -6.57,
+   "direction": "DOWN",
+   "market_state": "POSTPOST"
+  },
+  {
+   "ticker": "TMUS",
+   "prev_close": 149.2,
+   "current": 156.44,
+   "change_pct": 4.85,
+   "direction": "UP",
+   "market_state": "POSTPOST"
+  },
+  {
+   "ticker": "SFM",
+   "prev_close": 47.89,
+   "current": 49.7,
+   "change_pct": 3.78,
+   "direction": "UP",
+   "market_state": "POSTPOST"
+  },
+  {
+   "ticker": "BKNG",
+   "prev_close": 152.76,
+   "current": 148.13,
+   "change_pct": -3.03,
+   "direction": "DOWN",
+   "market_state": "POSTPOST"
+  },
+  {
+   "ticker": "NVO",
+   "prev_close": 38.95,
+   "current": 40.0,
+   "change_pct": 2.7,
+   "direction": "UP",
+   "market_state": "POSTPOST"
+  },
+  {
+   "ticker": "NVDA",
+   "prev_close": 210.15,
+   "current": 204.64,
+   "change_pct": -2.62,
+   "direction": "DOWN",
+   "market_state": "POSTPOST"
+  }
+ ],
+ "macro_regime": {
+  "regime": "RISK-ON",
+  "score": 2,
+  "vix": 19.420000076293945,
+  "vix_signal": "NEUTRAL",
+  "spy_vs_200d": 4.1,
+  "spy_signal": "ABOVE",
+  "hyg_lqd_ratio": 0.7426,
+  "credit_signal": "HEALTHY",
+  "degraded": false
+ },
+ "market_regime": {
+  "asOf": "2026-10-30",
+  "regime": "NEUTRAL",
+  "score": 1,
+  "degraded": false,
+  "signals": {
+   "vix": {
+    "value": 19.420000076293945,
+    "signal": "NEUTRAL"
+   },
+   "spy200d": {
+    "value": 4.1,
+    "signal": "ABOVE"
+   },
+   "credit": {
+    "value": 0.7426,
+    "signal": "HEALTHY"
+   },
+   "termSlope": {
+    "value": 2.2234,
+    "signal": "STEEPENING"
+   },
+   "breadth": {
+    "value": 6.67,
+    "signal": "WEAK"
+   },
+   "dxy": {
+    "value": 3.85,
+    "signal": "ABOVE"
+   }
+  }
+ },
+ "ta_refreshed": false,
+ "ta_skip_reason": "",
+ "conviction_scores": [
+  {
+   "ticker": "APP",
+   "total": 1,
+   "band": "MAINTAIN",
+   "rsi": 24.9,
+   "flags": [
+    "RSI_OS"
+   ],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "BKNG",
+   "total": 1,
+   "band": "MAINTAIN",
+   "rsi": 33.2,
+   "flags": [],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "MCD",
+   "total": 1,
+   "band": "MAINTAIN",
+   "rsi": 68.2,
+   "flags": [
+    "ADX_STRONG"
+   ],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "PEP",
+   "total": 1,
+   "band": "MAINTAIN",
+   "rsi": 61.4,
+   "flags": [
+    "ADX_STRONG"
+   ],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "SFM",
+   "total": 1,
+   "band": "MAINTAIN",
+   "rsi": 25.1,
+   "flags": [
+    "RSI_OS"
+   ],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "AXP",
+   "total": 0,
+   "band": "MAINTAIN",
+   "rsi": 54.3,
+   "flags": [
+    "ADX_WEAK"
+   ],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "DECK",
+   "total": 0,
+   "band": "MAINTAIN",
+   "rsi": 47.3,
+   "flags": [],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "NFLX",
+   "total": 0,
+   "band": "MAINTAIN",
+   "rsi": 30.9,
+   "flags": [
+    "ADX_STRONG"
+   ],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "NVDA",
+   "total": 0,
+   "band": "WATCHLIST",
+   "rsi": 35.4,
+   "flags": [],
+   "actual_weight": null,
+   "price": 224.41000366210938
+  },
+  {
+   "ticker": "NVO",
+   "total": 0,
+   "band": "MAINTAIN",
+   "rsi": 54.0,
+   "flags": [
+    "ADX_WEAK"
+   ],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "TMUS",
+   "total": 0,
+   "band": "MAINTAIN",
+   "rsi": 48.8,
+   "flags": [],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "TSMC",
+   "total": 0,
+   "band": "WATCHLIST",
+   "rsi": null,
+   "flags": [],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "UBER",
+   "total": 0,
+   "band": "MAINTAIN",
+   "rsi": 36.2,
+   "flags": [],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "VICI",
+   "total": 0,
+   "band": "MAINTAIN",
+   "rsi": 60.2,
+   "flags": [],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "VITL",
+   "total": 0,
+   "band": "MAINTAIN",
+   "rsi": 41.9,
+   "flags": [],
+   "actual_weight": null,
+   "price": null
+  },
+  {
+   "ticker": "SFD",
+   "total": -1,
+   "band": "MAINTAIN",
+   "rsi": 39.8,
+   "flags": [
+    "ADX_STRONG"
+   ],
+   "actual_weight": null,
+   "price": null
+  }
+ ],
+ "recommendations": [],
+ "earnings_flags": [
+  {
+   "ticker": "BKNG",
+   "earnings_date": "2026-11-03",
+   "days_away": 4,
+   "flag": "IMMINENT"
+  },
+  {
+   "ticker": "VITL",
+   "earnings_date": "2026-11-03",
+   "days_away": 4,
+   "flag": "IMMINENT"
+  },
+  {
+   "ticker": "APP",
+   "earnings_date": "2026-11-04",
+   "days_away": 5,
+   "flag": "IMMINENT"
+  },
+  {
+   "ticker": "MCD",
+   "earnings_date": "2026-11-04",
+   "days_away": 5,
+   "flag": "IMMINENT"
+  },
+  {
+   "ticker": "NVO",
+   "earnings_date": "2026-11-04",
+   "days_away": 5,
+   "flag": "IMMINENT"
+  },
+  {
+   "ticker": "UBER",
+   "earnings_date": "2026-11-04",
+   "days_away": 5,
+   "flag": "IMMINENT"
+  }
+ ],
+ "thesis_breakers_triggered": []
+}

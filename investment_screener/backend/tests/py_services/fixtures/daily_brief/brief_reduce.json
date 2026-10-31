@@ -1,0 +1,18 @@
+{
+ "date": "2026-11-02",
+ "timestamp": "2026-11-02T12:00:00+00:00",
+ "overnight_gaps": [],
+ "macro_regime": {"regime": "RISK-OFF", "score": -2, "degraded": false},
+ "market_regime": {"regime": "RISK_OFF", "score": -2, "degraded": false, "signals": {}},
+ "ta_refreshed": true,
+ "ta_skip_reason": "",
+ "conviction_scores": [
+  {"ticker": "NFLX", "total": -2, "band": "TRIM", "rsi": 45.0, "flags": [], "actual_weight": 6.2, "price": 900.0},
+  {"ticker": "VICI", "total": 1, "band": "MAINTAIN", "rsi": 60.2, "flags": [], "actual_weight": 3.0, "price": 30.0}
+ ],
+ "recommendations": [
+  {"ticker": "NFLX", "signal": "TRIM", "recommendation": "TRIM", "executionStatus": "READY"}
+ ],
+ "earnings_flags": [],
+ "thesis_breakers_triggered": []
+}
