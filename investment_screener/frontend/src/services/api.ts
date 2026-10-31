@@ -147,6 +147,65 @@ export const fetchPortfolioSummary = async (): Promise<PortfolioSummary> => {
     return await response.json();
 };
 
+// --- Portfolio profiles summary (per-profile base currency + consolidated USD) ---
+
+export interface ProfileSummaryPosition {
+    ticker: string;
+    qty: number;
+    avgCost: number | null;
+    /** Stored market price; null when the ticker has no usable price (never its cost). */
+    price: number | null;
+    priceAsOf: string | null;
+    priceCurrency: string | null;
+    value: number | null;
+    pnl: number | null;
+}
+
+export interface ProfileSummary {
+    accountId: string;
+    name: string;
+    /** The profile's own base currency — the page shows no other currency for it. */
+    currency: string;
+    cash: number;
+    invested: number;
+    marketValue: number;
+    unrealizedPnl: number;
+    unrealizedPnlPct: number | null;
+    pricedCount: number;
+    unpricedCount: number;
+    unpricedTickers: string[];
+    positions: ProfileSummaryPosition[];
+    /** Units of the profile currency per 1 USD; null when FX is unavailable. */
+    usdRate: number | null;
+    valueUsd: number | null;
+}
+
+export interface ProfilesSummary {
+    profiles: ProfileSummary[];
+    totals: {
+        valueUsd: number;
+        marketValueUsd: number;
+        investedUsd: number;
+        cashUsd: number;
+        unrealizedPnlUsd: number;
+        unrealizedPnlPct: number | null;
+        /** true when at least one profile could not be converted to USD. */
+        partial: boolean;
+    };
+    fx: Array<{ currency: string; usdTo: number; source: string; asOf: string }>;
+    fxUnavailable: string[];
+    lastPriceAt: string | null;
+}
+
+export const fetchProfilesSummary = async (): Promise<ProfilesSummary> => {
+    const response = await fetch('/api/portfolio/profiles-summary');
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'No se pudo cargar el resumen de portafolio');
+    }
+    return await response.json();
+};
+
 // --- Portfolio Period Performance ---
 
 export interface PeriodPerformance {
