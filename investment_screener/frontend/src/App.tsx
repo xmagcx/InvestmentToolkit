@@ -26,6 +26,7 @@ import { PrivacyProvider } from './context/PrivacyContext';
 import PortfolioPage from './pages/PortfolioPage';
 import ThesesPage from './pages/ThesesPage';
 import DailyBriefPage from './pages/DailyBriefPage';
+import OpportunitiesPage from './pages/OpportunitiesPage';
 import SourcesPage from './pages/SourcesPage';
 import RecentBuysPage from './pages/RecentBuysPage';
 import PortfolioMaintainerPage from './pages/PortfolioMaintainerPage';
@@ -45,6 +46,7 @@ function App() {
               <Route path="screener" element={<Navigate to="/portfolio" replace />} />
               <Route path="analysis" element={<Dashboard />} />
               <Route path="theses" element={<ThesesPage />} />
+              <Route path="opportunities" element={<OpportunitiesPage />} />
               <Route path="daily-brief" element={<DailyBriefPage />} />
               <Route path="sources" element={<SourcesPage />} />
               <Route path="recent-buys" element={<RecentBuysPage />} />

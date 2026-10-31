@@ -9,7 +9,7 @@
  * Layer: Frontend / UI / Layout
  */
 import { useState, useEffect } from 'react';
-import { Settings, History, Grid3X3, BarChart3, Search, RefreshCcw, TableProperties, PieChart, BookOpen, Zap, Eye, EyeOff, Database, ShoppingCart, Wallet } from 'lucide-react';
+import { Settings, History, Grid3X3, BarChart3, Search, RefreshCcw, TableProperties, PieChart, BookOpen, Zap, Eye, EyeOff, Database, ShoppingCart, Wallet, Target } from 'lucide-react';
 import { NavLink, useNavigate } from 'react-router-dom';
 import { useRecentTickers } from '../hooks/useRecentTickers';
 import { syncAndRefreshPortfolio, fetchSyncStatus } from '../services/api';
@@ -20,6 +20,7 @@ const NAV_ITEMS = [
     { name: 'Portfolio Summary', icon: PieChart,       path: '/portfolio-summary' },
     { name: 'Portfolio',         icon: TableProperties, path: '/portfolio' },
     { name: 'Stock Analysis',    icon: BarChart3,       path: '/analysis' },
+    { name: 'Oportunidades',     icon: Target,          path: '/opportunities' },
     { name: 'Daily Brief',        icon: Zap,             path: '/daily-brief' },
     { name: 'Investment Theses', icon: BookOpen,        path: '/theses' },
     { name: 'Fuentes',           icon: Database,        path: '/sources' },

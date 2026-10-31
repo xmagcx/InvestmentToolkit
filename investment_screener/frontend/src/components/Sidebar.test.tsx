@@ -1,7 +1,8 @@
 /**
  * @vitest-environment jsdom
- * Purpose: the main navigation no longer offers the Trade Log, and the manual portfolio
- * maintainer is labelled "Gestión de activos".
+ * Purpose: the main navigation no longer offers the Trade Log, the manual portfolio
+ * maintainer is labelled "Gestión de activos", and "Oportunidades" links to the screener
+ * before the Daily Brief.
  * Layer: Frontend unit. Usage: npx vitest run src/components/Sidebar.test.tsx
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -31,5 +32,20 @@ describe('Sidebar navigation', () => {
         expect(link.getAttribute('href')).toBe('/portfolio-maintainer');
         expect(screen.queryByRole('link', { name: /Trade Log/ })).toBeNull();
         expect(screen.queryByRole('link', { name: /^Portafolio$/ })).toBeNull();
+    });
+
+    it('offers "Oportunidades" before the Daily Brief', () => {
+        render(
+            <PrivacyProvider>
+                <MemoryRouter>
+                    <Sidebar />
+                </MemoryRouter>
+            </PrivacyProvider>
+        );
+        const opportunities = screen.getByRole('link', { name: /Oportunidades/ });
+        expect(opportunities.getAttribute('href')).toBe('/opportunities');
+
+        const links = screen.getAllByRole('link').map(link => link.getAttribute('href'));
+        expect(links.indexOf('/opportunities')).toBeLessThan(links.indexOf('/daily-brief'));
     });
 });
