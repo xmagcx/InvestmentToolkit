@@ -108,3 +108,41 @@ def test_aliases_are_normalised_before_fetching_and_writing(tmp_path):
     assert seen == ["PSU-U.TO"]
     assert result["written"] == ["PSU-U.TO"]
     assert get_investment_price(conn, "PSU-U.TO")["price"] == 99.5
+
+
+def _run_main_with_fx_probe(tmp_path, monkeypatch, broker_env):
+    """Run main() on a tmp DB with prices stubbed; return (report, fx_called)."""
+    import json as _json
+    import tv_price_refresh
+
+    db = tmp_path / "dm.sqlite"
+    initialize_db(str(db)).close()
+    calls = []
+    monkeypatch.setattr(tv_price_refresh, "refresh_prices", lambda conn: {"written": [], "failed": [], "stale": []})
+    monkeypatch.setattr(tv_price_refresh, "_refresh_exchange_rate", lambda: calls.append(1) or True)
+    if broker_env is None:
+        monkeypatch.delenv("BROKER_INTEGRATION", raising=False)
+    else:
+        monkeypatch.setenv("BROKER_INTEGRATION", broker_env)
+    import io
+    import contextlib
+    out = io.StringIO()
+    with contextlib.redirect_stdout(out):
+        code = tv_price_refresh.main(["--db", str(db)])
+    return code, _json.loads(out.getvalue()), bool(calls)
+
+
+def test_broker_off_skips_the_broker_backed_fx_refresh(tmp_path, monkeypatch):
+    code, report, fx_called = _run_main_with_fx_probe(tmp_path, monkeypatch, None)
+    assert code == 0
+    assert fx_called is False
+    assert report["exchange_rate_refreshed"] is None
+    assert report["exchange_rate_skipped"] == "broker integration disabled"
+
+
+def test_broker_on_still_refreshes_fx(tmp_path, monkeypatch):
+    code, report, fx_called = _run_main_with_fx_probe(tmp_path, monkeypatch, "on")
+    assert code == 0
+    assert fx_called is True
+    assert report["exchange_rate_refreshed"] is True
+    assert "exchange_rate_skipped" not in report

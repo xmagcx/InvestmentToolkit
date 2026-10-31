@@ -33,6 +33,7 @@ from __future__ import annotations
 
 import argparse
 import json
+import os
 import subprocess
 import sys
 from datetime import datetime, timezone
@@ -128,7 +129,16 @@ def main(argv: list[str] | None = None) -> int:
         result = refresh_prices(conn)
     finally:
         conn.close()
-    result["exchange_rate_refreshed"] = None if args.skip_fx else _refresh_exchange_rate()
+    # The USD->CAD refresh reads the broker panel; with the broker integration off (the default,
+    # see backend src/utils/brokerIntegration.ts) it is skipped, never attempted.
+    broker_on = os.environ.get("BROKER_INTEGRATION", "").strip().lower() == "on"
+    if args.skip_fx:
+        result["exchange_rate_refreshed"] = None
+    elif not broker_on:
+        result["exchange_rate_refreshed"] = None
+        result["exchange_rate_skipped"] = "broker integration disabled"
+    else:
+        result["exchange_rate_refreshed"] = _refresh_exchange_rate()
     print(json.dumps(result, indent=2))
     return 0 if args.exit_zero or not result["failed"] else 1
 

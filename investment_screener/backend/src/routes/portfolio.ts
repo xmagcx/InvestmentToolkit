@@ -21,11 +21,12 @@
  *   - GET /status - Returns the latest position sync timestamp
  *   - GET /position/:ticker - Returns price, shares, and per-account breakdown for a ticker
  *   - GET /holdings/:ticker - Retrieves per-account position counts
+ *   - GET /features - Reports which optional integrations are enabled (broker_integration)
  *   - POST /refresh-prices - Refreshes prices from TradingView real-time quotes (503 when TradingView is not connected)
- *   - POST /sync-tv - Gated TradingView CDP sync returning HITL preview diff
- *   - POST /sync-tv/promote - Finalizes the HITL TradingView snapshot into domain_model.sqlite
- *   - POST /sync-tv/apply - One-shot automated sync applying TV data immediately
- *   - POST /sync - Auto-priority sync selecting reachable sources
+ *   - POST /sync-tv - Gated TradingView CDP sync returning HITL preview diff (410 while the broker is disabled)
+ *   - POST /sync-tv/promote - Finalizes the HITL TradingView snapshot into domain_model.sqlite (410 while the broker is disabled)
+ *   - POST /sync-tv/apply - One-shot automated sync applying TV data immediately (410 while the broker is disabled)
+ *   - POST /sync - Auto-priority sync selecting reachable sources (410 while the broker is disabled)
  *   - GET /strategy-allocation - Aggregates cash and holdings by sub-strategy and pillar
  * 
  * Key Input Dependencies:
@@ -48,6 +49,7 @@ import { computeStrategyAllocation } from '../utils/strategyAllocation';
 import { PortfolioRepository } from '../services/PortfolioRepository';
 import { InvestmentRepository } from '../services/InvestmentRepository';
 import { normalizeTicker } from '../utils/tickerAliases';
+import { isBrokerIntegrationEnabled, requireBrokerIntegration } from '../utils/brokerIntegration';
 
 const router = express.Router();
 
@@ -468,8 +470,18 @@ router.get('/holdings/:ticker', (req, res) => {
     } catch { res.json({ ticker, accounts: [], total: 0, avgFillPrice: null, dataSource: 'error' }); }
 });
 
+// ── Feature flags ─────────────────────────────────────────────────────────────
+
+/** What the UI must hide. Broker-backed trading and sync are off unless the owner
+ *  opted in with BROKER_INTEGRATION=on (spec S6); everything else is always available. */
+router.get('/features', (_req, res) => {
+    res.json({ broker_integration: isBrokerIntegrationEnabled() });
+});
+
 // ── Refresh & Sync ────────────────────────────────────────────────────────────
 
+// /refresh-prices is deliberately NOT guarded: the one price refresh (AGENTS rule 25)
+// prices held and watchlisted symbols from anonymous TradingView quotes and needs no broker.
 router.post('/refresh-prices', async (_req, res) => {
     console.log(`[API] Refreshing portfolio prices from TradingView...`);
     try {
@@ -500,7 +512,7 @@ router.post('/refresh-prices', async (_req, res) => {
     }
 });
 
-router.post('/sync-tv', async (_req, res) => {
+router.post('/sync-tv', requireBrokerIntegration, async (_req, res) => {
     console.log('[API] Triggering TradingView portfolio sync...');
     try {
         const snapshot = await brokerSyncService.syncFromTV();
@@ -523,7 +535,7 @@ router.post('/sync-tv', async (_req, res) => {
     }
 });
 
-router.post('/sync-tv/promote', async (req, res) => {
+router.post('/sync-tv/promote', requireBrokerIntegration, async (req, res) => {
     const { merged, snapshot } = req.body;
     if (!Array.isArray(merged) || merged.length === 0) {
         res.status(400).json({ error: 'merged array is required in request body. Call /api/portfolio/sync-tv first.' });
@@ -547,7 +559,7 @@ router.post('/sync-tv/promote', async (req, res) => {
 });
 
 // One-shot: fetch TV snapshot → merge → persist to domain_model.sqlite immediately (no HITL gate)
-router.post('/sync-tv/apply', async (_req, res) => {
+router.post('/sync-tv/apply', requireBrokerIntegration, async (_req, res) => {
     console.log('[API] TV sync + auto-apply to domain_model.sqlite...');
     try {
         const snapshot = await brokerSyncService.syncFromTV();
@@ -586,7 +598,7 @@ router.post('/sync-tv/apply', async (_req, res) => {
     }
 });
 
-router.post('/sync', async (_req, res) => {
+router.post('/sync', requireBrokerIntegration, async (_req, res) => {
     console.log('[API] Auto portfolio sync (TV → cache)...');
     try {
         const result = await brokerSyncService.syncAuto();

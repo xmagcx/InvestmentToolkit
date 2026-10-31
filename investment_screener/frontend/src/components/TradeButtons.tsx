@@ -1,5 +1,6 @@
 import { useState, useEffect } from 'react';
 import { TradePrepModal } from './TradePrepModal';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 interface TradeButtonsProps {
     ticker: string;
@@ -10,6 +11,7 @@ interface TradeButtonsProps {
 }
 
 export function TradeButtons({ ticker, shares = 1, size = 'md', rating, className = '' }: TradeButtonsProps) {
+    const { broker_integration } = useFeatureFlags();
     const [tvConnected, setTvConnected] = useState(false);
     const [modal, setModal] = useState<{ action: 'buy' | 'sell' } | null>(null);
 
@@ -19,6 +21,10 @@ export function TradeButtons({ ticker, shares = 1, size = 'md', rating, classNam
             .then(d => setTvConnected(d.price_source === 'tradingview'))
             .catch(() => {});
     }, []);
+
+    // Screener-only mode (spec S6): order placement is disabled backend-side, so offering
+    // Buy/Sell here could only produce a 410. Nothing is rendered rather than a dead button.
+    if (!broker_integration) return null;
 
     const sm = size === 'sm';
     const cls = sm

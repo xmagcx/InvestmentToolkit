@@ -17,6 +17,13 @@
  *   - writeLog(entries) - Upserts entries into the trade_log_entry SQLite table (Wave 4 cutover)
  *   - makeLogEntry(fields) - Scaffolds a standardized manual/automatic trade log record
  *
+ * Broker kill switch (spec S6):
+ *   Every route here reaches a broker (order placement, working orders, TV order history),
+ *   so the whole router is behind `requireBrokerIntegration`: with BROKER_INTEGRATION unset
+ *   or anything but 'on', each route answers 410 BROKER_DISABLED and no broker is contacted.
+ *   Exceptions: GET /log and GET /audit/today read stored data only and stay available.
+ *   The code below is disabled, not deleted.
+ *
  * Routes Index:
  *   - POST /preflight - Executes preflight checks (size caps, stale data flags) for a trade
  *   - POST /execute - Form-fills order details in TradingView's panel via CDP
@@ -49,8 +56,16 @@ import { DOMAIN_MODEL_DB_FILE } from '../utils/paths';
 import { TradeLogRepository, TradeLogEntryRow } from '../services/TradeLogRepository';
 import { InvestmentRepository } from '../services/InvestmentRepository';
 import { PortfolioRepository } from '../services/PortfolioRepository';
+import { requireBrokerIntegration } from '../utils/brokerIntegration';
 
 const router = express.Router();
+
+// Screener-only by default: nothing in this router runs without BROKER_INTEGRATION=on, except
+// the two reads of stored data (the trade log in SQLite and today's local audit file), which
+// never touch a broker and back the Trade Log page.
+const STORED_DATA_READS = new Set(['/log', '/audit/today']);
+router.use((req, res, next) =>
+  req.method === 'GET' && STORED_DATA_READS.has(req.path) ? next() : requireBrokerIntegration(req, res, next));
 
 const REPO_ROOT = path.resolve(__dirname, '../../../..');
 const PLACE_ORDER_PY = path.join(REPO_ROOT, 'investment_screener/backend/py_services/place_order.py');

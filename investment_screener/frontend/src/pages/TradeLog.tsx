@@ -7,6 +7,7 @@ import {
 import { TradePrepModal } from '../components/TradePrepModal';
 import { PriceSourceBadge } from '../components/PriceSourceBadge';
 import { CopyCommandChip } from '../components/CopyCommandChip';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import {
     TRADE_LOG_PAGE_SIZE, TRADE_LOG_TAB_STATUSES, TRADE_REFRESH_NUDGE_DAYS, TRADE_SYNC_COMMAND, daysSince,
     latestFilledTrade, recentFirst, tradeDateParts, type TradeLogTab,
@@ -267,9 +268,16 @@ export default function TradeLog() {
     const [actionFilter, setActionFilter] = useState<ActionFilter>('all');
     const [selectedIds, setSelectedIds]   = useState<Set<string>>(new Set());
     const [showAll, setShowAll]           = useState(false);
+    // Screener-only mode (spec S6): every broker-backed control on this page is hidden,
+    // because /api/trading/* answers 410 while BROKER_INTEGRATION is not 'on'.
+    const { broker_integration } = useFeatureFlags();
+
     // Questrade is offered only when the owner enabled it in .env; TradingView is always the default.
     const [questradeEnabled, setQuestradeEnabled] = useState(false);
-    useEffect(() => { fetchBrokerSources().then(sources => setQuestradeEnabled(sources.questrade)); }, []);
+    useEffect(() => {
+        if (!broker_integration) return;
+        fetchBrokerSources().then(sources => setQuestradeEnabled(sources.questrade));
+    }, [broker_integration]);
 
     const loadQuotes = useCallback(async (data: TradeLogEntry[]) => {
         const unique = [...new Set(data.filter(e => e.status !== 'cancelled').map(e => e.ticker))];
@@ -299,11 +307,12 @@ export default function TradeLog() {
 
     useEffect(() => {
         load();
+        if (!broker_integration) return;
         // Auto-reconcile against TV on page load — silently, TV may not always be running
         syncTradeLogFromTV()
             .then(r => { if (r.success && r.cancelled > 0) { setSyncMsg(r.message); load(); } })
             .catch(() => {});
-    }, [load]);
+    }, [load, broker_integration]);
     useEffect(() => { setSelectedIds(new Set()); }, [tab]);
 
     const doSyncFromTV = async () => {
@@ -410,7 +419,7 @@ export default function TradeLog() {
                             ? `Latest executed trade: ${lastFill.ticker} ${lastFill.action} on ${tradeDateParts(lastFill.date).day}`
                                 + (lastFillAge != null ? ` (${lastFillAge === 0 ? 'today' : `${lastFillAge} day${lastFillAge === 1 ? '' : 's'} ago`})` : '')
                             : 'No executed trades recorded yet'}
-                        {fillsStale && ' · press Sync from TV if you have traded since'}
+                        {fillsStale && broker_integration && ' · press Sync from TV if you have traded since'}
                     </p>
                 </div>
                 <div className="flex items-center gap-3">
@@ -421,15 +430,17 @@ export default function TradeLog() {
                         </button>
                     )}
                     <PriceSourceBadge priceSource={priceSource} lastRefreshedAt={lastRefreshedAt} />
-                    {questradeEnabled && (
+                    {broker_integration && questradeEnabled && (
                         <CopyCommandChip command={TRADE_SYNC_COMMAND} label="Or refresh via"
                             title="Optional: refresh from Questrade instead. Paste this command to your agent; it needs your Questrade sign-in. Trades already imported from TradingView are not duplicated." />
                     )}
-                    <button onClick={doSyncFromTV} disabled={syncing}
-                        title="Reconcile open orders and import executed trades from TradingView's order history. TradingView will briefly switch through your accounts."
-                        className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-900/40 hover:bg-indigo-800/50 border border-indigo-700/50 text-indigo-400 hover:text-indigo-300 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
-                        <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} /> {syncing ? 'Syncing…' : 'Sync from TV'}
-                    </button>
+                    {broker_integration && (
+                        <button onClick={doSyncFromTV} disabled={syncing}
+                            title="Reconcile open orders and import executed trades from TradingView's order history. TradingView will briefly switch through your accounts."
+                            className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-indigo-900/40 hover:bg-indigo-800/50 border border-indigo-700/50 text-indigo-400 hover:text-indigo-300 text-xs font-semibold transition-colors disabled:opacity-50 disabled:cursor-not-allowed">
+                            <RefreshCw size={12} className={syncing ? 'animate-spin' : ''} /> {syncing ? 'Syncing…' : 'Sync from TV'}
+                        </button>
+                    )}
                     <button onClick={load}
                         className="flex items-center gap-1.5 px-3 py-1.5 rounded-lg bg-slate-800 hover:bg-slate-700 border border-slate-700 text-slate-400 hover:text-white text-xs font-semibold transition-colors">
                         <RefreshCcw size={12} /> Refresh
@@ -627,7 +638,7 @@ export default function TradeLog() {
                                         {/* Actions */}
                                         <td className="px-3 py-2.5">
                                             <div className="flex items-center gap-1 justify-end">
-                                                {isPlanned && (
+                                                {isPlanned && broker_integration && (
                                                     <button
                                                         onClick={() => setExecModal({ ticker: e.ticker, action: e.action as 'buy' | 'sell', shares: e.shares })}
                                                         title="Submit to TradingView"

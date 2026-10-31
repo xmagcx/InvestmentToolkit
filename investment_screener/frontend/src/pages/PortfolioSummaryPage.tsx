@@ -21,6 +21,7 @@ import {
     fetchPortfolioPerformance,
     fetchStrategyAllocation,
     syncAndRefreshPortfolio,
+    refreshPrices,
     type PortfolioSummary,
     type PortfolioPerformance,
     type StrategyAllocation,
@@ -29,6 +30,7 @@ import PortfolioSummaryCards from '../components/PortfolioSummaryCards';
 import PortfolioBreakdown from '../components/PortfolioBreakdown';
 import StrategyAllocationChart from '../components/StrategyAllocationChart';
 import { PriceSourceBadge } from '../components/PriceSourceBadge';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { usePrivacy } from '../context/PrivacyContext';
 import { PRICE_CHANGE_PERIODS } from '../utils/priceChangePeriods';
 import { deltaColor } from '../utils/formatters';
@@ -90,6 +92,7 @@ export default function PortfolioSummaryPage() {
     const [priceSource, setPriceSource] = useState<string | null>(null);
     const [syncing, setSyncing] = useState(false);
     const [refreshNote, setRefreshNote] = useState<{ text: string; ok: boolean } | null>(null);
+    const { broker_integration } = useFeatureFlags();
 
     function loadAll() {
         setLoading(true);
@@ -113,6 +116,19 @@ export default function PortfolioSummaryPage() {
         setSyncing(true);
         setRefreshNote(null);
         try {
+            // Screener-only mode (spec S6): holdings are maintained by hand, so Refresh runs
+            // only the one price refresh (AGENTS rule 25) and never the broker position sync,
+            // which would answer 410 and report a failure the owner cannot act on.
+            if (!broker_integration) {
+                const prices = await refreshPrices();
+                const missing = prices.missingPrices ?? [];
+                setRefreshNote({
+                    text: `prices: ${prices.updated} updated`
+                        + (missing.length ? ` · no quote for ${missing.join(', ')}` : ''),
+                    ok: prices.success && missing.length === 0,
+                });
+                return;
+            }
             const result = await syncAndRefreshPortfolio();
             setRefreshNote({ text: result.message, ok: result.pricesOk });
         } catch (e) {
