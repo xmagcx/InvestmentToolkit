@@ -21,7 +21,7 @@ const NAV_ITEMS = [
     { name: 'Portfolio',         icon: TableProperties, path: '/portfolio' },
     { name: 'Stock Analysis',    icon: BarChart3,       path: '/analysis' },
     { name: 'Oportunidades',     icon: Target,          path: '/opportunities' },
-    { name: 'Daily Brief',        icon: Zap,             path: '/daily-brief' },
+    { name: 'Brief diario',       icon: Zap,             path: '/daily-brief' },
     { name: 'Investment Theses', icon: BookOpen,        path: '/theses' },
     { name: 'Fuentes',           icon: Database,        path: '/sources' },
     { name: 'Compras recientes', icon: ShoppingCart,    path: '/recent-buys' },

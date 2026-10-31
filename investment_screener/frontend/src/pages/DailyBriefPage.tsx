@@ -2,594 +2,293 @@
  * DailyBriefPage.tsx (React Page)
  *
  * Purpose:
- *     Displays the latest daily portfolio brief — macro regime, conviction-scored
- *     holdings (INITIATE / ACCUMULATE / MAINTAIN / TRIM / EXIT / WATCHLIST), earnings calendar
- *     binary event flags, pillar health aggregation, and score delta vs. yesterday.
- *     Reads from /api/daily-brief/latest which serves the JSON snapshot produced by
- *     investment_screener/backend/py_services/daily_brief.py.
+ *     "Brief diario": the day's review list (artboard design/daily-brief/02-lista-del-dia.html).
+ *     A slim market bar in plain Spanish, the tasks ordered from most to least urgent — each one
+ *     says why, what to do and where to go — the TA-stale notice, and a collapsed table with the
+ *     holdings that have nothing pending today. None of it is a buy or sell order.
  *
  * Layer: Frontend / Pages
- * Key Functions: DailyBriefPage, ScoreBadge, DeltaBadge.
- * Key Input Dependencies: daily brief API and canonical recommendation context.
+ * Usage Examples:
+ *     <Route path="daily-brief" element={<DailyBriefPage />} />
+ * Key Functions: DailyBriefPage, MarketBar, TaskRow, UntaskedTable.
+ * Key Input Dependencies:
+ *     - services/dailyBrief.ts (GET /api/daily-brief/today and the regeneration routes, contract S10)
+ *     - services/api.ts addToWatchlist for the "Agregar a seguimiento" link
  */
-import { useRecommendations } from '../contexts/useRecommendations';
+import { useCallback, useEffect, useState } from 'react';
+import { Link } from 'react-router-dom';
+import { AlertTriangle, ChevronRight, RefreshCw } from 'lucide-react';
+import {
+    BriefBusyError,
+    NoBriefError,
+    fetchRegenerationStatus,
+    fetchTodayBrief,
+    startBriefRegeneration,
+    type BriefTask,
+    type DailyBriefToday,
+    type Urgency,
+} from '../services/dailyBrief';
+import { addToWatchlist } from '../services/api';
 
-import { useState, useEffect } from 'react';
-import { AlertTriangle, TrendingUp, TrendingDown, Minus, Calendar, Shield, Activity, RefreshCw, Target, Lock } from 'lucide-react';
-import { TradeButtons } from '../components/TradeButtons';
-import { TABriefCard } from '../components/TABriefCard';
-import { RecommendationFilters } from '../components/RecommendationFilters';
-import { RecentTradeTag } from '../components/RecentTradeTag';
-import { SmartText } from '../components/SmartText';
-import { CopyCommandChip } from '../components/CopyCommandChip';
-import { ValuationStrip } from '../components/RiskRewardCell';
-import { stanceOf } from '../utils/riskReward';
-import { tradeIntent, REC_CHIP_STYLES } from '../utils/recommendationPresentation';
+const POLL_MS = 5000;
 
-interface MacroRegime {
-    regime: 'RISK-ON' | 'NEUTRAL' | 'RISK-OFF';
-    score: number;
-    vix: number;
-    vix_signal: string;
-    spy_vs_200d: number;
-    spy_signal: string;
-    credit_signal: string;
-    details: string[];
-}
-
-interface ConvictionScore {
-    ticker: string;
-    total: number;
-    band: 'INITIATE' | 'ACCUMULATE' | 'MAINTAIN' | 'WATCHLIST' | 'TRIM' | 'EXIT' | 'WATCHLIST';
-    dcf_pts: number;
-    ta_pts: number;
-    weight_gap_pts: number;
-    momentum_pts: number;
-    dcf_action: string | null;
-    pct_to_fv: number | null;
-    rsi: number | null;
-    adx: number | null;
-    vol_bias: number | null;
-    actual_weight: number | null;
-    target_weight: number | null;
-    weight_gap: number | null;
-    flags: string[];
-    ta_staleness_days: number | null;
-}
-
-interface EarningsEntry {
-    ticker: string;
-    earnings_date: string | null;
-    days_away: number | null;
-    flag: 'IMMINENT' | 'APPROACHING' | 'UPCOMING' | 'OK' | 'UNKNOWN';
-}
-
-interface PillarHealth {
-    pillar: string;
-    avg_score: number;
-    count: number;
-    min: number;
-    max: number;
-}
-
-interface StandingDecision {
-    type: string;
-    reason: string;
-    source?: string;
-    maxEntryPrice?: number;
-}
-
-interface ProposedTrade {
-    side: 'buy' | 'sell';
-    ticker: string;
-    approxValueUSD: number;
-}
-
-interface Recommendation {
-    ticker: string;
-    signal: string;
-    score: number;
-    held: boolean;
-    recommendation: string;
-    executionStatus?: string;
-    rationale: string;
-    actionable: boolean;
-    urgency: number;
-    standingDecision: StandingDecision | null;
-    earnings: EarningsEntry | null;
-    proposedTrade: ProposedTrade | null;
-    /** Today's rank group and why (brief_recommendations.py). */
-    priority?: { tier: number; label: string };
-    decisionCheck?: { relation: string; effective: string | null; note: string } | null;
-    /** Level named in the standing decision and whether the price has reached it. */
-    condition?: { met: boolean; note: string } | null;
-    /** Set on the day's top cards when the valuation behind them should be refreshed before acting. */
-    refreshFirst?: { command: string; reasons: string[] } | null;
-}
-
-const PRIORITY_STYLES = [
-    'text-emerald-300 border-emerald-500/40 bg-emerald-500/10',   // ready to act
-    'text-rose-300 border-rose-500/40 bg-rose-500/10',            // needs your decision
-    'text-zinc-400 border-zinc-600/40 bg-zinc-700/20',            // no trade proposed
-    'text-sky-300 border-sky-500/40 bg-sky-500/10',               // waiting
-    'text-zinc-500 border-zinc-700/40 bg-transparent',            // already acted on
-];
-
-interface DailyBrief {
-    date: string;
-    timestamp: string;
-    macro_regime: MacroRegime;
-    ta_refreshed: boolean;
-    conviction_scores: ConvictionScore[];
-    recommendations?: Recommendation[];
-    total_equity?: number;
-    score_deltas: Record<string, number>;
-    pillar_health: PillarHealth[];
-    pillar_deltas: Record<string, number>;
-    earnings_flags: EarningsEntry[];
-    yesterday_date: string | null;
-}
-
-const BAND_STYLES: Record<string, { bg: string; text: string; border: string }> = {
-    ACCUMULATE: { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-    INITIATE:   { bg: 'bg-teal-500/10',    text: 'text-teal-400',    border: 'border-teal-500/30' },
-    BUY:        { bg: 'bg-emerald-500/10', text: 'text-emerald-400', border: 'border-emerald-500/30' },
-    MAINTAIN:       { bg: 'bg-sky-500/10',     text: 'text-sky-400',     border: 'border-sky-500/30' },
-    WATCHLIST:      { bg: 'bg-amber-500/10',   text: 'text-amber-400',   border: 'border-amber-500/30' },
-    TRIM:     { bg: 'bg-orange-500/10',  text: 'text-orange-400',  border: 'border-orange-500/30' },
-    EXIT:       { bg: 'bg-red-500/10',     text: 'text-red-400',     border: 'border-red-500/30' },
+const URGENCY: Record<Urgency, { label: string; rank: number; text: string; dot: string }> = {
+    alta:  { label: 'Alta',  rank: 0, text: 'text-red-400',    dot: 'bg-red-400' },
+    media: { label: 'Media', rank: 1, text: 'text-amber-400',  dot: 'bg-amber-400' },
+    baja:  { label: 'Baja',  rank: 2, text: 'text-slate-400',  dot: 'bg-slate-400' },
 };
 
-const REGIME_STYLES: Record<string, { bg: string; text: string; label: string }> = {
-    'RISK-ON':  { bg: 'bg-emerald-500/15', text: 'text-emerald-300', label: '✅ RISK-ON'  },
-    'NEUTRAL':  { bg: 'bg-amber-500/15',   text: 'text-amber-300',   label: '⚠️ NEUTRAL'  },
-    'RISK-OFF': { bg: 'bg-red-500/15',     text: 'text-red-300',     label: '🔴 RISK-OFF' },
-};
-
-function ScoreBadge({ score }: { score: number }) {
-    const color = score >= 3 ? 'text-emerald-400' : score >= 1 ? 'text-sky-400' :
-                  score === 0 ? 'text-amber-400' : score >= -2 ? 'text-orange-400' : 'text-red-400';
-    return <span className={`font-mono font-bold ${color}`}>{score > 0 ? `+${score}` : score}</span>;
+/** "Viernes 30 de octubre de 2026" — Intl gives "viernes, 30 de octubre de 2026". */
+function longDate(value: Date): string {
+    const parts = new Intl.DateTimeFormat('es-ES', {
+        weekday: 'long', day: 'numeric', month: 'long', year: 'numeric',
+    }).formatToParts(value);
+    const part = (type: Intl.DateTimeFormatPartTypes) => parts.find(p => p.type === type)?.value ?? '';
+    const weekday = part('weekday');
+    return `${weekday.charAt(0).toUpperCase()}${weekday.slice(1)} ${part('day')} de ${part('month')} de ${part('year')}`;
 }
 
-function DeltaBadge({ delta }: { delta: number }) {
-    if (delta === 0) return <span className="text-zinc-500">—</span>;
-    const color = delta > 0 ? 'text-emerald-400' : 'text-red-400';
-    const Icon = delta > 0 ? TrendingUp : TrendingDown;
+function generatedStamp(generatedAt: string): string {
+    const when = new Date(generatedAt);
+    if (Number.isNaN(when.getTime())) return '';
+    const time = when.toLocaleTimeString('es-ES', { hour: '2-digit', minute: '2-digit' });
+    const isToday = when.toDateString() === new Date().toDateString();
+    // Mid-sentence the weekday stays lowercase: "Generado el viernes 30 de octubre…".
+    return isToday ? `Generado hoy a las ${time}` : `Generado el ${longDate(when).toLowerCase()} a las ${time}`;
+}
+
+/** Green for a positive reading, red for a negative one, plain otherwise. */
+function indicatorTone(display: string): string {
+    if (display.startsWith('+')) return 'text-emerald-400';
+    if (display.startsWith('−') || display.startsWith('-')) return 'text-red-400';
+    return 'text-slate-100';
+}
+
+function MarketBar({ market }: { market: DailyBriefToday['market'] }) {
     return (
-        <span className={`flex items-center gap-0.5 ${color} text-xs`}>
-            <Icon size={11} />
-            {delta > 0 ? `+${delta}` : delta}
-        </span>
+        <section aria-label="Contexto del mercado"
+            className="flex flex-wrap items-center gap-5 rounded-xl border border-slate-800 bg-slate-900/80 px-5 py-3 shadow-lg">
+            <p className="whitespace-nowrap text-[15px] font-semibold text-slate-100">
+                <span className="text-amber-400">{market.label}</span>
+            </p>
+            <span aria-hidden="true" className="h-7 w-px bg-slate-700" />
+            <p className="flex-1 text-[13px] text-slate-300">{market.sentence}</p>
+            <span aria-hidden="true" className="h-7 w-px bg-slate-700" />
+            <div className="flex flex-wrap gap-4 text-[13px] text-slate-300">
+                {market.indicators.map(ind => (
+                    <span key={ind.key} className="whitespace-nowrap">
+                        {ind.label}{' '}
+                        <b className={`font-mono font-semibold ${indicatorTone(ind.display)}`}>{ind.display}</b>
+                    </span>
+                ))}
+            </div>
+        </section>
+    );
+}
+
+function TaskRow({ task }: { task: BriefTask }) {
+    const [added, setAdded] = useState(false);
+    const [addError, setAddError] = useState<string | null>(null);
+    const urgency = URGENCY[task.urgency] ?? URGENCY.baja;
+
+    const add = async () => {
+        try {
+            await addToWatchlist(task.ticker);
+            setAdded(true);
+        } catch (err) {
+            setAddError(err instanceof Error ? err.message : String(err));
+        }
+    };
+
+    return (
+        <li className="grid grid-cols-[96px_76px_1fr_190px_170px] items-center gap-4 rounded-xl border border-slate-800 bg-slate-900/80 px-5 py-3.5 shadow-lg">
+            <span className={`inline-flex items-center gap-2 text-xs font-bold uppercase tracking-widest ${urgency.text}`}>
+                <i aria-hidden="true" className={`inline-block h-2.5 w-2.5 rounded-sm ${urgency.dot}`} />
+                {urgency.label}
+            </span>
+            <span className="font-mono text-lg font-bold text-white">{task.ticker}</span>
+            <p className="text-sm text-slate-300">{task.summary}</p>
+            <p className="text-sm font-semibold text-slate-100">
+                {task.action}
+                <span className="mt-1 block w-fit rounded bg-slate-800 px-2 py-0.5 text-xs font-normal text-slate-400">
+                    {task.tag}
+                </span>
+            </p>
+            {task.link === 'analysis' ? (
+                <Link to={`/analysis?ticker=${task.ticker}`}
+                    className="inline-flex min-h-11 items-center justify-center rounded border border-slate-700 px-3.5 text-[13px] font-semibold text-amber-400 hover:bg-slate-800">
+                    Abrir análisis
+                </Link>
+            ) : added ? (
+                <span className="text-[13px] font-semibold text-emerald-300">Agregada a seguimiento</span>
+            ) : (
+                <button type="button" onClick={add}
+                    className="inline-flex min-h-11 items-center justify-center rounded border border-slate-700 px-3.5 text-[13px] font-semibold text-amber-400 hover:bg-slate-800">
+                    Agregar a seguimiento
+                </button>
+            )}
+            {addError && <span className="col-span-5 text-xs text-red-400">{addError}</span>}
+        </li>
+    );
+}
+
+function UntaskedTable({ rows }: { rows: DailyBriefToday['untasked'] }) {
+    return (
+        <details className="group">
+            <summary className="flex min-h-11 cursor-pointer list-none items-center gap-2 px-1 text-[13px] font-semibold text-slate-400 hover:text-slate-200">
+                <ChevronRight aria-hidden="true" size={14} className="transition-transform group-open:rotate-90" />
+                <span>Ver las otras {rows.length} acciones sin tareas para hoy</span>
+            </summary>
+            <div className="mt-2 overflow-x-auto rounded-lg border border-slate-700">
+                <table className="w-full text-[13px]">
+                    <caption className="sr-only">Acciones sin tareas pendientes hoy</caption>
+                    <thead className="bg-slate-800 text-left text-slate-400">
+                        <tr>
+                            <th scope="col" className="px-3 py-2 font-semibold">Ticker</th>
+                            <th scope="col" className="px-3 py-2 font-semibold">Estado</th>
+                            <th scope="col" className="px-3 py-2 text-right font-semibold">RSI</th>
+                            <th scope="col" className="px-3 py-2 font-semibold">Nota</th>
+                        </tr>
+                    </thead>
+                    <tbody className="divide-y divide-slate-700">
+                        {rows.map(row => (
+                            <tr key={row.ticker} className="text-slate-300 hover:bg-slate-800/40">
+                                <td className="px-3 py-2 font-mono">{row.ticker}</td>
+                                <td className="px-3 py-2">{row.status}</td>
+                                <td className="px-3 py-2 text-right font-mono">
+                                    {row.rsi === null ? '—' : row.rsi.toFixed(1).replace('.', ',')}
+                                </td>
+                                <td className="px-3 py-2">{row.note}</td>
+                            </tr>
+                        ))}
+                    </tbody>
+                </table>
+            </div>
+        </details>
     );
 }
 
 export default function DailyBriefPage() {
-    const recommendations = useRecommendations();
-    const [brief, setBrief] = useState<DailyBrief | null>(null);
+    const [brief, setBrief] = useState<DailyBriefToday | null>(null);
     const [loading, setLoading] = useState(true);
-    const [error, setError] = useState<string | null>(null);
-    const [activeFilter, setActiveFilter] = useState<string>('all');
-    const [recommendationFilter, setRecommendationFilter] = useState<string>('all');
-    // Priority order is the default; A–Z is a convenience for finding one ticker.
-    const [cardSort, setCardSort] = useState<'priority' | 'alphabetical'>('priority');
+    const [error, setError] = useState<{ noBrief: boolean; message: string } | null>(null);
+    const [regenerating, setRegenerating] = useState(false);
+    const [feedback, setFeedback] = useState<string | null>(null);
 
-    useEffect(() => {
-        fetch('/api/daily-brief/latest')
-            .then(r => r.ok ? r.json() : Promise.reject(r.statusText))
-            .then(setBrief)
-            .catch(e => setError(String(e)))
+    // No setLoading(true) here: the first render already starts loading, and a reload keeps
+    // the current list on screen until the new one arrives.
+    const load = useCallback(() => {
+        return fetchTodayBrief()
+            .then(data => { setBrief(data); setError(null); })
+            .catch((err: Error) => setError({ noBrief: err instanceof NoBriefError, message: err.message }))
             .finally(() => setLoading(false));
     }, []);
 
-    if (loading) return (
-        <div className="flex items-center justify-center h-64 text-zinc-400">
-            <RefreshCw className="animate-spin mr-2" size={18} /> Loading daily brief...
-        </div>
+    useEffect(() => { void load(); }, [load]);
+
+    // While the background run is going, ask every 5 s and reload the brief when it ends.
+    useEffect(() => {
+        if (!regenerating) return;
+        const timer = setInterval(() => {
+            void fetchRegenerationStatus()
+                .then(status => {
+                    if (status.running) return;
+                    setRegenerating(false);
+                    setFeedback('Brief regenerado');
+                    return load();
+                })
+                .catch((err: Error) => { setRegenerating(false); setFeedback(err.message); });
+        }, POLL_MS);
+        return () => clearInterval(timer);
+    }, [regenerating, load]);
+
+    const regenerate = async () => {
+        setFeedback(null);
+        try {
+            await startBriefRegeneration();
+            setRegenerating(true);
+            setFeedback('Generando el brief…');
+        } catch (err) {
+            setFeedback(err instanceof BriefBusyError ? 'Ya se está generando' : String(err));
+        }
+    };
+
+    const tasks = [...(brief?.tasks ?? [])].sort(
+        (a, b) => (URGENCY[a.urgency]?.rank ?? 9) - (URGENCY[b.urgency]?.rank ?? 9),
     );
-
-    if (error || !brief) return (
-        <div className="p-8">
-            <div className="bg-zinc-900 border border-zinc-700 rounded-lg p-6 text-center">
-                <AlertTriangle className="mx-auto mb-3 text-amber-400" size={32} />
-                <p className="text-zinc-300 mb-2">No daily brief available.</p>
-                <p className="text-zinc-500 text-sm mb-4">
-                    Run the daily brief script to generate today's analysis:
-                </p>
-                <code className="block bg-zinc-800 rounded px-4 py-2 text-emerald-300 text-sm font-mono">
-                    python3 investment_screener/backend/py_services/daily_brief.py
-                </code>
-                {error && <p className="text-red-400 text-xs mt-3">{error}</p>}
-            </div>
-        </div>
-    );
-
-    const macro     = brief.macro_regime;
-    const regStyle  = REGIME_STYLES[macro.regime] ?? REGIME_STYLES['NEUTRAL'];
-    const scores = (brief.conviction_scores ?? []).map(s => ({
-        ...s, band: stanceOf(recommendations[s.ticker]) ?? '—',
-        dcf_action: recommendations[s.ticker]?.valuation ?? null,
-        pct_to_fv: recommendations[s.ticker]?.upside_pct ?? null,
-    }));
-    const deltas    = brief.score_deltas ?? {};
-    const earnings  = (brief.earnings_flags ?? []).filter(e => e.flag !== 'OK' && e.flag !== 'UNKNOWN');
-    const pillars   = brief.pillar_health ?? [];
-    const pDeltas   = brief.pillar_deltas ?? {};
-
-    const filtered = activeFilter === 'all' ? scores :
-        scores.filter(s => s.band === activeFilter.toUpperCase());
-
-    const cards = (brief.recommendations ?? []).map(saved => {
-        const current = recommendations[saved.ticker];
-        // One stance per card (stanceOf): the action, or the hold/wait stance when the owner's
-        // standing decision disagrees. The valuation's own view is a sentence in the rationale.
-        const stance = stanceOf(current);
-        const matches = stance != null && stance === saved.recommendation;
-        return { ...saved, recommendation: stance ?? '—',
-            actionable: matches && saved.actionable,
-            proposedTrade: matches ? saved.proposedTrade : null,
-            rationale: matches ? saved.rationale : current?.reason ?? 'Current recommendation unavailable',
-            executionStatus: matches ? saved.executionStatus : 'REVIEW' };
-    });
-    const matchingCards = recommendationFilter === 'all' ? cards :
-        cards.filter(card => card.recommendation === recommendationFilter);
-    const filteredCards = cardSort === 'priority' ? matchingCards
-        : [...matchingCards].sort((a, b) => a.ticker.localeCompare(b.ticker));
+    const taskCount = brief?.counts?.tasks ?? tasks.length;
 
     return (
-        <div className="p-6 space-y-6 max-w-7xl mx-auto">
+        <div className="mx-auto flex max-w-7xl flex-col gap-3.5 p-6">
 
-            {/* Header */}
-            <div className="flex items-start justify-between">
+            <header className="flex items-start justify-between">
                 <div>
-                    <h1 className="text-2xl font-bold text-white">Daily Portfolio Brief</h1>
-                    <p className="text-zinc-400 text-sm mt-1">
-                        {brief.date}
-                        {brief.yesterday_date && <span className="ml-2 text-zinc-600">· vs {brief.yesterday_date}</span>}
-                        {brief.ta_refreshed && <span className="ml-2 text-emerald-600 text-xs">· TA refreshed</span>}
-                    </p>
-                </div>
-                <div className={`px-4 py-2 rounded-lg border ${regStyle.bg} border-zinc-700`}>
-                    <span className={`font-bold text-lg ${regStyle.text}`}>{regStyle.label}</span>
-                    <span className="text-zinc-400 text-sm ml-2">score={macro.score}</span>
-                </div>
-            </div>
-
-            {/* Macro + Earnings row */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-
-                {/* Macro details */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Shield size={16} className="text-zinc-400" />
-                        <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide">Macro Regime</h2>
-                    </div>
-                    <div className="space-y-1">
-                        {macro.details.map((d, i) => (
-                            <p key={i} className="text-sm text-zinc-400 font-mono">{d}</p>
-                        ))}
-                    </div>
-                    {macro.regime === 'RISK-OFF' && (
-                        <p className="mt-3 text-red-400 text-xs bg-red-500/10 rounded px-3 py-2 border border-red-500/20">
-                            ⛔ Gate all ACCUMULATE signals. Review TRIM / EXIT only today.
-                        </p>
-                    )}
-                    {macro.regime === 'NEUTRAL' && (
-                        <p className="mt-3 text-amber-400 text-xs bg-amber-500/10 rounded px-3 py-2 border border-amber-500/20">
-                            ⚠️ Only score ≥ +4 ACCUMULATE candidates are actionable.
+                    <h1 className="text-xl font-bold text-white">Brief diario</h1>
+                    {brief && (
+                        <p className="text-sm text-slate-400">
+                            {longDate(new Date(`${brief.date}T00:00:00`))} ·{' '}
+                            {taskCount === 1 ? '1 cosa para revisar' : `${taskCount} cosas para revisar`}, de más a menos urgente
                         </p>
                     )}
                 </div>
+                <div className="flex items-center gap-3">
+                    {brief && <p className="text-xs text-slate-400">{generatedStamp(brief.generatedAt)}</p>}
+                    <button type="button" onClick={regenerate} disabled={regenerating}
+                        className="min-h-11 rounded bg-zinc-800 px-3.5 text-xs font-semibold text-zinc-300 hover:bg-zinc-700 disabled:opacity-50">
+                        ↻ Regenerar brief
+                    </button>
+                </div>
+            </header>
 
-                {/* Earnings calendar */}
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Calendar size={16} className="text-zinc-400" />
-                        <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide">
-                            Binary Events {earnings.length > 0 && <span className="text-amber-400">({earnings.length})</span>}
-                        </h2>
+            <p role="status" className="min-h-4 text-xs text-amber-400">{feedback}</p>
+
+            {loading && !brief && !error && (
+                <p className="flex items-center gap-2 text-sm text-slate-500">
+                    <RefreshCw className="animate-spin" size={16} /> Cargando el brief…
+                </p>
+            )}
+
+            {error?.noBrief && (
+                <div className="rounded-xl border border-slate-800 bg-slate-900/80 p-6 text-center">
+                    <p className="text-slate-300">Todavía no hay brief de hoy</p>
+                    <p className="mt-1 text-sm text-slate-400">Genéralo para ver la lista del día.</p>
+                </div>
+            )}
+
+            {error && !error.noBrief && <p className="text-sm text-red-400">{error.message}</p>}
+
+            {brief && (
+                <>
+                    <MarketBar market={brief.market} />
+
+                    <div className="mx-0.5 flex items-baseline justify-between">
+                        <h2 className="text-lg font-semibold text-slate-100">Lista del día</h2>
+                        <p className="text-[13px] text-slate-400">
+                            Ninguna de estas tareas es una orden de compra o venta: son revisiones sugeridas.
+                        </p>
                     </div>
-                    {earnings.length === 0 ? (
-                        <p className="text-zinc-600 text-sm">No earnings within 30 days.</p>
+
+                    {tasks.length === 0 ? (
+                        <p className="rounded-xl border border-slate-800 bg-slate-900/80 p-6 text-center text-sm text-slate-400">
+                            Hoy no hay nada urgente que revisar
+                        </p>
                     ) : (
-                        <div className="space-y-2">
-                            {earnings.map(e => {
-                                const isUrgent = e.flag === 'IMMINENT' || e.flag === 'APPROACHING';
-                                return (
-                                    <div key={e.ticker}
-                                         className={`flex items-center justify-between text-sm px-3 py-1.5 rounded border
-                                             ${isUrgent ? 'bg-amber-500/10 border-amber-500/30' : 'bg-zinc-800 border-zinc-700'}`}>
-                                        <span className="font-mono font-bold text-white">{e.ticker}</span>
-                                        <span className="text-zinc-400">{e.earnings_date ?? '—'}</span>
-                                        <span className={`text-xs px-1.5 py-0.5 rounded font-medium
-                                            ${e.flag === 'IMMINENT' ? 'bg-red-500/20 text-red-300' :
-                                              e.flag === 'APPROACHING' ? 'bg-amber-500/20 text-amber-300' :
-                                              'bg-zinc-700 text-zinc-400'}`}>
-                                            {e.days_away}d · {e.flag}
-                                        </span>
-                                    </div>
-                                );
-                            })}
+                        <ol className="flex flex-col gap-2.5">
+                            {tasks.map(task => <TaskRow key={task.ticker} task={task} />)}
+                        </ol>
+                    )}
+
+                    {!brief.taFresh && (
+                        <div className="flex items-center gap-2.5 rounded border border-slate-700 bg-slate-800 px-3.5 py-2.5 text-[13px] text-amber-400">
+                            <AlertTriangle aria-hidden="true" size={14} />
+                            Análisis técnico no actualizado hoy
+                            {brief.taNote && <span className="text-slate-300">— {brief.taNote}</span>}
                         </div>
                     )}
-                </div>
-            </div>
 
-            {/* Technical Analysis Pulse — TradingView indicators */}
-            {scores.length > 0 && (
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Activity size={16} className="text-zinc-400" />
-                        <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide">
-                            Technical Momentum Cards
-                        </h2>
-                    </div>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-3">
-                        {(scores.filter(s => (s.actual_weight ?? 0) > 0).length > 0
-                            ? scores.filter(s => (s.actual_weight ?? 0) > 0)
-                            : scores
-                        ).slice(0, 8).map(s => (
-                            <TABriefCard
-                                key={s.ticker}
-                                ticker={s.ticker}
-                                rsi={s.rsi}
-                                adx={s.adx}
-                                volBias={s.vol_bias}
-                                emaAlignment={s.ta_pts >= 2 ? 'BULLISH' : s.ta_pts <= -2 ? 'BEARISH' : 'MIXED'}
-                                stalenessDays={s.ta_staleness_days}
-                            />
-                        ))}
-                    </div>
-                </div>
+                    {(brief.untasked ?? []).length > 0 && <UntaskedTable rows={brief.untasked} />}
+                </>
             )}
-
-            {/* Recommendations — summarized actions with rationales */}
-            {(brief.recommendations ?? []).length > 0 && (
-                <section aria-label="Recommendations" className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                    <div className="flex items-center justify-between mb-3">
-                        <div className="flex items-center gap-2">
-                            <Target size={16} className="text-zinc-400" />
-                            <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide">
-                                Recommendations ({filteredCards.length}{recommendationFilter !== 'all' && ` of ${cards.length}`})
-                            </h2>
-                        </div>
-                        <p className="text-xs text-zinc-600">
-                            Review each rationale — buttons open the order prep flow, nothing executes without your confirm.
-                        </p>
-                    </div>
-                    <div className="mb-4 flex flex-wrap items-center justify-between gap-3">
-                        <RecommendationFilters actions={cards.map(card => card.recommendation)}
-                            active={recommendationFilter} onChange={setRecommendationFilter} label="Recommendation filters" />
-                        <div role="group" aria-label="Sort recommendations" className="flex items-center gap-1 text-xs">
-                            <span className="text-zinc-500 mr-1">Sort</span>
-                            {(['priority', 'alphabetical'] as const).map(option => (
-                                <button key={option} type="button" aria-pressed={cardSort === option} onClick={() => setCardSort(option)}
-                                    title={option === 'priority'
-                                        ? 'Ready to act first, then items needing your decision, no-trade items, waiting items, and trades you already made last'
-                                        : 'Ticker A to Z'}
-                                    className={`px-2 py-1 rounded border font-semibold transition-colors ${cardSort === option
-                                        ? 'bg-zinc-700 border-zinc-500 text-white' : 'border-zinc-700 text-zinc-400 hover:text-zinc-200'}`}>
-                                    {option === 'priority' ? 'Priority' : 'A–Z'}
-                                </button>
-                            ))}
-                        </div>
-                    </div>
-                    <div className="space-y-3">
-                        {filteredCards.length === 0 && <p className="py-4 text-sm text-zinc-500">No recommendations match this filter.</p>}
-                        {filteredCards.map(rec => {
-                            const chip = REC_CHIP_STYLES[rec.recommendation] ?? REC_CHIP_STYLES.MAINTAIN;
-                            const intent = tradeIntent(rec.recommendation);
-                            return (
-                                <div key={rec.ticker}
-                                     className="flex flex-col md:flex-row md:items-center gap-3 bg-zinc-800/60 border border-zinc-700/60 rounded-lg px-4 py-3">
-                                    {/* Left: ticker + chips */}
-                                    <div className="flex items-center gap-2 md:w-64 shrink-0 flex-wrap">
-                                        <span className="text-zinc-600 text-xs font-mono w-5">{rec.urgency}.</span>
-                                        <span className="font-mono font-bold text-white text-base">{rec.ticker}</span>
-                                        <span title={rec.decisionCheck?.note || 'Recommendation'}
-                                            className={`px-2 py-0.5 rounded text-xs font-bold border ${chip.bg} ${chip.text} ${chip.border}`}>
-                                            {rec.recommendation.replace('_', ' ')}
-                                        </span>
-                                        <span title="Valuation and chart score; an input to the stance, not a second recommendation"
-                                            className="text-[10px] text-zinc-500">score <ScoreBadge score={rec.score} /></span>
-                                        {rec.priority && (
-                                            <span className={`px-1.5 py-0.5 rounded text-[10px] font-semibold border ${PRIORITY_STYLES[rec.priority.tier] ?? PRIORITY_STYLES[2]}`}>
-                                                {rec.priority.label}
-                                            </span>
-                                        )}
-                                        <RecentTradeTag rec={recommendations[rec.ticker]} />
-                                    </div>
-
-                                    {/* Middle: rationale + standing decision */}
-                                    <div className="flex-1 min-w-0">
-                                        {/* Same valuation visuals as the holdings tables, from the same record. */}
-                                        <ValuationStrip rec={recommendations[rec.ticker]} />
-                                        <p className="text-sm text-zinc-300 leading-snug"><SmartText text={rec.rationale} /></p>
-                                        {rec.refreshFirst && (
-                                            <div className="mt-1.5 flex flex-wrap items-center gap-2">
-                                                <CopyCommandChip highlight command={rec.refreshFirst.command} label="Refresh the analysis first:"
-                                                    title="Copies the command. Run it in the agent; it walks you through the result and records your decision." />
-                                                <span className="text-xs text-amber-300/80">{rec.refreshFirst.reasons.join(' · ')}</span>
-                                            </div>
-                                        )}
-                                        {rec.standingDecision && (
-                                            <p className="mt-1 flex items-center gap-1.5 text-xs text-amber-400/90">
-                                                <Lock size={11} className="shrink-0" />
-                                                Standing decision · {rec.standingDecision.type.replace(/_/g, ' ')}
-                                                {rec.standingDecision.source && (
-                                                    <span className="text-zinc-600">— {rec.standingDecision.source}</span>
-                                                )}
-                                            </p>
-                                        )}
-                                    </div>
-
-                                    {/* Right: proposed value + action buttons */}
-                                    <div className="flex items-center gap-3 shrink-0">
-                                        {rec.proposedTrade && (
-                                            <span className="text-sm font-mono text-zinc-400">
-                                                ~${rec.proposedTrade.approxValueUSD.toLocaleString(undefined, { maximumFractionDigits: 0 })}
-                                            </span>
-                                        )}
-                                        {rec.actionable && intent ? (
-                                            <TradeButtons ticker={rec.ticker} rating={intent.rating} size="md" />
-                                        ) : (
-                                            <span className="text-xs text-zinc-600 italic px-2">
-                                                {rec.executionStatus === 'QUEUED' ? 'macro-gated' : 'no trade without your direction'}
-                                            </span>
-                                        )}
-                                    </div>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </section>
-            )}
-
-            {/* Pillar health */}
-            {pillars.length > 0 && (
-                <div className="bg-zinc-900 border border-zinc-800 rounded-lg p-4">
-                    <div className="flex items-center gap-2 mb-3">
-                        <Activity size={16} className="text-zinc-400" />
-                        <h2 className="text-sm font-semibold text-zinc-300 uppercase tracking-wide">Pillar Health</h2>
-                    </div>
-                    <div className="grid grid-cols-2 md:grid-cols-4 gap-3">
-                        {pillars.map(p => {
-                            const pd = pDeltas[p.pillar];
-                            const avgColor = p.avg_score >= 2 ? 'text-emerald-400' :
-                                            p.avg_score >= 0 ? 'text-sky-400' :
-                                            p.avg_score >= -1 ? 'text-amber-400' : 'text-red-400';
-                            return (
-                                <div key={p.pillar} className="bg-zinc-800 rounded-lg p-3 border border-zinc-700">
-                                    <p className="text-xs text-zinc-500 truncate mb-1">{p.pillar}</p>
-                                    <div className="flex items-center justify-between">
-                                        <span className={`text-xl font-bold font-mono ${avgColor}`}>
-                                            {p.avg_score > 0 ? `+${p.avg_score}` : p.avg_score}
-                                        </span>
-                                        {pd !== undefined && pd !== 0 && (
-                                            <DeltaBadge delta={Math.round(pd)} />
-                                        )}
-                                    </div>
-                                    <p className="text-xs text-zinc-600 mt-1">
-                                        n={p.count} · [{p.min > 0 ? '+' : ''}{p.min}→{p.max > 0 ? '+' : ''}{p.max}]
-                                    </p>
-                                </div>
-                            );
-                        })}
-                    </div>
-                </div>
-            )}
-
-            {/* Conviction scores table */}
-            <div className="bg-zinc-900 border border-zinc-800 rounded-lg">
-                {/* Filter bar */}
-                <div className="flex items-center gap-2 p-4 border-b border-zinc-800 flex-wrap">
-                    <span className="text-xs text-zinc-500 mr-1">Filter:</span>
-                    <RecommendationFilters actions={scores.map(score => score.band)}
-                        active={activeFilter} onChange={setActiveFilter} label="Conviction filters" />
-                </div>
-
-                {/* Table */}
-                <div className="overflow-x-auto">
-                    <table className="w-full text-sm">
-                        <thead>
-                            <tr className="text-xs text-zinc-500 uppercase tracking-wide border-b border-zinc-800">
-                                <th className="text-left px-4 py-3">Ticker</th>
-                                <th className="text-center px-3 py-3">Score</th>
-                                <th className="text-center px-3 py-3">Band</th>
-                                <th className="text-center px-3 py-3"><SmartText text="DCF" /></th>
-                                <th className="text-center px-3 py-3">TA</th>
-                                <th className="text-center px-3 py-3">Gap</th>
-                                <th className="text-center px-3 py-3">Mom</th>
-                                <th className="text-left px-3 py-3"><SmartText text="DCF Action" /></th>
-                                <th className="text-center px-3 py-3">%→FV</th>
-                                <th className="text-center px-3 py-3">RSI</th>
-                                <th className="text-center px-3 py-3">ADX</th>
-                                <th className="text-center px-3 py-3">Wgt Gap</th>
-                                <th className="text-center px-3 py-3">Δ</th>
-                                <th className="text-left px-3 py-3">Flags</th>
-                            </tr>
-                        </thead>
-                        <tbody>
-                            {filtered.map(s => {
-                                const bs = BAND_STYLES[s.band] ?? BAND_STYLES.MAINTAIN;
-                                const delta = deltas[s.ticker];
-                                return (
-                                    <tr key={s.ticker}
-                                        className="border-b border-zinc-800/50 hover:bg-zinc-800/40 transition-colors">
-                                        <td className="px-4 py-2.5 font-mono font-bold text-white">{s.ticker}</td>
-                                        <td className="px-3 py-2.5 text-center">
-                                            <ScoreBadge score={s.total} />
-                                        </td>
-                                        <td className="px-3 py-2.5 text-center">
-                                            <span className={`px-2 py-0.5 rounded text-xs font-medium border ${bs.bg} ${bs.text} ${bs.border}`}>
-                                                {s.band}
-                                            </span>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-center text-zinc-400 font-mono text-xs">
-                                            {s.dcf_pts > 0 ? `+${s.dcf_pts}` : s.dcf_pts}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-center text-zinc-400 font-mono text-xs">
-                                            {s.ta_pts > 0 ? `+${s.ta_pts}` : s.ta_pts}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-center text-zinc-400 font-mono text-xs">
-                                            {s.weight_gap_pts > 0 ? `+${s.weight_gap_pts}` : s.weight_gap_pts}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-center text-zinc-400 font-mono text-xs">
-                                            {s.momentum_pts > 0 ? `+${s.momentum_pts}` : s.momentum_pts}
-                                        </td>
-                                        <td className="px-3 py-2.5">
-                                            <span className={`text-xs font-medium
-                                                ${(s.dcf_action ?? '').toUpperCase() === 'BUY' || (s.dcf_action ?? '').toUpperCase() === 'ACCUMULATE'
-                                                    ? 'text-emerald-400'
-                                                    : (s.dcf_action ?? '').toUpperCase() === 'SELL'
-                                                    ? 'text-red-400'
-                                                    : (s.dcf_action ?? '').toUpperCase() === 'TRIM'
-                                                    ? 'text-orange-400'
-                                                    : 'text-zinc-400'}`}>
-                                                {s.dcf_action ?? '—'}
-                                            </span>
-                                        </td>
-                                        <td className="px-3 py-2.5 text-center font-mono text-xs">
-                                            {s.pct_to_fv !== null
-                                                ? <span className={s.pct_to_fv > 0 ? 'text-emerald-400' : 'text-red-400'}>
-                                                    {s.pct_to_fv > 0 ? '+' : ''}{s.pct_to_fv?.toFixed(1)}%
-                                                  </span>
-                                                : <span className="text-zinc-600">—</span>}
-                                        </td>
-                                        <td className={`px-3 py-2.5 text-center font-mono text-xs
-                                            ${(s.rsi ?? 50) < 35 ? 'text-emerald-400' :
-                                              (s.rsi ?? 50) > 70 ? 'text-red-400' : 'text-zinc-400'}`}>
-                                            {s.rsi?.toFixed(1) ?? '—'}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-center font-mono text-xs text-zinc-400">
-                                            {s.adx?.toFixed(1) ?? '—'}
-                                        </td>
-                                        <td className={`px-3 py-2.5 text-center font-mono text-xs
-                                            ${(s.weight_gap ?? 0) > 0.5 ? 'text-emerald-400' :
-                                              (s.weight_gap ?? 0) < -0.5 ? 'text-orange-400' : 'text-zinc-400'}`}>
-                                            {s.weight_gap !== null
-                                                ? `${s.weight_gap > 0 ? '+' : ''}${s.weight_gap.toFixed(1)}%`
-                                                : '—'}
-                                        </td>
-                                        <td className="px-3 py-2.5 text-center">
-                                            {delta !== undefined ? <DeltaBadge delta={delta} /> : <Minus size={12} className="text-zinc-700 mx-auto" />}
-                                        </td>
-                                        <td className="px-3 py-2.5">
-                                            <div className="flex flex-wrap gap-1">
-                                                {s.flags.slice(0, 3).map(f => (
-                                                    <span key={f} className="text-xs bg-zinc-800 text-zinc-400 px-1.5 py-0.5 rounded font-mono">
-                                                        {f}
-                                                    </span>
-                                                ))}
-                                            </div>
-                                        </td>
-                                    </tr>
-                                );
-                            })}
-                        </tbody>
-                    </table>
-                </div>
-            </div>
         </div>
     );
 }

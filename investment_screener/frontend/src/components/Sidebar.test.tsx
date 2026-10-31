@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  * Purpose: the main navigation no longer offers the Trade Log, the manual portfolio
  * maintainer is labelled "Gestión de activos", and "Oportunidades" links to the screener
- * before the Daily Brief.
+ * before the Brief diario.
  * Layer: Frontend unit. Usage: npx vitest run src/components/Sidebar.test.tsx
  */
 import { afterEach, describe, expect, it, vi } from 'vitest';
@@ -34,7 +34,7 @@ describe('Sidebar navigation', () => {
         expect(screen.queryByRole('link', { name: /^Portafolio$/ })).toBeNull();
     });
 
-    it('offers "Oportunidades" before the Daily Brief', () => {
+    it('offers "Oportunidades" before the Brief diario', () => {
         render(
             <PrivacyProvider>
                 <MemoryRouter>
