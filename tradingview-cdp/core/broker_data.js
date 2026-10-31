@@ -25,6 +25,7 @@
  */
 
 import { evaluate, evaluateAsync } from '../connection.js';
+import { requireSession } from './session.js';
 import { parseOrderHistoryTable } from './order_history.js';
 import { settleAccountReads, switchWithRetry } from './account_reads.js';
 
@@ -116,6 +117,7 @@ async function _getAccountsOnce() {
  * @returns {Promise<object[]>} List of parsed account descriptor objects
  */
 export async function getAccounts() {
+  await requireSession('broker accounts');
   /**
    * Reads the dropdown until two consecutive reads agree (account_reads.js), then
    * maps and parses matched account type names, IDs, and raw text representations.
@@ -188,6 +190,7 @@ async function closeDropdown() {
  * @returns {Promise<object>} Status report of the switch attempt
  */
 export async function switchAccount(accountType) {
+  await requireSession('broker account switch');
   /**
    * Clicks the account dropdown button, queries lists for matching account prefix,
    * dispatches real mouse event sequence to select it, and waits 1.2s for data load.
@@ -229,6 +232,7 @@ export async function switchAccount(accountType) {
  * @returns {Promise<object>} Active account detail object containing type and ID
  */
 export async function activeAccount() {
+  await requireSession('broker active account');
   /**
    * Queries the account name element in the DOM and parses account type
    * and ID numerical string using regex.
@@ -257,6 +261,7 @@ export async function activeAccount() {
  * @returns {Promise<object>} Parsed balances object mapping CAD/USD amounts
  */
 export async function getBalances() {
+  await requireSession('broker balances');
   /**
    * Switches to 'Account summary' tab, queries rows, maps labels and CAD/USD cell columns,
    * assigns them into named balance fields, and reverts to the 'Positions' tab.
@@ -331,6 +336,7 @@ export async function getBalances() {
  * @returns {Promise<object>} Object listing parsed positions and raw row counts
  */
 export async function getPositions() {
+  await requireSession('broker positions');
   /**
    * Clicks 'Positions' tab, recursively clicks 'Show more' button (up to 15 times)
    * to expand all rows, queries the table rows, and parses symbol details.
@@ -401,6 +407,7 @@ export async function getPositions() {
  * @returns {Promise<object[]>} List of parsed order detail objects
  */
 export async function getOrders() {
+  await requireSession('broker orders');
   /**
    * Switches to 'Orders' tab, parses symbol, side, qty, order type, and status
    * fields, filters out invalid rows, and switches back to the 'Positions' tab.
@@ -466,6 +473,7 @@ async function getAccountSnapshot() {
  * @returns {Promise<object>} Consolidated portfolio data including snapshots list
  */
 export async function getPortfolio() {
+  await requireSession('broker portfolio');
   /**
    * Discovers accounts, iterates through each to switch active account views,
    * captures snapshots, and aggregates positions with account tags before returning.
@@ -518,6 +526,7 @@ export async function getPortfolio() {
  * @returns {Promise<object>} { orders, expectedCount, missingColumns } or { error }
  */
 export async function getOrderHistory() {
+  await requireSession('broker order history');
   /**
    * Opens Order history, selects its Filled sub-tab, reads the visible table that
    * has Update Time and Order ID columns, and returns to the Positions tab.
@@ -568,6 +577,7 @@ export async function getOrderHistory() {
  * @returns {Promise<object>} { dataSource, timestamp, accounts: [{ accountType, orders, expectedCount, error? }] }
  */
 export async function getOrderHistoryAllAccounts() {
+  await requireSession('broker order history (all accounts)');
   /**
    * Iterates the account dropdown, reads each account's Order history, then
    * switches back to the originally selected account.
@@ -600,6 +610,7 @@ export async function getOrderHistoryAllAccounts() {
  * @returns {Promise<object>} Grand totals and per-account breakdown details in USD
  */
 export async function getAccountTotals() {
+  await requireSession('broker account totals');
   /**
    * Switches to each account sequentially, reads parsed balances, extracts combined
    * or base USD/CAD values, accumulates cash/market/equity sums, and reverts to the primary account.
@@ -644,6 +655,7 @@ export async function getAccountTotals() {
  * @returns {Promise<object>} Diagnostic details on tabs, rows, and selected account
  */
 export async function inspectBrokerPanel() {
+  await requireSession('broker panel inspection');
   /**
    * Evaluates browser DOM to query round tab buttons, count row columns, check
    * position row class presence, and extract selected account name.

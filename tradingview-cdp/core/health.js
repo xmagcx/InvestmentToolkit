@@ -2,7 +2,8 @@
  * health.js - Core health check logic.
  * 
  * Purpose:
- *   Performs diagnostics on the CDP connection and TradingView chart layout API.
+ *   Performs diagnostics on the CDP connection, TradingView chart layout API, and
+ *   whether the page has a TradingView session (tv_authenticated / session_mode).
  * 
  * Key Input Dependencies:
  *   None (reads live state from TradingView Desktop on port 9222 via CDP)
@@ -11,6 +12,7 @@
  *   None (returns diagnostic report object)
  */
 import { getClient, getTargetInfo, evaluate } from '../connection.js';
+import { getSessionState } from './session.js';
 
 /**
  * Check health of the CDP connection and retrieve active chart state metadata.
@@ -24,6 +26,7 @@ export async function healthCheck() {
    */
   await getClient();
   const target = await getTargetInfo();
+  const { authenticated } = await getSessionState();
 
   const state = await evaluate(`
     (function() {
@@ -55,5 +58,7 @@ export async function healthCheck() {
     chart_resolution: state?.resolution || 'unknown',
     chart_type: state?.chartType ?? null,
     api_available: state?.apiAvailable ?? false,
+    tv_authenticated: authenticated,
+    session_mode: authenticated === true ? 'authenticated' : authenticated === false ? 'anonymous' : 'unknown',
   };
 }

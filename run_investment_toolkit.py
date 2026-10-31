@@ -25,6 +25,10 @@ Usage Examples:
 
     # Launch servers without launching TradingView Desktop:
     python3 run_investment_toolkit.py --no-tv
+
+    # Every launch also runs daily_brief.py in the background (log: .runtime/daily_brief.log);
+    # skip it with:
+    python3 run_investment_toolkit.py --no-daily-brief
 """
 
 import os
@@ -240,8 +244,35 @@ def install_and_verify_dependencies(process_env: Dict[str, str]) -> None:
     Colors.print("✅ Python dependencies OK.", Colors.GREEN)
 
 
+DAILY_BRIEF_SCRIPT: str = os.path.join(APP_DIR, "backend", "py_services", "daily_brief.py")
+DAILY_BRIEF_LOG: str = os.path.join(ROOT_DIR, ".runtime", "daily_brief.log")
+
+
+# External comment: Runs the daily brief in the background on every start
+def start_daily_brief(process_env: Dict[str, str], log_path: str = DAILY_BRIEF_LOG,
+                      popen: Any = subprocess.Popen) -> Optional[Any]:
+    """
+    Starts daily_brief.py detached from the service loop: it neither blocks the launch nor is
+    supervised (its exit never stops the servers). Output goes to log_path. A spawn failure
+    only warns: the app must start even when the brief cannot.
+    """
+    venv_python = os.path.join(ROOT_DIR, "venv", "Scripts" if IS_WINDOWS else "bin",
+                               "python.exe" if IS_WINDOWS else "python")
+    python = venv_python if os.path.exists(venv_python) else "python3"
+    try:
+        os.makedirs(os.path.dirname(log_path), exist_ok=True)
+        log = open(log_path, "w", encoding="utf-8")
+        proc = popen([python, DAILY_BRIEF_SCRIPT], env=process_env, stdout=log,
+                     stderr=subprocess.STDOUT, cwd=ROOT_DIR)
+    except OSError as exc:
+        Colors.print(f"⚠️  Daily brief not started: {exc}", Colors.YELLOW)
+        return None
+    Colors.print(f"📰 Daily brief running in background (log: {log_path})", Colors.CYAN)
+    return proc
+
+
 # External comment: Concurrently starts backend and frontend servers
-def start_services_loop(process_env: Dict[str, str]) -> None:
+def start_services_loop(process_env: Dict[str, str], run_daily_brief: bool = True) -> None:
     """
     Spawns Node backend and Vite frontend services and monitors their lifecycles.
     """
@@ -249,12 +280,16 @@ def start_services_loop(process_env: Dict[str, str]) -> None:
     clear_ports([3001, 5173])
 
     processes: List[subprocess.Popen] = []
+    brief_proc = None
     try:
         backend_proc = subprocess.Popen(["npm", "run", "start", "-w", "backend"], env=process_env, shell=False, cwd=APP_DIR)
         processes.append(backend_proc)
 
         frontend_proc = subprocess.Popen(["npm", "run", "dev", "-w", "frontend"], env=process_env, shell=False, cwd=APP_DIR)
         processes.append(frontend_proc)
+
+        # Not appended to `processes`: the brief finishing (or failing) must not stop the servers.
+        brief_proc = start_daily_brief(process_env) if run_daily_brief else None
 
         Colors.print("✅ Services Running!", Colors.GREEN)
         Colors.print("Backend:  http://localhost:3001")
@@ -273,6 +308,8 @@ def start_services_loop(process_env: Dict[str, str]) -> None:
                     subprocess.run(["taskkill", "/F", "/T", "/PID", str(p.pid)], stdout=subprocess.DEVNULL, stderr=subprocess.DEVNULL)
                 else:
                     p.terminate()
+        if brief_proc is not None and brief_proc.poll() is None:
+            brief_proc.terminate()
         Colors.print("All services stopped.", Colors.GREEN)
 
 
@@ -304,17 +341,25 @@ def prepare_databases(process_env: Dict[str, str]) -> None:
     run_command([sys.executable, os.path.join(py_services, "schema_migrator.py")], env=process_env)
 
 
-# External comment: CLI execution coordinator
-def main() -> None:
-    """
-    Main execution loop for launching the toolkit.
-    """
+# External comment: Command-line options of the launcher
+def build_arg_parser() -> "argparse.ArgumentParser":
+    """Return the launcher's argument parser."""
     import argparse
     parser = argparse.ArgumentParser(description="Unified startup launcher for Investment Toolkit suite.")
     parser.add_argument("--skip-deps", action="store_true", help="Skip npm install and python module re-verification")
     parser.add_argument("--no-tv", action="store_true", help="Skip launching TradingView Desktop")
     parser.add_argument("--skip-build", action="store_true", help="Skip building backend (if already built)")
-    args = parser.parse_args()
+    parser.add_argument("--no-daily-brief", action="store_true",
+                        help="Do not run daily_brief.py in the background at startup")
+    return parser
+
+
+# External comment: CLI execution coordinator
+def main() -> None:
+    """
+    Main execution loop for launching the toolkit.
+    """
+    args = build_arg_parser().parse_args()
 
     Colors.print("🚀 Launching Investment Screener...", Colors.GREEN)
 
@@ -352,7 +397,7 @@ def main() -> None:
     prepare_databases(process_env)
 
     # 7. Start active servers
-    start_services_loop(process_env)
+    start_services_loop(process_env, run_daily_brief=not args.no_daily_brief)
 
 
 if __name__ == "__main__":

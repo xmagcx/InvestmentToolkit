@@ -41,6 +41,7 @@ import { PriceSourceBadge } from '../components/PriceSourceBadge';
 import { ReduceCandidatesChip } from '../components/RiskRewardCell';
 import { TradeButtons } from '../components/TradeButtons';
 import { TradeLogModal } from '../components/TradeLogModal';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 import { ColumnPicker } from '../components/positions/ColumnPicker';
 import { COLUMNS, type TableRow } from '../components/positions/columns';
 import { moneyText } from '../components/positions/positionMath';
@@ -80,6 +81,9 @@ export default function PortfolioPage() {
     const [showReview, setShowReview] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
     const [logTicker, setLogTicker] = useState<string | null>(null);
+    // The trade journal posts to /api/trading/log, which is off with the broker; trades are
+    // recorded on the Portafolio page instead.
+    const { broker_integration: brokerOn } = useFeatureFlags();
 
     const prefs = useColumnPrefs(STORAGE_KEY, COLUMNS, PORTFOLIO_PRESET.columns);
 
@@ -250,8 +254,8 @@ export default function PortfolioPage() {
                             <TradeButtons ticker={row.ticker} size="sm" shares={suggestedShares({
                                 actualPct: row.actualPct, targetPct: row.targetPct,
                                 price: row.livePrice ?? row.currentPrice, portfolioValue: extras.totals.usd })} />
-                            <button type="button" onClick={() => setLogTicker(row.ticker)} title="Log a trade to journal"
-                                className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-400 hover:bg-zinc-700 hover:text-amber-400">Log</button>
+                            {brokerOn && <button type="button" onClick={() => setLogTicker(row.ticker)} title="Log a trade to journal"
+                                className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-400 hover:bg-zinc-700 hover:text-amber-400">Log</button>}
                             <button type="button" onClick={() => navigate(`/analysis?ticker=${row.ticker}`)} title="Analyze in Stock Analysis"
                                 className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-400 hover:bg-zinc-700 hover:text-white">Analyze</button>
                         </>
@@ -263,7 +267,7 @@ export default function PortfolioPage() {
             {showThesis && <InvestmentThesisModal onClose={() => setShowThesis(false)} />}
             {showReview && <LatestReviewModal onClose={() => setShowReview(false)} />}
             {showGuide && <AgentGuideModal onClose={() => setShowGuide(false)} />}
-            {logTicker && <TradeLogModal ticker={logTicker} onClose={() => setLogTicker(null)} />}
+            {brokerOn && logTicker && <TradeLogModal ticker={logTicker} onClose={() => setLogTicker(null)} />}
         </div>
     );
 }

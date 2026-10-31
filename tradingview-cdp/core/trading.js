@@ -14,6 +14,7 @@
  */
 
 import { evaluate, evaluateAsync, getClient } from '../connection.js';
+import { requireSession } from './session.js';
 import { captureScreenshot } from './capture.js';
 import { appendAuditEvent } from './audit.js';
 
@@ -118,6 +119,7 @@ const REACT_INPUT_SETTER = `Object.getOwnPropertyDescriptor(HTMLInputElement.pro
  * @returns {Promise<object>} Status metrics payload including connected status, type and CAD/USD buying power
  */
 export async function getBrokerStatus() {
+  await requireSession('broker status');
   /**
    * Evaluates browser DOM to locate Broker SVG indicators, parse Cash/TFSA account dropdowns,
    * and read raw text nodes to match CAD/USD buying power levels.
@@ -708,6 +710,7 @@ export async function verifyOrderForm({ intendedShares, intendedLimitPrice = nul
  * @returns {Promise<object>} Confirmation report details card
  */
 export async function preflight({ ticker, action, shares, orderType, limitPrice, accountType }) {
+  await requireSession('order preflight');
   /**
    * Resolves connected broker status, maps currency CAD/USD by symbol suffix,
    * derives cost estimate, validates buying power sufficiency, and logs auditing markers.
@@ -777,6 +780,7 @@ export async function preflight({ ticker, action, shares, orderType, limitPrice,
  * @returns {Promise<object>} Dialog details with screenshot path and submit text
  */
 export async function executeOrder({ ticker, action, shares, orderType, limitPrice, accountType }) {
+  await requireSession('order execution');
   /**
    * Closes any open dialogs, switches active symbol, selects target account, triggers dialog,
    * configures type, inputs shares and price, checks GTC, verifies form, captures screenshot, and logs.
@@ -941,6 +945,7 @@ export async function verifyOrderInBrokerPanel({ ticker, action, limitPrice } = 
  * @returns {Promise<object>} Status report
  */
 export async function confirmAndSubmit({ ticker, action, limitPrice } = {}) {
+  await requireSession('order submit');
   /**
    * Submits form inputs, logs confirmed submit event, waits 1.5s for broker update,
    * calls verifyOrderInBrokerPanel, and writes audit trail markers.
@@ -1040,6 +1045,7 @@ async function _findOrderRowAndAct({ orderId, ticker, buttonIndex }) {
  * @returns {Promise<object>} Cancellation outcome verification details
  */
 export async function cancelOrder({ orderId, ticker, action, limitPrice } = {}) {
+  await requireSession('order cancel');
   /**
    * Attempts to click cancel button without navigation, falls back to clicking Orders tab
    * and Inactive/Working, dispatches cancel clicks, polls confirm modal, and verifies disappearance.
@@ -1136,6 +1142,7 @@ export async function cancelOrder({ orderId, ticker, action, limitPrice } = {}) 
  * @returns {Promise<object>} Modification details with review screenshot path
  */
 export async function modifyOrder({ orderId, ticker, action, newLimitPrice, newShares } = {}) {
+  await requireSession('order modify');
   /**
    * Clicks edit pencil icon, captures initial form state, focuses price/qty inputs,
    * inputs new values via insertText, and takes a full review screenshot.
@@ -1255,6 +1262,7 @@ export async function modifyOrder({ orderId, ticker, action, newLimitPrice, newS
  * @returns {Promise<object>} Status report
  */
 export async function submitModify({ ticker, action, limitPrice, newPrice } = {}) {
+  await requireSession('order modify submit');
   /**
    * Resolves submit/apply modify buttons, confirms sub-dialogs, waits 1.5s,
    * verify changes inside Orders panel, and appends audit logs.
@@ -1331,6 +1339,7 @@ export async function submitModify({ ticker, action, limitPrice, newPrice } = {}
  * @returns {Promise<object>} Status report containing orders list
  */
 export async function listOpenOrders() {
+  await requireSession('open orders');
   /**
    * Clicks Orders tab, traverses Working and Inactive rows sequentially,
    * parses symbol, side, limitPrice, and orderId columns, and aggregates results.

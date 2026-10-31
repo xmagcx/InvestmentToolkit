@@ -184,6 +184,10 @@ function handleError(err) {
    * Helper function to format and log execution errors, exiting with code 1 or 2.
    */
   const message = err.message || String(err);
+  if (err.code === 'TV_SESSION_REQUIRED') {
+    console.error(JSON.stringify({ success: false, error: message, code: 'TV_SESSION_REQUIRED' }, null, 2));
+    process.exit(1);
+  }
   if (/CDP|connection|ECONNREFUSED|not running/i.test(message)) {
     console.error(JSON.stringify({ success: false, error: message }, null, 2));
     process.exit(2);

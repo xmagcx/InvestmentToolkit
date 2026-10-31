@@ -51,6 +51,18 @@ Commands can be invoked directly from this directory via `node cli.js [command] 
 
 ---
 
+## 🔓 Anonymous mode (no TradingView login)
+
+The engine works against a TradingView page nobody is logged into. `status` reports the session (`tv_authenticated`: `true` / `false` / `null` when the page does not expose the flag, and `session_mode`: `authenticated` / `anonymous` / `unknown`). Only the boolean `window.is_authenticated` is read — never the username, user id or auth token.
+
+| Works anonymously | Needs a TradingView session |
+|-------------------|-----------------------------|
+| `status`, `quote`, `chart` (all subcommands), `sweep`, `pine`, `screenshot` | `watchlist` (open/get/add/remove/create/delete), `alert` (list/create/delete), broker reads in `core/broker_data.js` (accounts, balances, positions, orders, portfolio, order history, account totals, panel inspection), trading in `core/trading.js` (broker status, preflight, execute, submit, cancel, modify, open orders) |
+
+A session-only command run on an anonymous page fails fast instead of failing obscurely in DOM automation: the CLI prints `{ "success": false, "error": "...", "code": "TV_SESSION_REQUIRED" }` to stderr and exits `1`, and Python callers importing the core modules directly get the same error. An unknown session state (`null`) proceeds, so nothing changes on pages that do not expose the flag.
+
+---
+
 ## 📂 Core Architecture (`core/`)
 
 The core automation routines are split into specialized modules:
@@ -63,6 +75,7 @@ The core automation routines are split into specialized modules:
 *   **[`core/capture.js`](core/capture.js)**: Takes page screenshots (saved to `PortfolioAnalysis/screenshots/`).
 *   **[`core/chart.js`](core/chart.js)**: Manages chart settings, layouts, active symbols, timeframes, and indicators.
 *   **[`core/data.js`](core/data.js)**: Extracts quotes, historical OHLCV data, and loaded study configurations.
+*   **[`core/session.js`](core/session.js)**: Reads the page login flag and guards session-only features with `TV_SESSION_REQUIRED`.
 *   **[`core/pine.js`](core/pine.js)**: Handles Monaco Editor injections, compiling indicator overlays, and retrieving source codes.
 *   **[`core/sweep.js`](core/sweep.js)**: Performs batch indicator scanning (RSI, Squeeze setups, volume biases) in a single CDP session.
 *   **[`core/trading.js`](core/trading.js)**: Automates order placements (Shares, Limit Price, TIF / GTC duration) with form validation and verification.

@@ -14,6 +14,7 @@
  *     - performSearch() - Orchestrates the full data fetching lifecycle for a ticker, including financials and AI thesis
  *     - loadAIThesis() - Retrieves and synchronizes existing AI-generated projections and rationale from storage
  *     - handleInputSubmit() - Updates the URL search parameters to trigger a new stock search
+ *     - Technicals tab hosts the anonymous public TradingView embeds (TradingViewWidget), collapsed by default
  */
 import { useRecommendations } from '../contexts/useRecommendations';
 
@@ -35,6 +36,7 @@ import { AgentResearchPromptCard } from '../components/AgentResearchPromptCard';
 import { AIAnalysisModal } from '../components/AIAnalysisModal';
 import { PineScriptViewerModal } from '../components/PineScriptViewerModal';
 import { TradeButtons } from '../components/TradeButtons';
+import { TradingViewWidget } from '../components/TradingViewWidget';
 import { storage } from '../services/storage';
 import { SmartText } from '../components/SmartText';
 import { stanceOf } from '../utils/riskReward';
@@ -45,6 +47,8 @@ export default function Dashboard() {
     const recommendations = useRecommendations();
     const [searchParams, setSearchParams] = useSearchParams();
     const [activeTab, setActiveTab] = useState<Tab>('overview');
+    // Public TradingView embeds load a remote script, so they stay collapsed until asked for.
+    const [showTradingView, setShowTradingView] = useState(false);
     const [chartMode, setChartMode] = useState<ChartMode>('revenue');
     const [stockData, setStockData] = useState<StockData | null>(null);
     const [technicalAnalysis, setTechnicalAnalysis] = useState<TechnicalAnalysisData | null>(null);
@@ -373,6 +377,24 @@ export default function Dashboard() {
                                         <p className="text-xs text-slate-500">Retrieving Multi-EMA alignment and momentum flow.</p>
                                     </div>
                                 )}
+
+                                <div className="bg-slate-900/40 border border-slate-800 rounded-xl p-4">
+                                    <button
+                                        onClick={() => setShowTradingView((open) => !open)}
+                                        className="flex items-center gap-2 text-sm font-semibold text-slate-200 hover:text-white"
+                                        title="Widgets públicos de TradingView, sin iniciar sesión ni vincular cuentas"
+                                    >
+                                        <BarChart3 size={16} className="text-primary" />
+                                        TradingView (público, sin cuenta)
+                                        <span className="text-xs font-normal text-slate-500">{showTradingView ? 'ocultar' : 'mostrar'}</span>
+                                    </button>
+                                    {showTradingView && (
+                                        <div className="mt-4 space-y-4">
+                                            <TradingViewWidget kind="advanced-chart" symbol={stockData.symbol} height={460} />
+                                            <TradingViewWidget kind="symbol-overview" symbol={stockData.symbol} height={260} />
+                                        </div>
+                                    )}
+                                </div>
                             </div>
                         )}
 

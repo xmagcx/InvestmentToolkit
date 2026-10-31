@@ -4,6 +4,7 @@ import { createPortal } from 'react-dom';
 import { X, CheckCircle, AlertTriangle, Loader2, ShieldCheck, Clock, Wifi, TrendingUp, RefreshCw } from 'lucide-react';
 import { runTradePreflight, runTradeExecute, runTradeSubmit, logTrade, fetchMarketQuotes, fetchTVQuote, type MarketQuote } from '../services/api';
 import { SmartText } from './SmartText';
+import { useFeatureFlags } from '../hooks/useFeatureFlags';
 
 type ModalStep =
     | 'configure'
@@ -68,7 +69,19 @@ function ConfRow({ label, value, flag, warn, valueClass }: { label: string; valu
     );
 }
 
-export function TradePrepModal({ ticker, initialAction, initialShares = 1, onClose }: TradePrepModalProps) {
+/**
+ * Screener-only guard (spec S6): with the broker disabled every call this modal makes
+ * (/api/trading/*, /api/portfolio/sync-tv) answers 410, so the modal is not mounted at
+ * all — its effects never run and no trading request is sent. The trigger buttons are
+ * hidden too; this is the backstop for any trigger that is not.
+ */
+export function TradePrepModal(props: TradePrepModalProps) {
+    const { broker_integration } = useFeatureFlags();
+    if (!broker_integration) return null;
+    return <TradePrepModalContent {...props} />;
+}
+
+function TradePrepModalContent({ ticker, initialAction, initialShares = 1, onClose }: TradePrepModalProps) {
     const recommendations = useRecommendations();
     const [step, setStep] = useState<ModalStep>('configure');
     const [action] = useState<'buy' | 'sell'>(initialAction);

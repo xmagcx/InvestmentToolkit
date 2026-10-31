@@ -147,6 +147,65 @@ export const fetchPortfolioSummary = async (): Promise<PortfolioSummary> => {
     return await response.json();
 };
 
+// --- Portfolio profiles summary (per-profile base currency + consolidated USD) ---
+
+export interface ProfileSummaryPosition {
+    ticker: string;
+    qty: number;
+    avgCost: number | null;
+    /** Stored market price; null when the ticker has no usable price (never its cost). */
+    price: number | null;
+    priceAsOf: string | null;
+    priceCurrency: string | null;
+    value: number | null;
+    pnl: number | null;
+}
+
+export interface ProfileSummary {
+    accountId: string;
+    name: string;
+    /** The profile's own base currency — the page shows no other currency for it. */
+    currency: string;
+    cash: number;
+    invested: number;
+    marketValue: number;
+    unrealizedPnl: number;
+    unrealizedPnlPct: number | null;
+    pricedCount: number;
+    unpricedCount: number;
+    unpricedTickers: string[];
+    positions: ProfileSummaryPosition[];
+    /** Units of the profile currency per 1 USD; null when FX is unavailable. */
+    usdRate: number | null;
+    valueUsd: number | null;
+}
+
+export interface ProfilesSummary {
+    profiles: ProfileSummary[];
+    totals: {
+        valueUsd: number;
+        marketValueUsd: number;
+        investedUsd: number;
+        cashUsd: number;
+        unrealizedPnlUsd: number;
+        unrealizedPnlPct: number | null;
+        /** true when at least one profile could not be converted to USD. */
+        partial: boolean;
+    };
+    fx: Array<{ currency: string; usdTo: number; source: string; asOf: string }>;
+    fxUnavailable: string[];
+    lastPriceAt: string | null;
+}
+
+export const fetchProfilesSummary = async (): Promise<ProfilesSummary> => {
+    const response = await fetch('/api/portfolio/profiles-summary');
+    if (!response.ok) {
+        const errorData = await response.json().catch(() => ({}));
+        throw new Error(errorData.error || 'No se pudo cargar el resumen de portafolio');
+    }
+    return await response.json();
+};
+
 // --- Portfolio Period Performance ---
 
 export interface PeriodPerformance {
@@ -944,3 +1003,163 @@ export async function fetchRecommendations(): Promise<Record<string, Recommendat
     if (!response.ok) throw new Error('Failed to fetch recommendations');
     return response.json();
 }
+// ─── Portfolio Maintainer API ─────────────────────────────────────────────────
+
+export type MaintainerAccountType = 'TFSA' | 'RRSP' | 'CASH' | 'PROFILE';
+
+export interface MaintainerAccount {
+    accountId: string;
+    name: string;
+    type: string;
+    currency: string;
+    cash: number;
+}
+
+export interface MaintainerPosition {
+    accountId: string;
+    ticker: string;
+    qty: number;
+    avgCost: number | null;
+    currency: string;
+    /** Stored market price (investment_price); null when the ticker has never been priced. */
+    price: number | null;
+    priceAsOf: string | null;
+}
+
+export interface MaintainerTransactionRequest {
+    accountId: string;
+    ticker: string;
+    side: 'BUY' | 'SELL';
+    qty: number;
+    price: number;
+    commission?: number;
+}
+
+export interface MaintainerTransactionResult {
+    position: { ticker: string; qty: number; avgCost: number | null } | null;
+    cash: number;
+    currency: string;
+}
+
+export const fetchMaintainerAccounts = async (): Promise<MaintainerAccount[]> => {
+    const res = await fetch('/api/portfolio-maintainer/accounts');
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to fetch maintainer accounts');
+    }
+    return res.json();
+};
+
+/** One row of a profile's transaction history (buys, sells, deposits, withdrawals). */
+export interface MaintainerTransaction {
+    entryId: string;
+    ticker: string;
+    action: string;
+    shares: number | null;
+    price: number | null;
+    totalCost: number | null;
+    notes: string | null;
+    loggedAt: string | null;
+}
+
+export const createMaintainerAccount = async (name: string, type: MaintainerAccountType = 'PROFILE', currency?: string): Promise<MaintainerAccount> => {
+    const res = await fetch('/api/portfolio-maintainer/accounts', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ name, type, currency }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to create account');
+    return data;
+};
+
+export const updateMaintainerAccount = async (accountId: string, patch: { name?: string; currency?: string }): Promise<MaintainerAccount> => {
+    const res = await fetch(`/api/portfolio-maintainer/accounts/${encodeURIComponent(accountId)}`, {
+        method: 'PATCH',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(patch),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to update account');
+    return data;
+};
+
+export const setMaintainerInitialCash = async (accountId: string, amount: number): Promise<{ accountId: string; cash: number }> => {
+    const res = await fetch(`/api/portfolio-maintainer/accounts/${encodeURIComponent(accountId)}/cash`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to set initial cash');
+    return data;
+};
+
+/** Delete a profile. `force` confirms deletion while the wallet still holds cash. */
+export const deleteMaintainerAccount = async (accountId: string, force = false): Promise<{ deleted: string }> => {
+    const res = await fetch(
+        `/api/portfolio-maintainer/accounts/${encodeURIComponent(accountId)}${force ? '?force=true' : ''}`,
+        { method: 'DELETE' }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete profile');
+    return data;
+};
+
+/** One wallet movement: `deposit` adds cash, `withdraw` removes it (never below 0). */
+export const moveMaintainerCash = async (
+    accountId: string,
+    direction: 'deposit' | 'withdraw',
+    amount: number,
+    note?: string
+): Promise<{ accountId: string; cash: number; currency: string }> => {
+    const res = await fetch(`/api/portfolio-maintainer/accounts/${encodeURIComponent(accountId)}/cash/${direction}`, {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ amount, note }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Cash movement failed');
+    return data;
+};
+
+export const fetchMaintainerTransactions = async (accountId: string, limit = 100, offset = 0): Promise<MaintainerTransaction[]> => {
+    const res = await fetch(
+        `/api/portfolio-maintainer/accounts/${encodeURIComponent(accountId)}/transactions?limit=${limit}&offset=${offset}`
+    );
+    const data = await res.json().catch(() => ({}));
+    if (!res.ok) throw new Error(data.error || 'Failed to fetch transactions');
+    return data;
+};
+
+export const fetchMaintainerPositions = async (): Promise<MaintainerPosition[]> => {
+    const res = await fetch('/api/portfolio-maintainer/positions');
+    if (!res.ok) {
+        const data = await res.json().catch(() => ({}));
+        throw new Error(data.error || 'Failed to fetch maintainer positions');
+    }
+    return res.json();
+};
+
+export const submitMaintainerTransaction = async (req: MaintainerTransactionRequest): Promise<MaintainerTransactionResult> => {
+    const res = await fetch('/api/portfolio-maintainer/transaction', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify(req),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Transaction failed');
+    return data;
+};
+
+export const deleteMaintainerPosition = async (accountId: string, ticker: string): Promise<{ deleted: string }> => {
+    const res = await fetch(
+        `/api/portfolio-maintainer/position/${encodeURIComponent(accountId)}/${encodeURIComponent(ticker)}`,
+        { method: 'DELETE' }
+    );
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to delete position');
+    return data;
+};
+
+
