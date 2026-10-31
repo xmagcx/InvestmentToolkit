@@ -33,6 +33,7 @@
  *   - app.use('/api/trading', tradingRouter)
  *   - app.use('/api/daily-brief', dailybriefRouter)
  *   - app.use('/api', sourcesRouter) - /api/sources/**, /api/stocks-origin, /api/recent-buys/**
+ *   - app.use('/api/opportunities', opportunitiesRouter) - GET /api/opportunities (screener funnel)
  */
 import { getRecommendations } from './utils/helpers';
 
@@ -56,6 +57,7 @@ import stockRouter from './routes/stock';
 import tradingRouter from './routes/trading';
 import dailybriefRouter from './routes/dailybrief';
 import sourcesRouter from './routes/sources';
+import opportunitiesRouter from './routes/opportunities';
 import { SourceScheduler } from './services/SourceScheduler';
 import portfolioMaintainerRouter from './routes/portfolioMaintainer';
 import profilesSummaryRouter from './routes/profilesSummary';
@@ -111,6 +113,7 @@ app.use('/api/screener', screenerRouter);   // /api/screener/all-holdings
 app.use('/api/trading', tradingRouter);     // /api/trading/** (preflight, execute, submit, audit)
 app.use('/api/daily-brief', dailybriefRouter); // /api/daily-brief/latest, /history, /conviction/:ticker
 app.use('/api', sourcesRouter);             // /api/sources/**, /api/stocks-origin, /api/recent-buys/**
+app.use('/api/opportunities', opportunitiesRouter); // /api/opportunities (Racional universe screener)
 app.use('/api/portfolio-maintainer', portfolioMaintainerRouter); // /api/portfolio-maintainer/accounts, /positions, /transactions, /transaction
 
 app.listen(Number(port), HOST, () => {
