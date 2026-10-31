@@ -69,12 +69,13 @@ async function loadYtdPerformanceReport(): Promise<any> {
     /*
       Cash-flow data lives in domain_model.sqlite's cash_flow / cash_flow_baseline tables.
       ytd_return.py performs the gate itself: load_cash_flows() returns {} when the DB has no
-      baseline row yet (fresh install / no cash flows recorded), calculate_twr() detects that and
-      exits non-zero with a JSON {"error": ...} on stdout, which spawnPythonScript() turns into a
-      rejected promise, caught below and returned as null.
+      baseline row yet (fresh install / no cash flows recorded), and calculate_twr() then prints
+      {"available": false, "reason": ...} with exit 0 — an empty state, returned as null. A real
+      failure (bad baseline, crash) still exits non-zero and is logged below.
      */
     try {
-        return await spawnPythonScript('ytd_return.py', ['--json']);
+        const report = await spawnPythonScript('ytd_return.py', ['--json']);
+        return report?.available === false ? null : report;
     } catch (err) {
         console.error(`[loadYtdPerformanceReport] Failed to run ytd_return.py:`, err);
     }

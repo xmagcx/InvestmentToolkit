@@ -32,8 +32,9 @@ def main():
     db_path = args.db_path or str(REPO_ROOT / "investment_screener/backend/data/intelligence.sqlite")
 
     if not Path(db_path).exists():
-        print(json.dumps({"error": f"Database file not found: {db_path}"}))
-        sys.exit(1)
+        # No ledger yet (fresh install) means no briefs: the same empty answer as an empty ledger.
+        print(json.dumps(None if args.latest else []))
+        return
 
     try:
         conn = sqlite3.connect(db_path)

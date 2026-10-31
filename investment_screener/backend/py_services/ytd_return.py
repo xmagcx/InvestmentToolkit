@@ -224,10 +224,13 @@ def calculate_twr() -> None:
     flows_data = load_cash_flows()
 
     if not flows_data:
+        reason = "cash_flow data is required (none found in domain_model.sqlite)."
         if is_json_mode:
-            print(json.dumps({"error": "cash_flow data is required (none found in domain_model.sqlite)."}))
-        else:
-            print("Error: cash_flow data is required (none found in domain_model.sqlite).")
+            # No baseline yet (fresh install) is an empty state, not a failure: the backend polls
+            # this on every summary request and reports "YTD unavailable".
+            print(json.dumps({"available": False, "reason": reason}))
+            return
+        print(f"Error: {reason}")
         sys.exit(1)
 
     starting_balance = flows_data.get("starting_balance_cad", 0.0)
