@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "02-lista-del-dia.html",
+  "handoffs": {
+    "02-lista-del-dia.html": {
+      "status": "implemented",
+      "queued": false,
+      "sentAt": "2026-10-31T16:14:28.030Z",
+      "startedAt": null,
+      "implementedAt": "2026-10-31T16:38:26.892Z",
+      "feature": "odd/tasks/opportunities-and-brief.md",
+      "note": "En main local 577fed0f. Validado en navegador con el brief real (copia de las BD). Reiniciar el backend para /api/daily-brief/today.",
+      "previewUrl": "http://localhost:5173/daily-brief"
+    }
+  }
+}

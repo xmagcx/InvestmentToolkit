@@ -1,0 +1,28 @@
+{
+  "title": "Resumen de portafolio (multi-moneda)",
+  "brief": "Rediseño de la página Portfolio Summary: cada perfil muestra sus valores en su moneda base y el total consolidado va en USD con la tasa usada visible (1 USD = 948,20 CLP · TradingView, hace 5 min). Nada de CAD salvo que un perfil tenga CAD como moneda base. Solo cuatro contenidos: valor total/invertido/P/L no realizado, caja y desglose por perfil, rendimiento 1D/1S/1M/3M, y asignación por estrategia. Sin controles de bróker ni de trading (plataforma solo screener); una sola acción 'Actualizar precios' con la hora de la última actualización. UX: menos es más, divulgación progresiva, jerarquía clara con el total en USD dominante, consistencia con el sidebar y las tarjetas actuales, estados de carga/vacío/error (un ticker sin precio muestra 'Sin precio', YTD ausente sin datos) y accesibilidad AA con foco visible y objetivos de 44x44.",
+  "feature": "odd/tasks/portfolio-summary-redesign.md",
+  "artboards": [
+    {
+      "file": "01-total-first.html",
+      "title": "Total primero",
+      "tradeoff": "El total en USD domina y la jerarquía es inmediata; las posiciones y la tasa quedan colapsadas, así que comparar perfiles exige leer dos tarjetas en secuencia",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-profiles-comparison.html",
+      "title": "Perfiles comparados",
+      "tradeoff": "Métricas alineadas fila a fila hacen la comparación entre monedas trivial; el total pierde protagonismo al vivir en una barra delgada y el layout no escala más allá de tres o cuatro perfiles",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-analyst-table.html",
+      "title": "Tabla de analista",
+      "tradeoff": "Máxima densidad: perfiles expandibles y todas las cifras a la vista con rail de rendimiento y asignación; es el más intimidante y el que más carga cognitiva impone a una lectura rápida",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

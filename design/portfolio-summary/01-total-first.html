@@ -1,0 +1,254 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Resumen de portafolio — Total primero</title>
+<style>
+  :root{
+    --background:#020617; --surface:#0f172a; --primary:#f59e0b; --secondary:#94a3b8;
+    --text:#e2e8f0; --accent:#fbbf24;
+    --slate-800:#1e293b; --slate-700:#334155; --slate-600:#475569; --slate-500:#64748b;
+    --slate-400:#94a3b8; --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9;
+    --emerald-400:#34d399; --emerald-300:#6ee7b7; --emerald-700:#047857; --emerald-600:#059669;
+    --red-400:#f87171; --zinc-800:#27272a; --zinc-300:#d4d4d8; --zinc-700:#3f3f46;
+    --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--background);
+    color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+  a,button,summary{transition:all .2s ease-in-out}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .app{display:flex;height:900px}
+
+  /* Sidebar — same look as components/Sidebar.tsx */
+  .sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);
+    display:flex;flex-direction:column;padding:20px 12px 12px}
+  .logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+  .search{margin:0 4px 12px}
+  .search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;
+    padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+  .search input::placeholder{color:var(--slate-400)}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;
+    text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+  .sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+  .sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+  .sidebar nav a i{font-style:normal;width:18px;text-align:center;opacity:.9}
+  .sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+
+  main{flex:1;padding:16px 20px;overflow:hidden;display:flex;flex-direction:column;gap:16px}
+  .pagehead{display:flex;align-items:flex-start;justify-content:space-between}
+  h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 2px}
+  .sub{font-size:14px;color:var(--slate-400);margin:0}
+  .refresh{display:flex;align-items:center;gap:12px}
+  .btn-utility{background:var(--zinc-800);color:var(--zinc-300);border:0;border-radius:4px;
+    padding:0 14px;min-height:44px;min-width:44px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-utility:hover{background:var(--zinc-700);transform:translateY(-1px)}
+  .stamp{font-size:12px;color:var(--slate-400)}
+
+  .card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;
+    padding:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+
+  /* Hero */
+  .hero{display:grid;grid-template-columns:1fr 420px;gap:24px;align-items:center;
+    box-shadow:0 10px 15px -3px rgba(16,185,129,.1)}
+  .hero .total{font-family:var(--mono);font-size:56px;line-height:1.05;font-weight:700;color:#fff;margin:6px 0 8px}
+  .hero .total .cur{font-size:24px;color:var(--slate-400);margin-left:8px}
+  .hero .delta{font-size:14px;color:var(--slate-400)}
+  .hero .delta b{color:var(--emerald-400);font-family:var(--mono)}
+  .kpis{display:grid;grid-template-columns:1fr 1fr;gap:10px}
+  .kpi{background:var(--surface);border:1px solid var(--slate-800);border-radius:8px;padding:10px 12px}
+  .kpi .v{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--slate-100);margin-top:4px}
+  .kpi .v.pos{color:var(--emerald-400)}
+  .kpi .s{font-size:12px;color:var(--slate-400);margin-top:2px;font-family:var(--mono)}
+  .fx{margin-top:12px;font-size:12px;color:var(--slate-400);display:flex;align-items:center;gap:8px}
+  details.fx-d summary{cursor:pointer;color:var(--slate-400);font-size:12px;list-style:none;
+    display:inline-flex;align-items:center;gap:6px;min-height:44px}
+  details.fx-d summary::-webkit-details-marker{display:none}
+  details.fx-d summary:hover{color:var(--slate-200)}
+  details.fx-d .body{font-size:12px;color:var(--slate-400);border-left:2px solid var(--slate-800);
+    padding:6px 0 2px 10px;margin-left:4px;line-height:1.6}
+
+  /* Rendimiento */
+  .perf{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+  .perf .card{display:flex;align-items:center;gap:14px;padding:12px 16px}
+  .perf .p{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em;width:28px}
+  .perf .pct{font-family:var(--mono);font-size:20px;font-weight:700}
+  .perf .abs{font-family:var(--mono);font-size:14px;font-weight:600}
+  .pos{color:var(--emerald-400)} .neg{color:var(--red-400)} .muted{color:var(--slate-400)}
+
+  /* Perfiles */
+  .profiles{display:grid;grid-template-columns:1fr 1fr;gap:12px}
+  .phead{display:flex;align-items:baseline;justify-content:space-between;gap:12px}
+  .pname{font-size:18px;font-weight:600;color:var(--slate-100)}
+  .badge{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--primary);
+    background:rgba(245,158,11,.1);border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:2px 8px}
+  .pval{font-family:var(--mono);font-size:30px;font-weight:700;color:#fff;margin:10px 0 2px}
+  .pusd{font-size:12px;color:var(--slate-400);font-family:var(--mono)}
+  .prow{display:flex;justify-content:space-between;font-size:14px;padding:4px 0}
+  .prow span:first-child{color:var(--slate-400)}
+  .prow span:last-child{font-weight:600;color:var(--slate-300);font-family:var(--mono)}
+  .warn{font-size:12px;color:var(--accent);margin-top:8px}
+  details.pos-d{margin-top:10px;border-top:1px solid var(--slate-800);padding-top:6px}
+  details.pos-d summary{cursor:pointer;list-style:none;font-size:12px;font-weight:700;letter-spacing:.1em;
+    text-transform:uppercase;color:var(--slate-400);min-height:44px;display:flex;align-items:center;gap:8px}
+  details.pos-d summary::-webkit-details-marker{display:none}
+  details.pos-d summary:hover{color:var(--slate-200)}
+  details.pos-d[open] summary .caret{transform:rotate(90deg)}
+  .caret{display:inline-block;transition:transform .2s ease-in-out}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--slate-400);font-weight:600;padding:6px 8px;background:var(--slate-800)}
+  td{padding:6px 8px;color:var(--slate-300)}
+  tbody tr{border-top:1px solid var(--slate-700)}
+  tbody tr:hover{background:rgba(30,41,59,.4)}
+  .num{text-align:right;font-family:var(--mono)}
+  .tick{font-family:var(--mono);color:var(--slate-200)}
+
+  /* Asignación */
+  .alloc summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;
+    min-height:44px;gap:12px}
+  .alloc summary::-webkit-details-marker{display:none}
+  .alloc summary:hover .label{color:var(--slate-200)}
+  .alloc[open] .caret{transform:rotate(90deg)}
+  .bar{display:flex;height:28px;border-radius:4px;overflow:hidden;margin:12px 0 10px}
+  .legend{display:flex;gap:20px;flex-wrap:wrap;font-size:13px;color:var(--slate-300)}
+  .legend span i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:6px}
+  .legend b{font-family:var(--mono);color:var(--slate-100)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search"><label for="s1" style="position:absolute;left:-9999px">Buscar ticker</label>
+      <input id="s1" type="text" placeholder="Buscar ticker…"></div>
+    <nav aria-label="Navegación principal">
+      <a href="#"><i aria-hidden="true">▦</i> Heatmap</a>
+      <a href="#" aria-current="page"><i aria-hidden="true">◴</i> Resumen de portafolio</a>
+      <a href="#"><i aria-hidden="true">▤</i> Portafolio</a>
+      <a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a>
+      <a href="#"><i aria-hidden="true">⚡</i> Brief diario</a>
+      <a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a>
+      <a href="#"><i aria-hidden="true">▣</i> Fuentes</a>
+    </nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+
+  <main>
+    <div class="pagehead">
+      <div>
+        <h1>Resumen de portafolio</h1>
+        <p class="sub">Cada perfil en su moneda base · total consolidado en USD</p>
+      </div>
+      <div class="refresh">
+        <p class="stamp" role="status">Precios actualizados hace 5 min</p>
+        <button class="btn-utility" type="button">↻ Actualizar precios</button>
+      </div>
+    </div>
+
+    <section class="card hero" aria-labelledby="h-total">
+      <div>
+        <h2 id="h-total" class="label">Valor total consolidado</h2>
+        <p class="total">15.268,14<span class="cur">USD</span></p>
+        <p class="delta">Hoy <b>+63,80 USD</b> <b>(+0,42 %)</b> · 5 posiciones con precio, 1 sin precio</p>
+        <details class="fx-d">
+          <summary><span class="caret" aria-hidden="true">›</span> 1 USD = 948,20 CLP · TradingView, hace 5 min</summary>
+          <div class="body">
+            Los perfiles en CLP se convierten a USD con esta tasa al momento del cálculo.<br>
+            Ahorro Chile: 5.832.700 CLP ÷ 948,20 = 6.151,34 USD.<br>
+            Última lectura: hoy 14:32 · fuente TradingView (FX_IDC:USDCLP).
+          </div>
+        </details>
+      </div>
+      <div class="kpis">
+        <div class="kpi"><span class="label">Invertido</span><div class="v">11.948,68</div><div class="s">USD · costo de posiciones con precio</div></div>
+        <div class="kpi"><span class="label">P/L no realizado</span><div class="v pos">+723,02</div><div class="s">USD · +6,05 %</div></div>
+        <div class="kpi"><span class="label">Caja disponible</span><div class="v">2.596,44</div><div class="s">USD · 1.700,00 USD + 850.000 CLP</div></div>
+        <div class="kpi"><span class="label">Acciones (mercado)</span><div class="v">12.671,70</div><div class="s">USD · excluye 1 ticker sin precio</div></div>
+      </div>
+    </section>
+
+    <section class="perf" aria-label="Rendimiento del total consolidado en USD">
+      <div class="card" style="box-shadow:0 10px 15px -3px rgba(16,185,129,.1)">
+        <span class="p">1D</span><span class="pct pos">+0,42 %</span><span class="abs pos">+63,80</span>
+      </div>
+      <div class="card" style="box-shadow:0 10px 15px -3px rgba(239,68,68,.1)">
+        <span class="p">1S</span><span class="pct neg">−1,10 %</span><span class="abs neg">−169,80</span>
+      </div>
+      <div class="card" style="box-shadow:0 10px 15px -3px rgba(16,185,129,.1)">
+        <span class="p">1M</span><span class="pct pos">+2,86 %</span><span class="abs pos">+424,60</span>
+      </div>
+      <div class="card" style="box-shadow:0 10px 15px -3px rgba(16,185,129,.1)">
+        <span class="p">3M</span><span class="pct pos">+7,31 %</span><span class="abs pos">+1.040,10</span>
+      </div>
+    </section>
+
+    <section class="profiles" aria-label="Desglose por perfil">
+      <article class="card">
+        <div class="phead"><span class="pname">Racional</span><span class="badge">USD</span></div>
+        <p class="pval">9.116,80 <span style="font-size:16px;color:var(--slate-400)">USD</span></p>
+        <p class="pusd">59,7 % del total</p>
+        <div class="prow"><span>Acciones</span><span>7.416,80 USD</span></div>
+        <div class="prow"><span>Caja</span><span>1.700,00 USD</span></div>
+        <div class="prow"><span>P/L no realizado</span><span class="pos">+998,60 USD (+15,56 %)</span></div>
+        <details class="pos-d">
+          <summary><span class="caret" aria-hidden="true">›</span> Ver 3 posiciones</summary>
+          <table>
+            <thead><tr><th scope="col">Ticker</th><th scope="col" class="num">Cant.</th><th scope="col" class="num">Costo prom.</th><th scope="col" class="num">Precio</th><th scope="col" class="num">P/L</th></tr></thead>
+            <tbody>
+              <tr><td class="tick">AAPL</td><td class="num">10</td><td class="num">182,40</td><td class="num">229,35</td><td class="num pos">+469,50</td></tr>
+              <tr><td class="tick">MSFT</td><td class="num">4</td><td class="num">401,10</td><td class="num">468,20</td><td class="num pos">+268,40</td></tr>
+              <tr><td class="tick">VOO</td><td class="num">6</td><td class="num">498,30</td><td class="num">541,75</td><td class="num pos">+260,70</td></tr>
+            </tbody>
+          </table>
+        </details>
+      </article>
+
+      <article class="card">
+        <div class="phead"><span class="pname">Ahorro Chile</span><span class="badge">CLP</span></div>
+        <p class="pval">5.832.700 <span style="font-size:16px;color:var(--slate-400)">CLP</span></p>
+        <p class="pusd">6.151,34 USD · 40,3 % del total</p>
+        <div class="prow"><span>Acciones</span><span>4.982.700 CLP</span></div>
+        <div class="prow"><span>Caja</span><span>850.000 CLP</span></div>
+        <div class="prow"><span>P/L no realizado</span><span class="neg">−261.300 CLP (−4,98 %)</span></div>
+        <p class="warn" role="status">⚠ CENCOSUD sin precio: queda fuera del valor de mercado.</p>
+        <details class="pos-d" open>
+          <summary><span class="caret" aria-hidden="true">›</span> Ver 3 posiciones</summary>
+          <table>
+            <thead><tr><th scope="col">Ticker</th><th scope="col" class="num">Cant.</th><th scope="col" class="num">Costo prom.</th><th scope="col" class="num">Precio</th><th scope="col" class="num">P/L</th></tr></thead>
+            <tbody>
+              <tr><td class="tick">SQM-B</td><td class="num">120</td><td class="num">41.250</td><td class="num">38.910</td><td class="num neg">−280.800</td></tr>
+              <tr><td class="tick">CHILE</td><td class="num">3.000</td><td class="num">98</td><td class="num">104,50</td><td class="num pos">+19.500</td></tr>
+              <tr><td class="tick">CENCOSUD</td><td class="num">400</td><td class="num">1.780</td><td class="num muted">Sin precio</td><td class="num muted">—</td></tr>
+            </tbody>
+          </table>
+        </details>
+      </article>
+    </section>
+
+    <details class="card alloc">
+      <summary>
+        <span><span class="caret" aria-hidden="true">›</span> <span class="label">Asignación por estrategia</span></span>
+        <span class="stamp">4 pilares · base 15.268,14 USD</span>
+      </summary>
+      <div class="bar" role="img" aria-label="Dividendos 34,4 %, Crecimiento 27,3 %, Índices 21,3 %, Caja 17,0 %">
+        <span style="width:34.4%;background:#34d399"></span>
+        <span style="width:27.3%;background:#f59e0b"></span>
+        <span style="width:21.3%;background:#94a3b8"></span>
+        <span style="width:17.0%;background:#334155"></span>
+      </div>
+      <div class="legend">
+        <span><i style="background:#34d399"></i>Dividendos <b>34,4 % · 5.254,90 USD</b></span>
+        <span><i style="background:#f59e0b"></i>Crecimiento <b>27,3 % · 4.166,30 USD</b></span>
+        <span><i style="background:#94a3b8"></i>Índices <b>21,3 % · 3.250,50 USD</b></span>
+        <span><i style="background:#334155"></i>Caja <b>17,0 % · 2.596,44 USD</b></span>
+      </div>
+    </details>
+  </main>
+</div>
+</body>
+</html>

@@ -1,0 +1,28 @@
+{
+  "title": "Oportunidades (screener del universo Racional)",
+  "brief": "Pantalla de oportunidades: filtros arriba y una grilla que parte del universo Racional (1.645 acciones, ETF excluidos con interruptor) y se va reduciendo con cada condición, mostrando el conteo del embudo paso a paso (1.645 → 1.212 rentables → 486 calidad → 131 baratas → 38 cayeron por causas externas → 21 con señal de giro → 12 con confirmación). Las condiciones se agrupan en lenguaje llano — Calidad del negocio, Precio atractivo, Cayó de precio, Señal de giro, Confirmación — como chips con umbral editable oculto hasta pedirlo, más plantillas Oportunidades (por defecto), Graham, Buffett y Lynch. El puntaje son estrellas de 1 a 5: 5 cumple los cinco grupos y cada grupo que falta resta una estrella; al pasar el cursor o enfocar se ven los grupos ✓/✗ en español, y los tickers sin datos muestran \"Datos insuficientes\" en lugar de valores inventados. Al abrir una fila o tarjeta se ve la lista de verificación con valor vs umbral, el cálculo de Graham con números reales (V = EPS × (8,5 + 2g) × 4,4 / Y, Y = 6,03 % AAA), por qué cayó (máximo 52 semanas, SMA200, SMA50, RSI), el detalle de Dataroma (superinversores e insiders) y la acción \"Agregar a seguimiento\". Datos de muestra plausibles sobre tickers reales del universo (TMO, APH, DIS, META, AMZN, NVDA, NEE, CRBG, NBIS). Solo screener: ninguna maqueta ofrece comprar ni vender.",
+  "feature": "odd/tasks/opportunities-and-brief.md",
+  "artboards": [
+    {
+      "file": "01-embudo.html",
+      "title": "Embudo guiado (6 preguntas)",
+      "tradeoff": "Recorrido de 6 preguntas y resultados explicados para quien invierte por primera vez: columnas formuladas como preguntas con ayuda «?», veredicto en color, consenso de analistas (comprar/mantener/vender y precio esperado) (Favorable / Revisar / Desfavorable) y la historia de cada empresa al pulsarla; a cambio hay menos cifras a la vista y la grilla muestra 3–4 filas sin desplazarse.",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-constructor-de-condiciones.html",
+      "title": "Constructor de condiciones",
+      "tradeoff": "La búsqueda se lee como una frase en español (\"Muéstrame negocios de calidad que estén baratos y que hayan caído…\"), cada condición es un chip que abre sus umbrales y el conteo del embudo queda en una línea compacta; el detalle vive en un cajón fijo a la derecha, así que comparar fila y ficha no exige abrir y cerrar nada. A cambio la frase solo admite condiciones encadenadas con \"y\" (nada de \"o\" ni paréntesis) y el cajón recorta la tabla a diez columnas estrechas",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-tarjetas-por-estrellas.html",
+      "title": "Tarjetas por estrellas",
+      "tradeoff": "Los resultados se agrupan en carriles 5★, 4★ y 3★ con tarjetas que ya muestran los cinco grupos ✓/✗, de modo que la jerarquía de calidad se ve sin leer números, y un interruptor devuelve la vista de grilla para quien quiera comparar. A cambio caben cinco tarjetas por carril sin desplazamiento horizontal, el detalle exige abrir un diálogo modal y ordenar por cualquier otra columna (precio, caída, margen) obliga a cambiar de vista",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

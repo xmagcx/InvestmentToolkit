@@ -1,0 +1,28 @@
+{
+  "title": "Brief diario (rediseño simple)",
+  "brief": "Rediseño de la página Daily Brief buscando algo simple y fácil de entender: interfaz en español, jerga explicada en lenguaje llano (\"Régimen neutral: el mercado no tiene una tendencia clara\"), menos es más, divulgación progresiva, jerarquía clara, consistencia con el sidebar y las tarjetas actuales, pasos mínimos y accesibilidad AA. Datos reales del brief 2026-10-30 (régimen NEUTRAL, amplitud 7 %, gaps APP −9,62 %, VITL −6,57 %, TMUS +4,85 %, NVDA −2,62 %, resultados BKNG/VITL 3 nov y APP/MCD/NVO/UBER 4 nov). Plataforma solo screener y recomendaciones: sin botones de bróker ni de órdenes, solo \"Abrir análisis\" y \"Agregar a seguimiento\". Cada maqueta muestra un estado vacío o parcial real (análisis técnico no actualizado hoy, sin eventos el resto de la semana, TSMC sin historial suficiente).",
+  "feature": "odd/tasks/opportunities-and-brief.md",
+  "artboards": [
+    {
+      "file": "01-tres-preguntas.html",
+      "title": "Tres preguntas",
+      "tradeoff": "Máxima claridad para quien no es analista: tres tarjetas apiladas responden ¿cómo está el mercado?, ¿qué hago hoy? y ¿qué viene?, con el detalle numérico colapsado. A cambio solo caben dos o tres tickers por respuesta, así que no sirve para revisar las 16 posiciones ni para comparar entre ellas",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "02-lista-del-dia.html",
+      "title": "Lista de acciones del día",
+      "tradeoff": "Convierte el brief en una lista de tareas priorizada (urgencia, ticker, acción sugerida, motivo en una línea): mínimos pasos para saber qué revisar primero. A cambio el contexto de mercado queda reducido a una barra delgada y la lista impone un orden que puede sugerir más urgencia de la que hay en un día sin recomendaciones",
+      "width": 1440,
+      "height": 900
+    },
+    {
+      "file": "03-semaforo.html",
+      "title": "Semáforo",
+      "tradeoff": "Un vistazo basta para ver el estado de las 16 posiciones agrupadas en verde/ámbar/rojo, con un párrafo narrativo arriba que resume el día. A cambio el agrupamiento aplana el matiz: dos motivos muy distintos (caída fuerte y resultados próximos) caen en el mismo color, y cada ficha solo admite una línea de explicación",
+      "width": 1440,
+      "height": 900
+    }
+  ]
+}

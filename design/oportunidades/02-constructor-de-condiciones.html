@@ -1,0 +1,495 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Oportunidades — Constructor de condiciones</title>
+<style>
+  :root{
+    --background:#020617; --surface:#0f172a; --primary:#f59e0b; --secondary:#94a3b8;
+    --text:#e2e8f0; --accent:#fbbf24;
+    --slate-800:#1e293b; --slate-700:#334155; --slate-600:#475569; --slate-500:#64748b;
+    --slate-400:#94a3b8; --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9;
+    --emerald-400:#34d399; --emerald-300:#6ee7b7; --emerald-700:#047857; --emerald-600:#059669;
+    --red-400:#f87171; --red-300:#fca5a5; --amber-400:#fbbf24;
+    --zinc-800:#27272a; --zinc-300:#d4d4d8; --zinc-700:#3f3f46;
+    --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--background);
+    color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+  a,button,summary{transition:all .2s ease-in-out}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .app{display:flex;height:900px}
+
+  .sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);
+    display:flex;flex-direction:column;padding:20px 12px 12px}
+  .logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+  .search{margin:0 4px 12px;position:relative}
+  .search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;
+    padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+  .search input::placeholder{color:var(--slate-400)}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;
+    text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+  .sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+  .sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+  .sidebar nav a i{font-style:normal;width:18px;text-align:center;opacity:.9}
+  .sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+
+  main{flex:1;padding:16px 20px 10px;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+  .pagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 2px}
+  .sub{font-size:14px;color:var(--slate-400);margin:0}
+  .presets{display:flex;gap:8px}
+  .preset{background:var(--slate-800);color:var(--slate-300);border:1px solid var(--slate-700);border-radius:4px;
+    padding:0 14px;min-height:44px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .preset:hover{background:var(--slate-700);color:#fff;transform:translateY(-1px)}
+  .preset[aria-pressed="true"]{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--amber-400)}
+
+  .card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;padding:16px 18px;
+    box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+
+  /* Frase editable */
+  .frase{font-size:20px;line-height:2;color:var(--slate-300);margin:10px 0 0;max-width:118ch}
+  .cond{position:relative;display:inline-block;margin:0 2px}
+  .cond > button{font-family:inherit;font-size:17px;font-weight:600;cursor:pointer;border-radius:8px;
+    border:1px solid rgba(245,158,11,.4);background:rgba(245,158,11,.1);color:var(--amber-400);padding:6px 10px}
+  .cond > button:hover{background:rgba(245,158,11,.18);transform:translateY(-1px)}
+  .cond > button .caret{font-size:11px;color:var(--slate-300);margin-left:6px}
+  .cond.off > button{background:var(--slate-800);border-color:var(--slate-700);color:var(--slate-400)}
+  .pop{position:absolute;left:0;top:50px;z-index:10;width:306px;background:var(--surface);border:1px solid var(--slate-700);
+    border-radius:8px;padding:12px;box-shadow:0 14px 32px rgba(0,0,0,.6)}
+  .pop .poph{display:block;margin:0 0 8px;font-size:13px;font-weight:600;color:var(--slate-100)}
+  .pop .umb{display:flex;flex-direction:column;gap:7px}
+  .pop label{display:flex;align-items:center;justify-content:space-between;gap:8px;font-size:13px;color:var(--slate-300)}
+  .pop input[type=text]{width:78px;background:var(--background);border:1px solid var(--slate-700);border-radius:4px;
+    color:#fff;font-family:var(--mono);font-size:13px;padding:6px;text-align:right}
+  .pop .popfoot{display:flex;gap:8px;margin-top:10px}
+  .btn-ghost{background:var(--slate-800);color:var(--slate-200);border:1px solid var(--slate-700);border-radius:4px;
+    padding:0 14px;min-height:44px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-ghost:hover{background:var(--slate-700)}
+  .btn-primary{background:var(--emerald-700);color:#fff;border:0;border-radius:4px;padding:0 16px;min-height:44px;
+    font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-primary:hover{background:var(--emerald-600);transform:translateY(-1px)}
+  .addcond{font-family:inherit;font-size:15px;border:1px dashed var(--slate-700);background:transparent;color:var(--slate-400);
+    border-radius:8px;padding:7px 12px;cursor:pointer}
+  .addcond:hover{color:var(--amber-400);border-color:rgba(245,158,11,.4)}
+  .etf{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--slate-300)}
+
+  /* Cadena del embudo */
+  .chain{display:flex;align-items:center;gap:10px;flex-wrap:wrap;margin-top:14px;padding-top:12px;border-top:1px solid var(--slate-800)}
+  .chain .sgroup{display:flex;align-items:baseline;gap:6px}
+  .chain .n{font-family:var(--mono);font-size:16px;font-weight:700;color:#fff}
+  .chain .n.dim{color:var(--slate-400)}
+  .chain .t{font-size:12px;color:var(--slate-400)}
+  .chain .arrow{color:var(--slate-600);font-size:14px}
+  .chain .n.final{color:var(--amber-400)}
+
+  .toolbar{display:flex;align-items:baseline;justify-content:space-between}
+
+  .body{flex:1;display:flex;gap:14px;overflow:hidden}
+  .tablewrap{flex:1;overflow:auto;border:1px solid var(--slate-700);border-radius:8px;background:rgba(15,23,42,.8)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{background:var(--slate-800);text-align:left;color:var(--slate-400);font-size:12px;font-weight:600;
+    padding:9px 10px;position:sticky;top:0}
+  thead th.num{text-align:right}
+  tbody tr{border-top:1px solid var(--slate-700);cursor:pointer}
+  tbody tr:hover{background:rgba(30,41,59,.4)}
+  tbody tr[aria-selected="true"]{background:rgba(30,41,59,.7);box-shadow:inset 3px 0 0 var(--primary)}
+  td{padding:8px 10px}
+  td.num{text-align:right;font-family:var(--mono);color:var(--slate-200)}
+  .rowbtn{background:none;border:0;padding:0;text-align:left;cursor:pointer;font-family:inherit;color:inherit}
+  .tick{font-family:var(--mono);font-size:14px;font-weight:700;color:#fff;display:block}
+  .nm2{font-size:12px;color:var(--slate-400);display:block}
+  .neg{color:var(--red-400)} .pos{color:var(--emerald-400)}
+  .nd{color:var(--slate-400);font-size:12px;font-style:italic}
+  .starwrap{position:relative}
+  .stars{background:none;border:0;cursor:pointer;font-size:15px;letter-spacing:1px;padding:4px 2px;font-family:inherit;color:var(--primary)}
+  .stars .off{color:var(--slate-600)}
+  .startip{position:absolute;left:-6px;top:30px;z-index:5;width:262px;background:var(--surface);
+    border:1px solid var(--slate-700);border-radius:8px;padding:10px;box-shadow:0 10px 25px rgba(0,0,0,.6);display:none}
+  .stars:hover + .startip,.stars:focus + .startip,.startip:hover{display:block}
+  .startip ul{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:4px}
+  .startip li{display:flex;gap:8px;font-size:12px;color:var(--slate-300)}
+  .yes{color:var(--emerald-400);font-weight:700} .no{color:var(--red-400);font-weight:700}
+  .badge{font-size:11px;border:1px solid var(--slate-700);border-radius:4px;padding:3px 6px;color:var(--slate-300);background:var(--slate-800)}
+  .badge b{font-family:var(--mono);color:var(--amber-400);font-weight:700}
+  .sig{font-size:12px;color:var(--slate-300)}
+
+  /* Cajón de detalle */
+  .drawer{width:396px;flex:0 0 396px;background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;
+    padding:14px 16px;overflow:auto;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .drawer h2{margin:0;font-size:18px;font-weight:600;color:#fff}
+  .drawer .dhead{display:flex;align-items:flex-start;justify-content:space-between;gap:10px}
+  .drawer h3{margin:14px 0 6px;font-size:13px;font-weight:600;color:var(--slate-100)}
+  .close{background:var(--slate-800);border:1px solid var(--slate-700);color:var(--slate-300);border-radius:4px;
+    min-height:44px;min-width:44px;cursor:pointer;font-family:inherit;font-size:14px}
+  .close:hover{background:var(--slate-700);color:#fff}
+  .check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+  .check li{display:grid;grid-template-columns:16px 1fr auto;gap:8px;font-size:12px;color:var(--slate-300);align-items:baseline}
+  .check li .v{font-family:var(--mono);color:var(--slate-200)}
+  .gname{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate-400);margin:10px 0 3px}
+  .prose{font-size:12px;color:var(--slate-300);line-height:1.55;margin:0 0 8px}
+  .prose b{color:#fff;font-weight:600}
+  .formula{font-family:var(--mono);font-size:12px;color:var(--slate-200);background:var(--slate-800);
+    border:1px solid var(--slate-700);border-radius:4px;padding:8px;line-height:1.5}
+  .acts{display:flex;gap:8px;margin-top:12px}
+  footer{font-size:12px;color:var(--slate-400);display:flex;justify-content:space-between;padding-top:2px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search">
+      <label for="s1" style="position:absolute;left:-9999px">Buscar ticker</label>
+      <input id="s1" type="text" placeholder="Buscar ticker…">
+    </div>
+    <nav aria-label="Navegación principal">
+      <a href="#"><i aria-hidden="true">▦</i> Heatmap</a>
+      <a href="#"><i aria-hidden="true">◴</i> Resumen de portafolio</a>
+      <a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a>
+      <a href="#" aria-current="page"><i aria-hidden="true">◎</i> Oportunidades</a>
+      <a href="#"><i aria-hidden="true">⚡</i> Brief diario</a>
+      <a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a>
+      <a href="#"><i aria-hidden="true">▣</i> Fuentes</a>
+      <a href="#"><i aria-hidden="true">▤</i> Gestión de activos</a>
+    </nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+
+  <main>
+    <div class="pagehead">
+      <div>
+        <h1>Oportunidades</h1>
+        <p class="sub">Arme la búsqueda como una frase · universo Racional, 1.645 acciones</p>
+      </div>
+      <div class="presets" role="group" aria-label="Plantillas de condiciones">
+        <button class="preset" aria-pressed="true" type="button">Oportunidades</button>
+        <button class="preset" aria-pressed="false" type="button">Graham</button>
+        <button class="preset" aria-pressed="false" type="button">Buffett</button>
+        <button class="preset" aria-pressed="false" type="button">Lynch</button>
+      </div>
+    </div>
+
+    <section class="card" aria-labelledby="frase-h">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <span class="label" id="frase-h">Mi búsqueda</span>
+        <label class="etf"><input type="checkbox" id="etf"> Incluir ETF (929 fondos)</label>
+      </div>
+      <p class="frase">
+        Muéstrame
+        <span class="cond" id="c-calidad">
+          <button type="button" aria-expanded="false" aria-controls="p-calidad">negocios de calidad<span class="caret" aria-hidden="true">▾</span></button>
+          <span class="pop" id="p-calidad" hidden>
+            <span class="poph">Calidad del negocio</span>
+            <span class="umb">
+              <label>ROIC ≥ <input type="text" value="15 %" aria-label="Umbral ROIC"></label>
+              <label>ROE ≥ <input type="text" value="15 %" aria-label="Umbral ROE"></label>
+              <label>ROA ≥ <input type="text" value="7 %" aria-label="Umbral ROA"></label>
+              <label>Deuda / Patrimonio ≤ <input type="text" value="0,5" aria-label="Umbral deuda patrimonio"></label>
+              <label>Flujo de caja libre <input type="text" value="positivo" aria-label="Condición de flujo de caja libre"></label>
+            </span>
+            <span class="popfoot"><button class="btn-primary" type="button">Aplicar</button><button class="btn-ghost" type="button" data-close>Quitar condición</button></span>
+          </span>
+        </span>
+        que estén
+        <span class="cond" id="c-precio">
+          <button type="button" aria-expanded="false" aria-controls="p-precio">baratos<span class="caret" aria-hidden="true">▾</span></button>
+          <span class="pop" id="p-precio" hidden>
+            <span class="poph">Precio atractivo</span>
+            <span class="umb">
+              <label>P/E bajo su sector <input type="text" value="sí" aria-label="P/E bajo su sector"></label>
+              <label>FCF yield ≥ <input type="text" value="5 %" aria-label="Umbral FCF yield"></label>
+              <label>PEG ≤ <input type="text" value="1,0" aria-label="Umbral PEG"></label>
+              <label>Margen Graham ≥ <input type="text" value="25 %" aria-label="Umbral margen de seguridad"></label>
+              <label>Precio objetivo ≥ <input type="text" value="+20 %" aria-label="Umbral precio objetivo"></label>
+            </span>
+            <span class="popfoot"><button class="btn-primary" type="button">Aplicar</button><button class="btn-ghost" type="button" data-close>Quitar condición</button></span>
+          </span>
+        </span>
+        y que hayan
+        <span class="cond" id="c-caida">
+          <button type="button" aria-expanded="false" aria-controls="p-caida">caído ≥ 20 % por causas externas<span class="caret" aria-hidden="true">▾</span></button>
+          <span class="pop" id="p-caida" hidden>
+            <span class="poph">Cayó de precio</span>
+            <span class="umb">
+              <label>Bajo el máximo 52s ≥ <input type="text" value="20 %" aria-label="Umbral caída desde máximo"></label>
+              <label>Precio bajo SMA200 <input type="text" value="sí" aria-label="Precio bajo SMA200"></label>
+            </span>
+            <span class="popfoot"><button class="btn-primary" type="button">Aplicar</button><button class="btn-ghost" type="button" data-close>Quitar condición</button></span>
+          </span>
+        </span>,
+        con
+        <span class="cond" id="c-giro">
+          <button type="button" aria-expanded="false" aria-controls="p-giro">señal de giro<span class="caret" aria-hidden="true">▾</span></button>
+          <span class="pop" id="p-giro" hidden>
+            <span class="poph">Señal de giro</span>
+            <span class="umb">
+              <label>RSI(14) &lt; <input type="text" value="35" aria-label="Umbral RSI"></label>
+              <label>MACD <input type="text" value="cruce alcista" aria-label="Condición MACD"></label>
+              <label>Precio sobre SMA50 <input type="text" value="sí" aria-label="Precio sobre SMA50"></label>
+            </span>
+            <span class="popfoot"><button class="btn-primary" type="button">Aplicar</button><button class="btn-ghost" type="button" data-close>Quitar condición</button></span>
+          </span>
+        </span>
+        y
+        <span class="cond" id="c-confirm">
+          <button type="button" aria-expanded="false" aria-controls="p-confirm">confirmación de quienes compran<span class="caret" aria-hidden="true">▾</span></button>
+          <span class="pop" id="p-confirm" hidden>
+            <span class="poph">Confirmación</span>
+            <span class="umb">
+              <label>Compras de superinversores ≥ <input type="text" value="1" aria-label="Umbral compras de superinversores"></label>
+              <label>Insiders agrupados ≥ <input type="text" value="2" aria-label="Umbral insiders agrupados"></label>
+            </span>
+            <span class="popfoot"><button class="btn-primary" type="button">Aplicar</button><button class="btn-ghost" type="button" data-close>Quitar condición</button></span>
+          </span>
+        </span>.
+        <button class="addcond" type="button">+ añadir condición</button>
+      </p>
+
+      <div class="chain" aria-label="Cuántas acciones quedan en cada paso">
+        <span class="sgroup"><span class="n dim">1.645</span><span class="t">universo</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="sgroup"><span class="n">1.212</span><span class="t">con ganancias</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="sgroup"><span class="n">486</span><span class="t">calidad</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="sgroup"><span class="n">131</span><span class="t">baratas</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="sgroup"><span class="n">38</span><span class="t">cayeron por causas externas</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="sgroup"><span class="n">21</span><span class="t">señal de giro</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="sgroup"><span class="n final">12</span><span class="t">con confirmación</span></span>
+      </div>
+    </section>
+
+    <div class="toolbar">
+      <span class="label">Resultados: 38 acciones (las 5 últimas condiciones solo puntúan)</span>
+      <span class="sub" style="font-size:12px">Ordenado por estrellas · 9 visibles</span>
+    </div>
+
+    <div class="body">
+      <div class="tablewrap">
+        <table id="tabla">
+          <caption style="position:absolute;left:-9999px">Resultados. Pulse una fila para ver el detalle a la derecha.</caption>
+          <thead>
+            <tr>
+              <th scope="col">Acción</th>
+              <th scope="col">Estrellas</th>
+              <th scope="col" class="num">Precio</th>
+              <th scope="col" class="num">Caída 52s</th>
+              <th scope="col" class="num">Margen Graham</th>
+              <th scope="col" class="num">P/E</th>
+              <th scope="col" class="num">FCF yield</th>
+              <th scope="col" class="num">ROIC</th>
+              <th scope="col">Señal</th>
+              <th scope="col">Dataroma</th>
+            </tr>
+          </thead>
+          <tbody id="cuerpo"></tbody>
+        </table>
+      </div>
+
+      <aside class="drawer" id="drawer" aria-label="Detalle de la acción seleccionada"></aside>
+    </div>
+
+    <footer>
+      <span>Datos: TradingView (15 min de retraso, sin cuenta) · Dataroma · FRED AAA</span>
+      <span>Solo screener: la plataforma no envía órdenes.</span>
+    </footer>
+  </main>
+</div>
+
+<script>
+var Y = 6.03;
+var DATA = [
+ {t:'TMO', n:'Thermo Fisher Scientific', s:'Salud', p:521.83, max52:729.00, eps:28.60, g:13,
+  roic:16.2, roe:17.4, roa:7.8, fcfPos:true, de:0.42, peSec:26.4, fcfy:5.4, peg:0.94, target:23,
+  belowSma200:true, aboveSma50:true, rsi:31.4, macd:'alcista', sup:3, supPrice:694.28, ins:1, insCluster:false,
+  why:'Recorte de presupuestos de investigación y menor demanda de equipos post-pandemia; el negocio de diagnóstico sigue creciendo.'},
+ {t:'APH', n:'Amphenol', s:'Tecnología', p:52.10, max52:68.90, eps:2.95, g:13,
+  roic:18.9, roe:24.1, roa:9.8, fcfPos:true, de:0.38, peSec:24.8, fcfy:5.6, peg:0.95, target:21,
+  belowSma200:true, aboveSma50:true, rsi:33.2, macd:'alcista', sup:2, supPrice:61.40, ins:0, insCluster:false,
+  why:'Castigo sectorial a proveedores de componentes tras dos trimestres de inventarios altos en clientes industriales.'},
+ {t:'DIS', n:'Walt Disney', s:'Comunicaciones', p:96.40, max52:144.15, eps:6.20, g:11,
+  roic:9.8, roe:10.4, roa:5.1, fcfPos:true, de:0.44, peSec:19.2, fcfy:7.9, peg:0.88, target:26,
+  belowSma200:true, aboveSma50:true, rsi:41.8, macd:'alcista', sup:3, supPrice:103.70, ins:0, insCluster:false,
+  why:'Pérdida de suscriptores en streaming y gasto en parques más débil; la caída excede lo que explican los resultados.'},
+ {t:'META', n:'Meta Platforms', s:'Comunicaciones', p:612.70, max52:781.50, eps:27.40, g:10,
+  roic:27.6, roe:31.2, roa:18.4, fcfPos:true, de:0.14, peSec:20.1, fcfy:5.1, peg:1.32, target:18,
+  belowSma200:true, aboveSma50:true, rsi:33.8, macd:'alcista', sup:2, supPrice:645.10, ins:0, insCluster:false,
+  why:'Temor del mercado al gasto en centros de datos de IA; los ingresos por publicidad siguen creciendo a doble dígito.'},
+ {t:'AMZN', n:'Amazon.com', s:'Consumo discrecional', p:198.30, max52:256.90, eps:6.85, g:14,
+  roic:15.8, roe:18.9, roa:7.4, fcfPos:true, de:0.46, peSec:24.1, fcfy:3.1, peg:1.48, target:19,
+  belowSma200:true, aboveSma50:false, rsi:44.1, macd:'bajista', sup:2, supPrice:214.60, ins:0, insCluster:false,
+  why:'Rotación fuera de consumo discrecional y margen de AWS bajo presión; aún no hay señal técnica de giro.'},
+ {t:'NVDA', n:'NVIDIA', s:'Tecnología', p:142.60, max52:212.20, eps:4.20, g:15,
+  roic:62.4, roe:78.3, roa:55.1, fcfPos:true, de:0.12, peSec:24.8, fcfy:2.6, peg:1.71, target:28,
+  belowSma200:true, aboveSma50:false, rsi:38.6, macd:'bajista', sup:3, supPrice:168.90, ins:0, insCluster:false,
+  why:'Corrección del sector de semiconductores tras dudas sobre el ritmo de inversión en IA; sigue por debajo de la SMA50.'},
+ {t:'NEE', n:'NextEra Energy', s:'Servicios públicos', p:58.20, max52:77.50, eps:4.10, g:9,
+  roic:null, roe:11.8, roa:3.2, fcfPos:null, de:1.42, peSec:17.6, fcfy:null, peg:null, target:22,
+  belowSma200:true, aboveSma50:true, rsi:29.8, macd:'alcista', sup:1, supPrice:62.80, ins:0, insCluster:false,
+  why:'Tasas largas altas castigan a las eléctricas reguladas; la cartera de renovables contratada no cambió.'},
+ {t:'CRBG', n:'Corebridge Financial', s:'Financiero', p:29.85, max52:38.40, eps:4.95, g:7,
+  roic:null, roe:14.2, roa:1.1, fcfPos:null, de:0.61, peSec:11.4, fcfy:null, peg:null, target:24,
+  belowSma200:true, aboveSma50:true, rsi:34.1, macd:'alcista', sup:0, supPrice:null, ins:5, insCluster:true,
+  why:'Arrastre del sector asegurador por expectativa de bajada de tasas; cinco directivos compraron en el mismo mes.'},
+ {t:'NBIS', n:'Nebius Group', s:'Tecnología', p:38.70, max52:65.80, eps:null, g:null,
+  roic:null, roe:null, roa:null, fcfPos:null, de:0.33, peSec:24.8, fcfy:null, peg:null, target:35,
+  belowSma200:true, aboveSma50:true, rsi:28.4, macd:'alcista', sup:0, supPrice:null, ins:4, insCluster:true,
+  why:'Empresa joven, aún en pérdidas: la caída sigue al enfriamiento del sector de infraestructura de IA.'}
+];
+
+function f(n,d){ if(n===null||n===undefined) return null; return n.toFixed(d).replace('.',','); }
+function pct(n,d){ var v=f(n,d===undefined?1:d); return v===null?null:v+' %'; }
+function graham(x){ if(x.eps===null||x.g===null) return null; return x.eps*(8.5+2*x.g)*4.4/Y; }
+function mos(x){ var v=graham(x); if(v===null) return null; return (v-x.p)/v*100; }
+function pe(x){ return x.eps===null?null:x.p/x.eps; }
+function drop(x){ return (x.p/x.max52-1)*100; }
+
+var GRUPOS = [
+ {id:'calidad', name:'Calidad del negocio', items:[
+   {l:'ROIC', u:'≥ 15 %', v:function(x){return pct(x.roic)}, ok:function(x){return x.roic!==null&&x.roic>=15}},
+   {l:'ROE', u:'≥ 15 %', v:function(x){return pct(x.roe)}, ok:function(x){return x.roe!==null&&x.roe>=15}},
+   {l:'ROA', u:'≥ 7 %', v:function(x){return pct(x.roa)}, ok:function(x){return x.roa!==null&&x.roa>=7}},
+   {l:'Flujo de caja libre', u:'positivo', v:function(x){return x.fcfPos===null?null:(x.fcfPos?'positivo':'negativo')}, ok:function(x){return x.fcfPos===true}},
+   {l:'Deuda / Patrimonio', u:'≤ 0,5', v:function(x){return f(x.de,2)}, ok:function(x){return x.de!==null&&x.de<=0.5}}
+ ]},
+ {id:'precio', name:'Precio atractivo', items:[
+   {l:'P/E vs. su sector', u:'menor', v:function(x){var p=pe(x);return p===null?null:f(p,1)+' vs '+f(x.peSec,1)}, ok:function(x){var p=pe(x);return p!==null&&p<x.peSec}},
+   {l:'FCF yield', u:'≥ 5 %', v:function(x){return pct(x.fcfy)}, ok:function(x){return x.fcfy!==null&&x.fcfy>=5}},
+   {l:'PEG', u:'≤ 1,0', v:function(x){return f(x.peg,2)}, ok:function(x){return x.peg!==null&&x.peg<=1}},
+   {l:'Margen de seguridad (Graham)', u:'≥ 25 %', v:function(x){return pct(mos(x))}, ok:function(x){var m=mos(x);return m!==null&&m>=25}},
+   {l:'Precio objetivo analistas', u:'≥ +20 %', v:function(x){return x.target===null?null:'+'+f(x.target,0)+' %'}, ok:function(x){return x.target!==null&&x.target>=20}}
+ ]},
+ {id:'caida', name:'Cayó de precio', items:[
+   {l:'Bajo el máximo de 52 semanas', u:'≥ 20 %', v:function(x){return f(drop(x),1)+' %'}, ok:function(x){return drop(x)<=-20}},
+   {l:'Precio bajo la SMA200', u:'sí', v:function(x){return x.belowSma200?'sí':'no'}, ok:function(x){return x.belowSma200===true}}
+ ]},
+ {id:'giro', name:'Señal de giro', items:[
+   {l:'RSI(14) bajo o MACD alcista', u:'RSI < 35', v:function(x){return 'RSI '+f(x.rsi,1)+' · MACD '+x.macd}, ok:function(x){return (x.rsi!==null&&x.rsi<35)||x.macd==='alcista'}},
+   {l:'Precio sobre la SMA50', u:'sí', v:function(x){return x.aboveSma50?'sí':'no'}, ok:function(x){return x.aboveSma50===true}}
+ ]},
+ {id:'confirm', name:'Confirmación', items:[
+   {l:'Compras de superinversores', u:'≥ 1', v:function(x){return x.sup+' compras'}, ok:function(x){return x.sup>=1}},
+   {l:'Compras de insiders agrupadas', u:'≥ 2', v:function(x){return x.ins+' compras'}, ok:function(x){return x.insCluster===true}}
+ ]}
+];
+function grupoOk(gr,x){
+  var oks = gr.items.map(function(it){return it.ok(x)});
+  if(gr.id==='confirm') return oks.some(Boolean);
+  return oks.every(Boolean);
+}
+function faltanDatos(gr,x){ return gr.items.some(function(it){return it.v(x)===null}); }
+function estrellas(x){ return GRUPOS.filter(function(gr){return grupoOk(gr,x)}).length; }
+function starsHtml(k){ var s=''; for(var i=1;i<=5;i++){ s += i<=k?'★':'<span class="off">★</span>'; } return s; }
+function tipHtml(x){
+  return '<ul>'+GRUPOS.map(function(gr){
+    var ok=grupoOk(gr,x), nd=!ok&&faltanDatos(gr,x);
+    return '<li><span class="'+(ok?'yes':'no')+'" aria-hidden="true">'+(ok?'✓':'✗')+'</span><span>'+gr.name+(nd?' — <i>datos insuficientes</i>':'')+'</span></li>';
+  }).join('')+'</ul>';
+}
+function cell(v){ return v===null?'<span class="nd">n/d</span>':v; }
+
+function filaHtml(x,i){
+  var k=estrellas(x), m=mos(x), p=pe(x);
+  var sig = x.rsi<35 ? 'Sobreventa' : (x.macd==='alcista'?'Giro al alza':'Sigue cayendo');
+  var ic  = x.rsi<35 ? '↯' : (x.macd==='alcista'?'↗':'↘');
+  var badges = (x.sup>0?'<span class="badge">Superinv. <b>'+x.sup+'</b></span> ':'')+
+               (x.ins>0?'<span class="badge">Insiders <b>'+x.ins+'</b></span>':'')+
+               (x.sup===0&&x.ins===0?'<span class="nd">sin registro</span>':'');
+  return '<tr data-i="'+i+'" aria-selected="false">'+
+    '<td><button class="rowbtn" type="button"><span class="tick">'+x.t+'</span><span class="nm2">'+x.n+' · '+x.s+'</span></button></td>'+
+    '<td><span class="starwrap"><button class="stars" type="button" aria-label="'+k+' de 5 estrellas. Ver grupos cumplidos.">'+starsHtml(k)+'</button>'+
+      '<span class="startip" role="note">'+tipHtml(x)+'</span></span></td>'+
+    '<td class="num">'+f(x.p,2)+'</td>'+
+    '<td class="num neg">'+f(drop(x),1)+' %</td>'+
+    '<td class="num">'+(m===null?cell(null):'<span class="'+(m>=25?'pos':(m<0?'neg':''))+'">'+f(m,1)+' %</span>')+'</td>'+
+    '<td class="num">'+cell(f(p,1))+'</td>'+
+    '<td class="num">'+cell(pct(x.fcfy))+'</td>'+
+    '<td class="num">'+cell(pct(x.roic))+'</td>'+
+    '<td><span class="sig"><span aria-hidden="true">'+ic+'</span> '+sig+'</span></td>'+
+    '<td>'+badges+'</td></tr>';
+}
+
+function drawerHtml(x){
+  var k=estrellas(x), v=graham(x), m=mos(x);
+  var checklist = GRUPOS.map(function(gr){
+    var ok=grupoOk(gr,x);
+    return '<p class="gname"><span class="'+(ok?'yes':'no')+'" aria-hidden="true">'+(ok?'✓':'✗')+'</span> '+gr.name+'</p>'+
+      '<ul class="check">'+gr.items.map(function(it){
+        var val=it.v(x), good=it.ok(x);
+        return '<li><span class="'+(good?'yes':'no')+'" aria-hidden="true">'+(good?'✓':'✗')+'</span><span>'+it.l+' '+it.u+'</span>'+
+          '<span class="v">'+(val===null?'<i class="nd">Datos insuficientes</i>':val)+'</span></li>';
+      }).join('')+'</ul>';
+  }).join('');
+  var grahamBlock = v===null
+    ? '<p class="prose">Sin beneficio por acción positivo no se puede calcular el valor de Graham: <b>datos insuficientes</b>.</p>'
+    : '<p class="prose">Con un beneficio por acción de <b>'+f(x.eps,2)+' USD</b>, un crecimiento esperado de <b>'+f(x.g,0)+' %</b> y el bono AAA en <b>6,03 %</b>:</p>'+
+      '<div class="formula">V = EPS × (8,5 + 2g) × 4,4 / Y<br>V = '+f(x.eps,2)+' × (8,5 + 2×'+f(x.g,0)+') × 4,4 / 6,03<br>V = <b>'+f(v,2)+' USD</b><br>Precio hoy '+f(x.p,2)+' USD → margen '+f(m,1)+' %</div>';
+  var dataroma = (x.sup>0?'<p class="prose"><b>'+x.sup+' superinversores</b> compraron el último trimestre a un precio medio declarado de <b>'+f(x.supPrice,2)+' USD</b>; hoy cotiza '+f((x.p/x.supPrice-1)*100,1)+' % respecto a ese precio.</p>':'')+
+    (x.ins>0?'<p class="prose"><b>'+x.ins+' compras de directivos</b>'+(x.insCluster?' agrupadas en el mismo mes':'')+', sin accionistas del 10 %.</p>':'')+
+    (x.sup===0&&x.ins===0?'<p class="prose">Sin compras registradas en Dataroma.</p>':'');
+
+  return '<div class="dhead"><div><h2>'+x.t+' · '+x.n+'</h2>'+
+    '<p class="prose" style="margin-top:4px">'+x.s+' · '+k+' de 5 estrellas <span aria-hidden="true">'+starsHtml(k)+'</span></p></div>'+
+    '<button class="close" type="button" id="cerrar" aria-label="Cerrar detalle">✕</button></div>'+
+    '<h3>Qué cumple y qué no</h3>'+checklist+
+    '<h3>Cuánto vale según Graham</h3>'+grahamBlock+
+    '<h3>Por qué cayó</h3><p class="prose">'+x.why+'</p>'+
+    '<p class="prose">'+f(drop(x),1)+' % bajo el máximo de 52 semanas ('+f(x.max52,2)+' USD), '+(x.belowSma200?'bajo':'sobre')+' la media de 200 días y '+(x.aboveSma50?'ya sobre':'aún bajo')+' la de 50 días. RSI(14) '+f(x.rsi,1)+'.</p>'+
+    '<h3>Quién está comprando</h3>'+dataroma+
+    '<div class="acts"><button class="btn-primary" type="button">Agregar a seguimiento</button><button class="btn-ghost" type="button">Abrir análisis</button></div>';
+}
+
+DATA.sort(function(a,b){ return estrellas(b)-estrellas(a); });
+document.getElementById('cuerpo').innerHTML = DATA.map(filaHtml).join('');
+
+var drawer = document.getElementById('drawer');
+function select(i){
+  document.querySelectorAll('#cuerpo tr').forEach(function(r){ r.setAttribute('aria-selected', r.dataset.i===String(i)?'true':'false'); });
+  drawer.innerHTML = drawerHtml(DATA[i]);
+  drawer.hidden = false;
+}
+document.getElementById('cuerpo').addEventListener('click', function(e){
+  if(e.target.closest('.stars')) return;
+  var tr = e.target.closest('tr'); if(tr) select(Number(tr.dataset.i));
+});
+drawer.addEventListener('click', function(e){
+  if(e.target.id==='cerrar'){ drawer.hidden = true;
+    document.querySelectorAll('#cuerpo tr').forEach(function(r){ r.setAttribute('aria-selected','false'); }); }
+});
+// Condiciones de la frase: abrir / cerrar umbrales
+document.querySelectorAll('.cond > button').forEach(function(b){
+  b.addEventListener('click', function(){
+    var pop = document.getElementById(b.getAttribute('aria-controls'));
+    var open = b.getAttribute('aria-expanded')==='true';
+    document.querySelectorAll('.pop').forEach(function(p){p.hidden=true});
+    document.querySelectorAll('.cond > button').forEach(function(o){o.setAttribute('aria-expanded','false')});
+    if(!open){ pop.hidden=false; b.setAttribute('aria-expanded','true'); }
+  });
+});
+document.querySelectorAll('[data-close]').forEach(function(b){
+  b.addEventListener('click', function(){
+    var cond = b.closest('.cond'); cond.classList.add('off');
+    cond.querySelector('.pop').hidden = true;
+    cond.querySelector('button').setAttribute('aria-expanded','false');
+  });
+});
+document.querySelectorAll('.preset').forEach(function(p){
+  p.addEventListener('click', function(){
+    document.querySelectorAll('.preset').forEach(function(o){o.setAttribute('aria-pressed','false')});
+    p.setAttribute('aria-pressed','true');
+  });
+});
+select(2); // DIS seleccionada para mostrar el cajón
+</script>
+</body>
+</html>

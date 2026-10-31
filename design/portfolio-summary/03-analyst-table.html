@@ -1,0 +1,257 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Resumen de portafolio — Tabla de analista</title>
+<style>
+  :root{
+    --background:#020617; --surface:#0f172a; --primary:#f59e0b; --secondary:#94a3b8;
+    --text:#e2e8f0; --accent:#fbbf24;
+    --slate-800:#1e293b; --slate-700:#334155; --slate-600:#475569; --slate-500:#64748b;
+    --slate-400:#94a3b8; --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9;
+    --emerald-400:#34d399; --emerald-300:#6ee7b7; --red-400:#f87171;
+    --zinc-800:#27272a; --zinc-300:#d4d4d8; --zinc-700:#3f3f46;
+    --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--background);
+    color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+  a,button,summary{transition:all .2s ease-in-out}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .app{display:flex;height:900px}
+
+  .sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);
+    display:flex;flex-direction:column;padding:20px 12px 12px}
+  .logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+  .search{margin:0 4px 12px}
+  .search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;
+    padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+  .search input::placeholder{color:var(--slate-400)}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;
+    text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+  .sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+  .sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+  .sidebar nav a i{font-style:normal;width:18px;text-align:center}
+  .sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+
+  main{flex:1;display:grid;grid-template-columns:1fr 340px;gap:14px;padding:16px 20px;overflow:hidden}
+  .col{display:flex;flex-direction:column;gap:14px;min-width:0}
+  h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 2px}
+  .sub{font-size:14px;color:var(--slate-400);margin:0}
+  .label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+  .card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;padding:16px;
+    box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .pos{color:var(--emerald-400)} .neg{color:var(--red-400)} .muted{color:var(--slate-400)}
+  .stamp{font-size:12px;color:var(--slate-400)}
+  .btn-utility{background:var(--zinc-800);color:var(--zinc-300);border:0;border-radius:4px;padding:0 14px;
+    min-height:44px;min-width:44px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-utility:hover{background:var(--zinc-700);transform:translateY(-1px)}
+
+  .head{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  .headtotal{display:flex;align-items:baseline;gap:14px;margin-top:8px}
+  .headtotal .t{font-family:var(--mono);font-size:44px;font-weight:700;color:#fff;line-height:1}
+  .headtotal .c{font-size:16px;color:var(--slate-400)}
+  .headtotal .d{font-family:var(--mono);font-size:14px;font-weight:600}
+  details.fx summary{cursor:pointer;list-style:none;color:var(--slate-400);font-size:12px;min-height:44px;
+    display:inline-flex;align-items:center;gap:6px}
+  details.fx summary::-webkit-details-marker{display:none}
+  details.fx summary:hover{color:var(--slate-200)}
+  details.fx .body{font-size:12px;color:var(--slate-300);line-height:1.7;border-left:2px solid var(--slate-800);
+    padding-left:10px;margin:2px 0 0 4px}
+
+  /* Tabla densa */
+  .tablewrap{flex:1;overflow:auto;border:1px solid var(--slate-700);border-radius:8px;background:rgba(15,23,42,.8)}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  thead th{position:sticky;top:0;background:var(--slate-800);color:var(--slate-400);font-weight:600;
+    text-align:left;padding:9px 12px;white-space:nowrap}
+  td{padding:9px 12px;color:var(--slate-300);white-space:nowrap}
+  tbody tr{border-top:1px solid var(--slate-700)}
+  tbody tr:hover{background:rgba(30,41,59,.4)}
+  .num{text-align:right;font-family:var(--mono)}
+  .tick{font-family:var(--mono);color:var(--slate-200)}
+  tr.profile td{background:rgba(30,41,59,.35);font-size:14px}
+  tr.profile .pname{font-weight:600;color:var(--slate-100)}
+  tr.position td:first-child{padding-left:34px}
+  tr.position{font-size:13px}
+  .badge{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--primary);background:rgba(245,158,11,.1);
+    border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:1px 7px;margin-left:8px}
+  .toggle{background:none;border:0;color:var(--slate-400);cursor:pointer;font-family:inherit;font-size:13px;
+    display:inline-flex;align-items:center;gap:8px;min-height:44px;min-width:44px;padding:0 4px}
+  .toggle:hover{color:var(--slate-200)}
+  .caret{display:inline-block;transition:transform .2s ease-in-out}
+  .caret.open{transform:rotate(90deg)}
+  tr.total td{background:var(--slate-800);color:#fff;font-weight:700;font-size:14px}
+  .warnrow td{color:var(--accent);font-size:12px;background:rgba(15,23,42,.6)}
+
+  /* Rail derecho */
+  .rail{display:flex;flex-direction:column;gap:14px;overflow:hidden}
+  .perflist{display:flex;flex-direction:column;gap:8px;margin-top:10px}
+  .perfrow{display:flex;align-items:center;justify-content:space-between;background:var(--surface);
+    border:1px solid var(--slate-800);border-radius:8px;padding:9px 12px}
+  .perfrow .k{font-size:12px;font-weight:700;color:var(--slate-400);letter-spacing:.1em}
+  .perfrow .v{font-family:var(--mono);font-size:18px;font-weight:700}
+  .perfrow .a{font-family:var(--mono);font-size:12px;color:var(--slate-400)}
+  .empty{border:1px dashed var(--slate-700);border-radius:8px;padding:10px 12px;color:var(--slate-400);
+    font-size:12px;text-align:center}
+  .donut{display:flex;align-items:center;gap:14px;margin-top:10px}
+  .legend{display:flex;flex-direction:column;gap:7px;font-size:13px;color:var(--slate-300)}
+  .legend span i{display:inline-block;width:10px;height:10px;border-radius:2px;margin-right:8px}
+  .legend b{font-family:var(--mono);color:var(--slate-100)}
+  .legend small{display:block;color:var(--slate-400);font-family:var(--mono);font-size:11px;margin-left:18px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search"><label for="s3" style="position:absolute;left:-9999px">Buscar ticker</label>
+      <input id="s3" type="text" placeholder="Buscar ticker…"></div>
+    <nav aria-label="Navegación principal">
+      <a href="#"><i aria-hidden="true">▦</i> Heatmap</a>
+      <a href="#" aria-current="page"><i aria-hidden="true">◴</i> Resumen de portafolio</a>
+      <a href="#"><i aria-hidden="true">▤</i> Portafolio</a>
+      <a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a>
+      <a href="#"><i aria-hidden="true">⚡</i> Brief diario</a>
+      <a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a>
+      <a href="#"><i aria-hidden="true">▣</i> Fuentes</a>
+    </nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+
+  <main>
+    <div class="col">
+      <section class="card">
+        <div class="head">
+          <div>
+            <h1>Resumen de portafolio</h1>
+            <p class="sub">Cada perfil en su moneda base · total consolidado en USD</p>
+            <div class="headtotal">
+              <span class="t">15.268,14</span><span class="c">USD</span>
+              <span class="d pos">+63,80 (+0,42 %) hoy</span>
+            </div>
+            <details class="fx">
+              <summary>1 USD = 948,20 CLP · TradingView, hace 5 min ›</summary>
+              <div class="body">Ahorro Chile: 5.832.700 CLP ÷ 948,20 = 6.151,34 USD.<br>
+                Solo los perfiles cuya moneda base no es USD se convierten.</div>
+            </details>
+          </div>
+          <div style="text-align:right">
+            <p class="stamp" role="status">Precios actualizados hace 5 min</p>
+            <button class="btn-utility" type="button" style="margin-top:8px">↻ Actualizar precios</button>
+            <div style="margin-top:12px">
+              <span class="label">Invertido</span>
+              <div style="font-family:var(--mono);font-size:16px;font-weight:600;color:var(--slate-200)">11.948,68 USD</div>
+              <span class="label" style="display:block;margin-top:8px">P/L no realizado</span>
+              <div class="pos" style="font-family:var(--mono);font-size:16px;font-weight:600">+723,02 USD (+6,05 %)</div>
+              <span class="label" style="display:block;margin-top:8px">Caja</span>
+              <div style="font-family:var(--mono);font-size:16px;font-weight:600;color:var(--slate-200)">2.596,44 USD</div>
+            </div>
+          </div>
+        </div>
+      </section>
+
+      <div class="tablewrap">
+        <table>
+          <caption style="text-align:left;padding:10px 12px;font-size:12px;color:var(--slate-400)">
+            Perfiles y sus posiciones · valores en la moneda base de cada perfil
+          </caption>
+          <thead>
+            <tr>
+              <th scope="col">Perfil / posición</th>
+              <th scope="col" class="num">Cant.</th>
+              <th scope="col" class="num">Costo prom.</th>
+              <th scope="col" class="num">Precio</th>
+              <th scope="col" class="num">Acciones</th>
+              <th scope="col" class="num">Caja</th>
+              <th scope="col" class="num">Invertido</th>
+              <th scope="col" class="num">P/L</th>
+              <th scope="col" class="num">Valor perfil</th>
+              <th scope="col" class="num">En USD</th>
+            </tr>
+          </thead>
+          <tbody>
+            <tr class="profile">
+              <td><button class="toggle" type="button" aria-expanded="true" aria-controls="r1 r2 r3">
+                <span class="caret open" aria-hidden="true">›</span><span class="pname">Racional</span><span class="badge">USD</span></button></td>
+              <td class="num muted">—</td><td class="num muted">—</td><td class="num muted">—</td>
+              <td class="num">7.416,80</td><td class="num">1.700,00</td><td class="num">6.418,20</td>
+              <td class="num pos">+998,60</td><td class="num" style="color:#fff;font-weight:700">9.116,80</td>
+              <td class="num">9.116,80</td>
+            </tr>
+            <tr class="position" id="r1"><td class="tick">AAPL</td><td class="num">10</td><td class="num">182,40</td><td class="num">229,35</td>
+              <td class="num">2.293,50</td><td class="num muted">—</td><td class="num">1.824,00</td><td class="num pos">+469,50</td>
+              <td class="num">2.293,50</td><td class="num muted">2.293,50</td></tr>
+            <tr class="position" id="r2"><td class="tick">MSFT</td><td class="num">4</td><td class="num">401,10</td><td class="num">468,20</td>
+              <td class="num">1.872,80</td><td class="num muted">—</td><td class="num">1.604,40</td><td class="num pos">+268,40</td>
+              <td class="num">1.872,80</td><td class="num muted">1.872,80</td></tr>
+            <tr class="position" id="r3"><td class="tick">VOO</td><td class="num">6</td><td class="num">498,30</td><td class="num">541,75</td>
+              <td class="num">3.250,50</td><td class="num muted">—</td><td class="num">2.989,80</td><td class="num pos">+260,70</td>
+              <td class="num">3.250,50</td><td class="num muted">3.250,50</td></tr>
+
+            <tr class="profile">
+              <td><button class="toggle" type="button" aria-expanded="false" aria-controls="c1 c2 c3">
+                <span class="caret" aria-hidden="true">›</span><span class="pname">Ahorro Chile</span><span class="badge">CLP</span></button></td>
+              <td class="num muted">—</td><td class="num muted">—</td><td class="num muted">—</td>
+              <td class="num">4.982.700</td><td class="num">850.000</td><td class="num">5.244.000</td>
+              <td class="num neg">−261.300</td><td class="num" style="color:#fff;font-weight:700">5.832.700</td>
+              <td class="num">6.151,34</td>
+            </tr>
+            <tr class="warnrow"><td colspan="10">⚠ 1 de 3 posiciones sin precio (CENCOSUD): queda fuera del valor de mercado y del P/L.</td></tr>
+
+            <tr class="total">
+              <td>Total consolidado</td>
+              <td class="num">—</td><td class="num">—</td><td class="num">—</td>
+              <td class="num">12.671,70</td><td class="num">2.596,44</td><td class="num">11.948,68</td>
+              <td class="num pos">+723,02</td><td class="num">—</td><td class="num">15.268,14</td>
+            </tr>
+          </tbody>
+        </table>
+      </div>
+    </div>
+
+    <aside class="rail" aria-label="Rendimiento y asignación">
+      <section class="card">
+        <span class="label">Rendimiento (USD)</span>
+        <div class="perflist">
+          <div class="perfrow"><span class="k">1D</span><span><span class="v pos">+0,42 %</span> <span class="a">+63,80</span></span></div>
+          <div class="perfrow"><span class="k">1S</span><span><span class="v neg">−1,10 %</span> <span class="a">−169,80</span></span></div>
+          <div class="perfrow"><span class="k">1M</span><span><span class="v pos">+2,86 %</span> <span class="a">+424,60</span></span></div>
+          <div class="perfrow"><span class="k">3M</span><span><span class="v pos">+7,31 %</span> <span class="a">+1.040,10</span></span></div>
+          <p class="empty">YTD sin datos: el perfil Ahorro Chile no tiene historial desde enero.</p>
+        </div>
+      </section>
+
+      <section class="card">
+        <span class="label">Asignación por estrategia</span>
+        <div class="donut">
+          <svg width="150" height="150" viewBox="0 0 180 180" role="img"
+               aria-label="Dividendos 34,4 por ciento, Crecimiento 27,3 por ciento, Índices 21,3 por ciento, Caja 17,0 por ciento">
+            <circle cx="90" cy="90" r="70" fill="none" stroke="#1e293b" stroke-width="22"></circle>
+            <g transform="rotate(-90 90 90)" fill="none" stroke-width="22">
+              <circle cx="90" cy="90" r="70" stroke="#34d399" stroke-dasharray="151.3 288.5" stroke-dashoffset="0"></circle>
+              <circle cx="90" cy="90" r="70" stroke="#f59e0b" stroke-dasharray="120.1 319.7" stroke-dashoffset="-151.3"></circle>
+              <circle cx="90" cy="90" r="70" stroke="#94a3b8" stroke-dasharray="93.7 346.1" stroke-dashoffset="-271.4"></circle>
+              <circle cx="90" cy="90" r="70" stroke="#334155" stroke-dasharray="74.8 365.0" stroke-dashoffset="-365.1"></circle>
+            </g>
+            <text x="90" y="84" text-anchor="middle" fill="#ffffff" font-size="20" font-weight="700"
+                  font-family="ui-monospace,Menlo,monospace">15.268</text>
+            <text x="90" y="104" text-anchor="middle" fill="#94a3b8" font-size="12"
+                  font-family="Inter,system-ui,sans-serif">USD total</text>
+          </svg>
+          <div class="legend">
+            <span><i style="background:#34d399"></i>Dividendos <b>34,4 %</b><small>5.254,90 USD</small></span>
+            <span><i style="background:#f59e0b"></i>Crecimiento <b>27,3 %</b><small>4.166,30 USD</small></span>
+            <span><i style="background:#94a3b8"></i>Índices <b>21,3 %</b><small>3.250,50 USD</small></span>
+            <span><i style="background:#334155"></i>Caja <b>17,0 %</b><small>2.596,44 USD</small></span>
+          </div>
+        </div>
+      </section>
+    </aside>
+  </main>
+</div>
+</body>
+</html>

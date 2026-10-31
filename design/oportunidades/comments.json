@@ -1,0 +1,60 @@
+{
+  "version": 1,
+  "comments": [
+    {
+      "id": "tdjxe4x0",
+      "file": "01-embudo.html",
+      "selector": "body > div > main > div:nth-of-type(1) > div:nth-of-type(1) > p",
+      "excerpt": "Buenos negocios que cayeron de precio por causas externas · universo Racional, 1.645 acciones",
+      "comment": "dejemos solo el universo de acciones",
+      "createdAt": "2026-10-31T15:31:52.090Z",
+      "status": "resolved",
+      "sentAt": "2026-10-31T15:31:52.109Z",
+      "resolvedAt": "2026-10-31T15:32:25.061Z"
+    },
+    {
+      "id": "cj04arzc",
+      "file": "01-embudo.html",
+      "selector": "body > div > main > div:nth-of-type(1) > div:nth-of-type(2) > button:nth-of-type(2)",
+      "excerpt": "Graham",
+      "comment": "cual es la utilidad de estos botnoes?? a menos que sirvan como filtros no los utiliza",
+      "createdAt": "2026-10-31T15:32:35.797Z",
+      "status": "resolved",
+      "sentAt": "2026-10-31T15:32:35.817Z",
+      "resolvedAt": "2026-10-31T15:33:09.190Z"
+    },
+    {
+      "id": "x0vcjjkt",
+      "file": "01-embudo.html",
+      "selector": "body > div > main > section",
+      "excerpt": "CÓMO SE REDUCE EL UNIVERSO Incluir ETF (929 fondos) BASE 1.645 Universo Racional FILTRA 1.212 Con ganancias (EPS > 0) PUNTÚA 486 Calidad del negocio PUNTÚA 131 Precio atractivo FILTRA 38 Cayó de precio PUNTÚA 21 Señal de giro PUNTÚA 12 Confirmación Hoy filtran dos pasos: con ganancias y cayó de prec",
+      "comment": "tiene que haber un storytelling para entender como aplicar los filtros, aun siento que no hay conexion de cara a un inversor que esta partiendo, por lo que busca simplificar o auto-eplicar los filtros. utiliza alguna estetica de algun framework para ahcerlo mas bonito, simple y facil de operar",
+      "createdAt": "2026-10-31T15:35:02.075Z",
+      "status": "resolved",
+      "sentAt": "2026-10-31T15:35:02.097Z",
+      "resolvedAt": "2026-10-31T15:37:41.986Z"
+    },
+    {
+      "id": "na4z2r5s",
+      "file": "01-embudo.html",
+      "selector": "body > div > main > div:nth-of-type(3)",
+      "excerpt": "Oportunidades ordenadas por estrellas. Pulse el ticker para ver el detalle. Acción Estrellas Precio Caída 52s Valor Graham Margen P/E FCF yield ROIC Señal técnica Dataroma TMO Thermo Fisher Scientific · Salud ★★★★★ 521,83 -28,4 % 719,98 27,5 % 18,2 5,4 % 16,2 % ↯ Sobreventa Superinv. 3 Insiders 1 Qu",
+      "comment": "lo mismo que los filtros, como inversor de que me sirve que haya caida del precio, que es el valor de graham ocomo entenderlo, cuando es bueno, cuando es malo, el margen para que me sirve, como se interpreta, todas las columnas en general no se entiende, piensalo como si fuese la primera vez que vas a invertir, necesitas un guia que te eplique la finalidad y por que son indicadores a entender o revisar. necesito que apliques algun framework con mejor diseño, simple y facil de entender por cualquier persona,  aunque no sea inversionaista o maneje los terminos, genera un storytelling adecuado para la audiencia",
+      "createdAt": "2026-10-31T15:40:18.280Z",
+      "status": "resolved",
+      "sentAt": "2026-10-31T15:40:18.300Z",
+      "resolvedAt": "2026-10-31T15:42:54.350Z"
+    },
+    {
+      "id": "sbdj3oz6",
+      "file": "01-embudo.html",
+      "selector": "#tabla > thead > tr > th:nth-of-type(1)",
+      "excerpt": "Acción",
+      "comment": "falta una columna que te muestre el analisis de los analistas, en alguna de las herramientas que te habia compartido se puede rescatar cual es la opnion de los analistas referentes a la evaluacion del stock",
+      "createdAt": "2026-10-31T15:42:01.144Z",
+      "status": "resolved",
+      "sentAt": "2026-10-31T15:42:01.159Z",
+      "resolvedAt": "2026-10-31T15:44:33.892Z"
+    }
+  ]
+}

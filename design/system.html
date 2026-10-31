@@ -1,0 +1,209 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Investment Toolkit — Design system</title>
+<style>
+  :root{
+    --color-background:#020617; --color-surface:#0f172a; --color-primary:#f59e0b;
+    --color-secondary:#94a3b8; --color-text:#e2e8f0; --color-accent:#fbbf24;
+    --slate-800:#1e293b; --slate-700:#334155; --slate-600:#475569; --slate-500:#64748b;
+    --slate-400:#94a3b8; --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9;
+    --emerald-400:#34d399; --emerald-300:#6ee7b7; --emerald-700:#047857; --emerald-600:#059669;
+    --red-400:#f87171; --red-300:#fca5a5; --red-900:#7f1d1d; --red-800:#991b1b;
+    --amber-400:#fbbf24; --amber-500:#f59e0b; --zinc-800:#27272a; --zinc-300:#d4d4d8;
+    --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;width:1440px;background:var(--color-background);color:var(--color-text);
+    font-family:var(--font-sans);-webkit-font-smoothing:antialiased;font-size:14px}
+  a,button{transition:all .2s ease-in-out}
+  :focus-visible{outline:2px solid var(--color-primary);outline-offset:2px;
+    box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  main{padding:32px 40px 56px;max-width:1440px}
+  h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 4px}
+  h2{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;
+    letter-spacing:.1em;margin:40px 0 14px}
+  p.sub{color:var(--slate-400);margin:0;font-size:14px}
+  .card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;
+    padding:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .grid{display:grid;gap:12px}
+  .sw{border:1px solid var(--slate-800);border-radius:8px;overflow:hidden;background:var(--color-surface)}
+  .sw .chip{height:64px}
+  .sw .meta{padding:8px 10px;font-size:12px;line-height:1.5}
+  .sw .meta b{display:block;color:var(--slate-200);font-weight:600}
+  .sw .meta span{color:var(--slate-400);font-family:var(--mono)}
+  .sw .meta i{display:block;color:var(--slate-500);font-style:normal;font-size:11px;margin-top:2px}
+  table{width:100%;border-collapse:collapse;font-size:14px}
+  .tablewrap{overflow-x:auto;border:1px solid var(--slate-700);border-radius:8px}
+  thead{background:var(--slate-800);color:var(--slate-400);text-align:left}
+  th,td{padding:8px 16px}
+  tbody tr{border-top:1px solid var(--slate-700)}
+  tbody tr:hover{background:rgba(30,41,59,.4)}
+  .num{text-align:right;font-family:var(--mono)}
+  .pos{color:var(--emerald-400)} .neg{color:var(--red-400)} .amber{color:var(--amber-400)}
+  .btn{border:0;border-radius:4px;padding:8px 16px;font-size:14px;font-weight:600;cursor:pointer;
+    min-height:44px}
+  .btn-primary{background:var(--emerald-700);color:#fff}
+  .btn-primary:hover{background:var(--emerald-600)}
+  .btn-secondary{background:var(--slate-700);color:var(--slate-200)}
+  .btn-secondary:hover{background:var(--slate-600)}
+  .btn-utility{background:var(--zinc-800);color:var(--zinc-300);font-size:12px;padding:6px 12px}
+  .btn-utility:hover{background:#3f3f46}
+  .btn-danger{background:rgba(127,29,29,.6);color:var(--red-300)}
+  .banner{border-radius:4px;padding:8px 16px;font-size:14px;margin-bottom:10px}
+  .ok{border:1px solid #065f46;background:rgba(6,78,59,.4);color:var(--emerald-300)}
+  .err{border:1px solid var(--red-800);background:rgba(127,29,29,.4);color:var(--red-300)}
+  .label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+  .hero{font-size:30px;font-weight:700;color:#fff;margin:8px 0 12px}
+  .row{display:flex;justify-content:space-between;font-size:14px;padding:3px 0}
+  .row span:first-child{color:var(--slate-400)}
+  .row span:last-child{font-weight:600;color:var(--slate-300);font-family:var(--mono)}
+  .typo div{margin-bottom:10px;color:var(--slate-300)}
+  .typo small{display:block;color:var(--slate-400);font-size:12px;font-family:var(--mono)}
+  .space{display:flex;align-items:flex-end;gap:16px}
+  .space div{text-align:center;color:var(--slate-400);font-size:12px;font-family:var(--mono)}
+  .space i{display:block;background:var(--amber-500);border-radius:2px;margin-bottom:6px}
+  .radius{display:flex;gap:16px}
+  .radius div{width:120px;height:80px;background:var(--color-surface);border:1px solid var(--slate-700);
+    display:flex;align-items:center;justify-content:center;color:var(--slate-400);font-size:12px;
+    font-family:var(--mono)}
+  .nav{width:240px;background:var(--color-surface);border-right:1px solid var(--slate-800);padding:12px}
+  .nav .logo{color:var(--color-primary);font-weight:700;font-size:18px;padding:8px 8px 14px}
+  .nav a{display:block;padding:10px 16px;border-radius:8px;text-decoration:none;font-size:14px;
+    font-weight:500;color:var(--color-secondary)}
+  .nav a.active{background:var(--slate-800);color:var(--color-primary)}
+  .nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+  .skeleton{height:24px;border-radius:4px;background:linear-gradient(90deg,#0f172a 25%,#1e293b 50%,#0f172a 75%);
+    background-size:200% 100%;animation:shimmer 1.5s infinite}
+  @keyframes shimmer{0%{background-position:-200% 0}100%{background-position:200% 0}}
+  footer{margin-top:48px;border-top:1px solid var(--slate-800);padding-top:12px;
+    color:var(--slate-400);font-size:12px}
+</style>
+</head>
+<body>
+<main>
+  <header>
+    <h1>Investment Toolkit — Sistema de diseño</h1>
+    <p class="sub">Tokens leídos de <span style="font-family:var(--mono)">src/index.css</span>,
+      <span style="font-family:var(--mono)">tailwind.config.js</span> y las clases usadas por las páginas de portafolio.</p>
+  </header>
+
+  <h2>Colores — tokens declarados</h2>
+  <div class="grid" style="grid-template-columns:repeat(6,1fr)">
+    <div class="sw"><div class="chip" style="background:#020617"></div><div class="meta"><b>background</b><span>#020617</span><i>fondo app</i></div></div>
+    <div class="sw"><div class="chip" style="background:#0f172a"></div><div class="meta"><b>surface</b><span>#0f172a</span><i>sidebar, tarjetas</i></div></div>
+    <div class="sw"><div class="chip" style="background:#f59e0b"></div><div class="meta"><b>primary</b><span>#f59e0b</span><i>marca, foco, activo</i></div></div>
+    <div class="sw"><div class="chip" style="background:#94a3b8"></div><div class="meta"><b>secondary</b><span>#94a3b8</span><i>nav inactivo</i></div></div>
+    <div class="sw"><div class="chip" style="background:#e2e8f0"></div><div class="meta"><b>text</b><span>#e2e8f0</span><i>texto base</i></div></div>
+    <div class="sw"><div class="chip" style="background:#fbbf24"></div><div class="meta"><b>accent</b><span>#fbbf24</span><i>acento</i></div></div>
+  </div>
+
+  <h2>Colores — clases en uso</h2>
+  <div class="grid" style="grid-template-columns:repeat(6,1fr)">
+    <div class="sw"><div class="chip" style="background:#1e293b"></div><div class="meta"><b>slate-800</b><span>#1e293b</span><i>bordes, nav activo</i></div></div>
+    <div class="sw"><div class="chip" style="background:#334155"></div><div class="meta"><b>slate-700</b><span>#334155</span><i>tablas, inputs</i></div></div>
+    <div class="sw"><div class="chip" style="background:#64748b"></div><div class="meta"><b>slate-500</b><span>#64748b</span><i>solo label grande</i></div></div>
+    <div class="sw"><div class="chip" style="background:#94a3b8"></div><div class="meta"><b>slate-400</b><span>#94a3b8</span><i>texto secundario</i></div></div>
+    <div class="sw"><div class="chip" style="background:#cbd5e1"></div><div class="meta"><b>slate-300</b><span>#cbd5e1</span><i>valores tabla</i></div></div>
+    <div class="sw"><div class="chip" style="background:#34d399"></div><div class="meta"><b>emerald-400</b><span>#34d399</span><i>delta positivo</i></div></div>
+    <div class="sw"><div class="chip" style="background:#6ee7b7"></div><div class="meta"><b>emerald-300</b><span>#6ee7b7</span><i>saldo, éxito</i></div></div>
+    <div class="sw"><div class="chip" style="background:#047857"></div><div class="meta"><b>emerald-700</b><span>#047857</span><i>botón primario</i></div></div>
+    <div class="sw"><div class="chip" style="background:#f87171"></div><div class="meta"><b>red-400</b><span>#f87171</span><i>delta negativo</i></div></div>
+    <div class="sw"><div class="chip" style="background:#fca5a5"></div><div class="meta"><b>red-300</b><span>#fca5a5</span><i>texto de error</i></div></div>
+    <div class="sw"><div class="chip" style="background:#fbbf24"></div><div class="meta"><b>amber-400</b><span>#fbbf24</span><i>tipo de cambio, aviso</i></div></div>
+    <div class="sw"><div class="chip" style="background:#27272a"></div><div class="meta"><b>zinc-800</b><span>#27272a</span><i>botón de cabecera</i></div></div>
+  </div>
+  <p class="sub" style="margin-top:10px;font-size:12px">slate-500 sobre surface mide 3,76:1 — por debajo de AA.
+    Los labels pequeños usan slate-400 (7,0:1).</p>
+
+  <h2>Tipografía — Inter, sans-serif</h2>
+  <div class="card typo">
+    <div style="font-size:24px;font-weight:700;color:#fff">Portafolio consolidado <small>text-2xl / 24px / 700</small></div>
+    <div style="font-size:20px;font-weight:700;color:#fff">Resumen de portafolio <small>text-xl / 20px / 700</small></div>
+    <div style="font-size:30px;font-weight:700;color:#fff;font-family:var(--mono)">15.268,14 <small style="font-family:var(--font-sans)">valor hero de tarjeta · text-3xl / 30px / 700</small></div>
+    <div style="font-size:18px;font-weight:600;color:var(--slate-100)">Sección <small>text-lg / 18px / 600</small></div>
+    <div class="label">Valor total · label <small style="letter-spacing:normal">text-xs / 12px / 700 / tracking-widest</small></div>
+    <div style="font-size:14px">Texto de tabla y cuerpo <small>text-sm / 14px</small></div>
+    <div style="font-size:12px;color:var(--slate-400)">Pie y notas <small>text-xs / 12px</small></div>
+  </div>
+
+  <h2>Espaciado</h2>
+  <div class="card space">
+    <div><i style="width:6px;height:6px"></i>6px</div>
+    <div><i style="width:8px;height:8px"></i>8px</div>
+    <div><i style="width:12px;height:12px"></i>12px</div>
+    <div><i style="width:16px;height:16px"></i>16px</div>
+    <div><i style="width:20px;height:20px"></i>20px</div>
+    <div><i style="width:24px;height:24px"></i>24px</div>
+    <div><i style="width:240px;height:10px"></i>240px · sidebar</div>
+  </div>
+
+  <h2>Radios y sombras</h2>
+  <div class="radius">
+    <div style="border-radius:4px">rounded 4px</div>
+    <div style="border-radius:8px">rounded-lg 8px</div>
+    <div style="border-radius:12px">rounded-xl 12px</div>
+    <div style="border-radius:12px;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)">shadow-lg</div>
+    <div style="border-radius:12px;box-shadow:0 4px 20px rgba(0,0,0,.3)">hover</div>
+    <div style="border-radius:12px;box-shadow:0 10px 15px -3px rgba(16,185,129,.1)">glow +</div>
+    <div style="border-radius:12px;box-shadow:0 10px 15px -3px rgba(239,68,68,.1)">glow −</div>
+  </div>
+
+  <h2>Componentes</h2>
+  <div class="grid" style="grid-template-columns:240px 1fr 1fr">
+    <nav class="nav" aria-label="Ejemplo de navegación">
+      <div class="logo">⚡ Investment Toolkit</div>
+      <a href="#" class="active">Resumen de portafolio</a>
+      <a href="#">Portafolio</a>
+      <a href="#">Análisis</a>
+    </nav>
+
+    <div class="card">
+      <div style="display:flex;justify-content:space-between;align-items:center">
+        <span class="label">Valor total</span>
+        <span aria-hidden="true" style="color:var(--slate-500)">◎</span>
+      </div>
+      <div class="hero" style="font-family:var(--mono)">15.268,14 USD</div>
+      <div class="row"><span>Invertido</span><span>11.948,68 USD</span></div>
+      <div class="row"><span>P/L no realizado</span><span class="pos">+723,02 USD</span></div>
+      <div class="row"><span>Caja</span><span>2.596,44 USD</span></div>
+    </div>
+
+    <div class="card">
+      <span class="label">Estados y acciones</span>
+      <div style="margin-top:12px">
+        <div class="banner ok">Precios actualizados · 5 de 6 tickers</div>
+        <div class="banner err">No se pudo cargar el resumen</div>
+        <div class="skeleton" style="margin-bottom:10px"></div>
+        <div style="display:flex;gap:8px;flex-wrap:wrap">
+          <button class="btn btn-primary">Guardar</button>
+          <button class="btn btn-secondary">Cancelar</button>
+          <button class="btn btn-utility" style="min-height:44px">↻ Actualizar precios</button>
+          <button class="btn btn-danger">Eliminar</button>
+        </div>
+      </div>
+    </div>
+  </div>
+
+  <h2>Tabla</h2>
+  <div class="tablewrap">
+    <table>
+      <caption class="sub" style="text-align:left;padding:8px 16px;font-size:12px">Cabecera slate-800, filas divididas por slate-700, números en mono a la derecha</caption>
+      <thead><tr><th scope="col">Ticker</th><th scope="col" class="num">Cantidad</th><th scope="col" class="num">Precio</th><th scope="col" class="num">P/L</th></tr></thead>
+      <tbody>
+        <tr><td style="font-family:var(--mono);color:var(--slate-200)">AAPL</td><td class="num" style="color:var(--slate-300)">10</td><td class="num" style="color:var(--slate-300)">229,35</td><td class="num pos">+469,50</td></tr>
+        <tr><td style="font-family:var(--mono);color:var(--slate-200)">SQM-B</td><td class="num" style="color:var(--slate-300)">120</td><td class="num" style="color:var(--slate-300)">38.910</td><td class="num neg">−280.800</td></tr>
+        <tr><td style="font-family:var(--mono);color:var(--slate-200)">CENCOSUD</td><td class="num" style="color:var(--slate-300)">400</td><td class="num" style="color:var(--slate-400)">Sin precio</td><td class="num" style="color:var(--slate-400)">—</td></tr>
+      </tbody>
+    </table>
+  </div>
+
+  <footer>Fuentes: src/index.css · tailwind.config.js · components/Sidebar.tsx · components/PortfolioSummaryCards.tsx ·
+    components/PortfolioBreakdown.tsx · pages/PortfolioSummaryPage.tsx · pages/PortfolioMaintainerPage.tsx</footer>
+</main>
+</body>
+</html>

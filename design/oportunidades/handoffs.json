@@ -1,0 +1,16 @@
+{
+  "version": 1,
+  "chosen": "01-embudo.html",
+  "handoffs": {
+    "01-embudo.html": {
+      "status": "implemented",
+      "queued": false,
+      "sentAt": "2026-10-31T15:45:19.180Z",
+      "startedAt": "2026-10-31T15:45:40.657Z",
+      "implementedAt": "2026-10-31T16:11:00.624Z",
+      "feature": "odd/tasks/opportunities-and-brief.md",
+      "note": "En main local 50defa4f. Validado en navegador con datos reales del scanner de TradingView sobre copia de la BD. Requiere reiniciar el lanzador (migración 0015 + backend nuevo).",
+      "previewUrl": "http://localhost:5173/opportunities"
+    }
+  }
+}

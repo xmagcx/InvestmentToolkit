@@ -1,0 +1,242 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Brief diario — Lista de acciones del día</title>
+<style>
+  :root{
+    --background:#020617; --surface:#0f172a; --primary:#f59e0b; --secondary:#94a3b8;
+    --text:#e2e8f0; --accent:#fbbf24;
+    --slate-800:#1e293b; --slate-700:#334155; --slate-600:#475569; --slate-500:#64748b;
+    --slate-400:#94a3b8; --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9;
+    --emerald-400:#34d399; --emerald-300:#6ee7b7; --emerald-700:#047857; --emerald-600:#059669;
+    --red-400:#f87171; --red-300:#fca5a5; --amber-400:#fbbf24;
+    --zinc-800:#27272a; --zinc-300:#d4d4d8; --zinc-700:#3f3f46;
+    --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--background);
+    color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+  a,button,summary{transition:all .2s ease-in-out}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .app{display:flex;height:900px}
+
+  .sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);
+    display:flex;flex-direction:column;padding:20px 12px 12px}
+  .logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+  .search{margin:0 4px 12px}
+  .search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;
+    padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+  .search input::placeholder{color:var(--slate-400)}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;
+    text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+  .sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+  .sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+  .sidebar nav a i{font-style:normal;width:18px;text-align:center;opacity:.9}
+  .sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+
+  main{flex:1;padding:16px 24px;overflow:hidden;display:flex;flex-direction:column;gap:14px}
+  .pagehead{display:flex;align-items:flex-start;justify-content:space-between}
+  h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 2px}
+  .sub{font-size:14px;color:var(--slate-400);margin:0}
+  .headright{display:flex;align-items:center;gap:12px}
+  .btn-utility{background:var(--zinc-800);color:var(--zinc-300);border:0;border-radius:4px;
+    padding:0 14px;min-height:44px;min-width:44px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-utility:hover{background:var(--zinc-700);transform:translateY(-1px)}
+  .stamp{font-size:12px;color:var(--slate-400);margin:0}
+
+  .card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;
+    padding:16px 20px;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+
+  /* Barra delgada de contexto */
+  .ctx{display:flex;align-items:center;gap:20px;padding:12px 20px}
+  .ctx .state{font-size:15px;font-weight:600;color:var(--slate-100);white-space:nowrap}
+  .ctx .state b{color:var(--amber-400)}
+  .ctx .plain{font-size:13px;color:var(--slate-300);margin:0;flex:1}
+  .ctx .mini{display:flex;gap:16px;font-size:13px;color:var(--slate-300);white-space:nowrap}
+  .ctx .mini b{font-family:var(--mono);color:var(--slate-100);font-weight:600}
+  .pos{color:var(--emerald-400)} .neg{color:var(--red-400)}
+  .sep{width:1px;height:28px;background:var(--slate-700)}
+
+  .listhead{display:flex;align-items:baseline;justify-content:space-between;margin:2px 2px 0}
+  .listhead h2{font-size:18px;font-weight:600;color:var(--slate-100);margin:0}
+  .listhead p{margin:0;font-size:13px;color:var(--slate-400)}
+
+  ol.tasks{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:10px}
+  ol.tasks li{display:grid;grid-template-columns:96px 76px 1fr 190px 150px;gap:18px;align-items:center;
+    background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;padding:14px 20px;
+    box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  ol.tasks li:hover{box-shadow:0 4px 20px rgba(0,0,0,.3)}
+
+  .urg{display:inline-flex;align-items:center;gap:8px;font-size:12px;font-weight:700;
+    text-transform:uppercase;letter-spacing:.1em}
+  .urg i{font-style:normal;width:10px;height:10px;border-radius:2px;display:inline-block}
+  .urg.alta{color:var(--red-400)} .urg.alta i{background:#f87171}
+  .urg.media{color:var(--amber-400)} .urg.media i{background:#fbbf24}
+  .urg.baja{color:var(--slate-400)} .urg.baja i{background:#94a3b8}
+
+  .tick{font-family:var(--mono);font-size:18px;font-weight:700;color:#fff}
+  .why{font-size:14px;color:var(--slate-300);margin:0}
+  .why b{color:#fff;font-weight:600;font-family:var(--mono)}
+  .act{font-size:14px;font-weight:600;color:var(--slate-100)}
+  .act span{display:block;font-size:12px;color:var(--slate-400);font-weight:400;margin-top:2px}
+  .link{color:var(--accent);text-decoration:none;font-size:13px;font-weight:600;
+    border:1px solid var(--slate-700);border-radius:4px;padding:11px 14px;min-height:44px;
+    display:inline-flex;align-items:center;justify-content:center}
+  .link:hover{background:var(--slate-800)}
+
+  .notice{display:flex;align-items:center;gap:10px;border:1px solid var(--slate-700);border-radius:4px;
+    background:var(--slate-800);padding:10px 14px;font-size:13px;color:var(--amber-400)}
+  .notice span{color:var(--slate-300)}
+
+  details.rest summary{cursor:pointer;list-style:none;display:flex;align-items:center;gap:10px;
+    min-height:44px;color:var(--slate-400);font-size:13px;font-weight:600;padding:0 4px}
+  details.rest summary::-webkit-details-marker{display:none}
+  details.rest summary:hover{color:var(--slate-200)}
+  details.rest[open] .caret{transform:rotate(90deg)}
+  .caret{display:inline-block;transition:transform .2s ease-in-out}
+  table{width:100%;border-collapse:collapse;font-size:13px;margin-top:8px}
+  th{text-align:left;color:var(--slate-400);font-weight:600;padding:8px 10px;background:var(--slate-800)}
+  td{padding:8px 10px;color:var(--slate-300)}
+  tbody tr{border-top:1px solid var(--slate-700)}
+  tbody tr:hover{background:rgba(30,41,59,.4)}
+  .num{text-align:right;font-family:var(--mono)}
+  .tblwrap{border:1px solid var(--slate-700);border-radius:8px;overflow:hidden}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search">
+      <label for="s1" style="position:absolute;left:-9999px">Buscar ticker</label>
+      <input id="s1" type="text" placeholder="Buscar ticker…">
+    </div>
+    <nav aria-label="Navegación principal">
+      <a href="#"><i aria-hidden="true">▦</i> Heatmap</a>
+      <a href="#"><i aria-hidden="true">◴</i> Resumen de portafolio</a>
+      <a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a>
+      <a href="#" aria-current="page"><i aria-hidden="true">⚡</i> Brief diario</a>
+      <a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a>
+      <a href="#"><i aria-hidden="true">▣</i> Fuentes</a>
+      <a href="#"><i aria-hidden="true">▤</i> Gestión de activos</a>
+    </nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+
+  <main>
+    <div class="pagehead">
+      <div>
+        <h1>Brief diario</h1>
+        <p class="sub">Viernes 30 de octubre de 2026 · 7 cosas para revisar, de más a menos urgente</p>
+      </div>
+      <div class="headright">
+        <p class="stamp" role="status">Generado hoy a las 23:28</p>
+        <button class="btn-utility" type="button">↻ Regenerar brief</button>
+      </div>
+    </div>
+
+    <section class="card ctx" aria-label="Contexto del mercado">
+      <p class="state">Mercado <b>neutral</b></p>
+      <div class="sep" aria-hidden="true"></div>
+      <p class="plain">No hay una tendencia clara: el índice sube, pero solo 7 % de tus acciones lo acompaña. Día para revisar, no para apurarse.</p>
+      <div class="sep" aria-hidden="true"></div>
+      <div class="mini">
+        <span>VIX <b>19,4</b></span>
+        <span>S&amp;P vs. 200d <b class="pos">+4,1 %</b></span>
+        <span>Amplitud <b class="neg">7 %</b></span>
+        <span>Crédito <b>sano</b></span>
+      </div>
+    </section>
+
+    <div class="listhead">
+      <h2>Lista del día</h2>
+      <p>Ninguna de estas tareas es una orden de compra o venta: son revisiones sugeridas.</p>
+    </div>
+
+    <ol class="tasks">
+      <li>
+        <span class="urg alta"><i aria-hidden="true"></i> Alta</span>
+        <span class="tick">APP</span>
+        <p class="why">Se desplomó <b>−9,62 %</b> anoche (252,83 → 228,50 USD) y publica resultados el 4 de noviembre.</p>
+        <p class="act">Revisar la tesis <span>Sobreventa: RSI 24,9</span></p>
+        <a class="link" href="#">Abrir análisis</a>
+      </li>
+      <li>
+        <span class="urg alta"><i aria-hidden="true"></i> Alta</span>
+        <span class="tick">VITL</span>
+        <p class="why">Cayó <b>−6,57 %</b> anoche (9,28 → 8,67 USD) y publica resultados el 3 de noviembre.</p>
+        <p class="act">Revisar la tesis <span>Caída antes de resultados</span></p>
+        <a class="link" href="#">Abrir análisis</a>
+      </li>
+      <li>
+        <span class="urg media"><i aria-hidden="true"></i> Media</span>
+        <span class="tick">BKNG</span>
+        <p class="why">Bajó <b>−3,03 %</b> (152,76 → 148,13 USD) y es la otra empresa que publica el 3 de noviembre.</p>
+        <p class="act">Anotar la fecha <span>Resultados en 4 días</span></p>
+        <a class="link" href="#">Abrir análisis</a>
+      </li>
+      <li>
+        <span class="urg media"><i aria-hidden="true"></i> Media</span>
+        <span class="tick">TMUS</span>
+        <p class="why">Saltó <b class="pos">+4,85 %</b> anoche (149,20 → 156,44 USD) sin noticia registrada en el sistema.</p>
+        <p class="act">Buscar la causa <span>Subida sin explicación</span></p>
+        <a class="link" href="#">Abrir análisis</a>
+      </li>
+      <li>
+        <span class="urg media"><i aria-hidden="true"></i> Media</span>
+        <span class="tick">SFM</span>
+        <p class="why">Subió <b class="pos">+3,78 %</b> pero sigue en sobreventa (RSI 25,1) y es la acción más volátil de tu lista.</p>
+        <p class="act">Vigilar el rebote <span>Volatilidad en máximos</span></p>
+        <a class="link" href="#">Abrir análisis</a>
+      </li>
+      <li>
+        <span class="urg baja"><i aria-hidden="true"></i> Baja</span>
+        <span class="tick">NVDA</span>
+        <p class="why">Cayó <b>−2,62 %</b> (210,15 → 204,64 USD), pero sigue siendo la única acción en tendencia al alza.</p>
+        <p class="act">Sin acción <span>Está en seguimiento</span></p>
+        <a class="link" href="#">Agregar a seguimiento</a>
+      </li>
+      <li>
+        <span class="urg baja"><i aria-hidden="true"></i> Baja</span>
+        <span class="tick">NVO</span>
+        <p class="why">Subió <b class="pos">+2,70 %</b> (38,95 → 40,00 USD) y publica resultados el 4 de noviembre.</p>
+        <p class="act">Sin acción <span>Anotar la fecha</span></p>
+        <a class="link" href="#">Abrir análisis</a>
+      </li>
+    </ol>
+
+    <div class="notice" role="status">
+      <span aria-hidden="true">⚠</span>
+      Análisis técnico no actualizado hoy — <span>RSI y tendencia vienen del cierre anterior; el resto de los datos es de esta madrugada.</span>
+    </div>
+
+    <details class="rest">
+      <summary><span class="caret" aria-hidden="true">›</span> Ver las otras 9 acciones sin tareas para hoy</summary>
+      <div class="tblwrap">
+        <table>
+          <caption style="position:absolute;left:-9999px">Acciones sin tareas pendientes hoy</caption>
+          <thead><tr><th scope="col">Ticker</th><th scope="col">Estado</th><th scope="col" class="num">RSI</th><th scope="col">Nota</th></tr></thead>
+          <tbody>
+            <tr><td>MCD</td><td>Mantener</td><td class="num">68,2</td><td>Tendencia fuerte; publica resultados el 4 de noviembre</td></tr>
+            <tr><td>PEP</td><td>Mantener</td><td class="num">61,4</td><td>Tendencia fuerte, sin cambios</td></tr>
+            <tr><td>AXP</td><td>Mantener</td><td class="num">54,3</td><td>Sin dirección clara</td></tr>
+            <tr><td>DECK</td><td>Mantener</td><td class="num">47,3</td><td>Sin cambios relevantes</td></tr>
+            <tr><td>NFLX</td><td>Mantener</td><td class="num">30,9</td><td>Impulso negativo, cerca de sobreventa</td></tr>
+            <tr><td>UBER</td><td>Mantener</td><td class="num">36,2</td><td>Publica resultados el 4 de noviembre</td></tr>
+            <tr><td>VICI</td><td>Mantener</td><td class="num">60,2</td><td>Sin cambios relevantes</td></tr>
+            <tr><td>SFD</td><td>Mantener</td><td class="num">39,8</td><td>El único con puntaje negativo (−1): impulso a la baja</td></tr>
+            <tr><td>TSMC</td><td>En seguimiento</td><td class="num">—</td><td>Sin historial de precios suficiente para calcular</td></tr>
+          </tbody>
+        </table>
+      </div>
+    </details>
+  </main>
+</div>
+</body>
+</html>

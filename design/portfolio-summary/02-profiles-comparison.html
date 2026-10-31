@@ -1,0 +1,245 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Resumen de portafolio — Perfiles comparados</title>
+<style>
+  :root{
+    --background:#020617; --surface:#0f172a; --primary:#f59e0b; --secondary:#94a3b8;
+    --text:#e2e8f0; --accent:#fbbf24;
+    --slate-800:#1e293b; --slate-700:#334155; --slate-600:#475569; --slate-500:#64748b;
+    --slate-400:#94a3b8; --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9;
+    --emerald-400:#34d399; --emerald-300:#6ee7b7; --red-400:#f87171;
+    --zinc-800:#27272a; --zinc-300:#d4d4d8; --zinc-700:#3f3f46;
+    --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--background);
+    color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+  a,button,summary{transition:all .2s ease-in-out}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .app{display:flex;height:900px}
+
+  .sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);
+    display:flex;flex-direction:column;padding:20px 12px 12px}
+  .logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+  .search{margin:0 4px 12px}
+  .search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;
+    padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+  .search input::placeholder{color:var(--slate-400)}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;
+    text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+  .sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+  .sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+  .sidebar nav a i{font-style:normal;width:18px;text-align:center}
+  .sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+
+  main{flex:1;padding:16px 20px;display:flex;flex-direction:column;gap:14px;overflow:hidden}
+  h1{font-size:20px;font-weight:700;color:#fff;margin:0}
+  .label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+  .card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;
+    padding:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .mono{font-family:var(--mono)}
+  .pos{color:var(--emerald-400)} .neg{color:var(--red-400)} .muted{color:var(--slate-400)}
+  .btn-utility{background:var(--zinc-800);color:var(--zinc-300);border:0;border-radius:4px;padding:0 14px;
+    min-height:44px;min-width:44px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-utility:hover{background:var(--zinc-700);transform:translateY(-1px)}
+
+  /* Barra total delgada */
+  .totalbar{display:flex;align-items:center;gap:24px;padding:12px 16px}
+  .totalbar .t{font-family:var(--mono);font-size:34px;font-weight:700;color:#fff;line-height:1}
+  .totalbar .t span{font-size:16px;color:var(--slate-400);margin-left:6px}
+  .totalbar .chip{font-size:13px;color:var(--slate-300)}
+  .totalbar .chip b{font-family:var(--mono)}
+  .divider{width:1px;align-self:stretch;background:var(--slate-800)}
+  .right{margin-left:auto;display:flex;align-items:center;gap:12px}
+  .stamp{font-size:12px;color:var(--slate-400)}
+  details.fx summary{cursor:pointer;list-style:none;color:var(--slate-400);font-size:12px;min-height:44px;
+    display:flex;align-items:center;gap:6px}
+  details.fx summary::-webkit-details-marker{display:none}
+  details.fx summary:hover{color:var(--slate-200)}
+  details.fx .body{position:absolute;margin-top:4px;background:var(--surface);border:1px solid var(--slate-700);
+    border-radius:8px;padding:10px 12px;font-size:12px;color:var(--slate-300);line-height:1.7;z-index:5;
+    box-shadow:0 10px 15px -3px rgba(0,0,0,.4);max-width:360px}
+
+  /* Comparación */
+  .compare{flex:1;display:grid;grid-template-columns:188px 1fr 1fr;gap:0;overflow:hidden;padding:0}
+  .colhead{padding:14px 16px;border-bottom:1px solid var(--slate-800)}
+  .colhead.gutter{border-right:1px solid var(--slate-800)}
+  .pname{font-size:18px;font-weight:600;color:var(--slate-100)}
+  .badge{font-size:11px;font-weight:700;letter-spacing:.08em;color:var(--primary);background:rgba(245,158,11,.1);
+    border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:2px 8px;margin-left:8px}
+  .share{font-size:12px;color:var(--slate-400);margin-top:4px}
+  .gutter{border-right:1px solid var(--slate-800);background:rgba(15,23,42,.5)}
+  .metric{padding:11px 16px;border-bottom:1px solid var(--slate-800);font-size:13px;color:var(--slate-400);
+    display:flex;align-items:center;min-height:46px}
+  .val{padding:11px 16px;border-bottom:1px solid var(--slate-800);font-family:var(--mono);font-size:16px;
+    font-weight:600;color:var(--slate-200);display:flex;align-items:baseline;gap:10px;min-height:46px}
+  .val small{font-family:var(--font-sans);font-size:12px;color:var(--slate-400);font-weight:500}
+  .val.big{font-size:24px;font-weight:700;color:#fff}
+  .colbody{display:flex;flex-direction:column}
+  .colbody.b2{border-left:1px solid var(--slate-800)}
+  .posbox{padding:10px 16px}
+  details.pos summary{cursor:pointer;list-style:none;min-height:44px;display:flex;align-items:center;gap:8px;
+    font-size:12px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-400)}
+  details.pos summary::-webkit-details-marker{display:none}
+  details.pos summary:hover{color:var(--slate-200)}
+  details.pos[open] .caret{transform:rotate(90deg)}
+  .caret{display:inline-block;transition:transform .2s ease-in-out}
+  table{width:100%;border-collapse:collapse;font-size:13px}
+  th{text-align:left;color:var(--slate-400);font-weight:600;padding:6px 8px;background:var(--slate-800)}
+  td{padding:6px 8px;color:var(--slate-300)}
+  tbody tr{border-top:1px solid var(--slate-700)}
+  tbody tr:hover{background:rgba(30,41,59,.4)}
+  .num{text-align:right;font-family:var(--mono)}
+  .tick{font-family:var(--mono);color:var(--slate-200)}
+  .warn{font-size:12px;color:var(--accent);padding:0 16px 10px}
+
+  /* Pie: rendimiento + asignación */
+  .foot{display:grid;grid-template-columns:1fr 420px;gap:14px}
+  .perf{display:grid;grid-template-columns:repeat(4,1fr);gap:10px}
+  .pcell{background:var(--surface);border:1px solid var(--slate-800);border-radius:8px;padding:10px 12px}
+  .pcell .k{font-size:12px;font-weight:700;color:var(--slate-400);letter-spacing:.1em}
+  .pcell .v{font-family:var(--mono);font-size:20px;font-weight:700;margin-top:4px}
+  .pcell .a{font-family:var(--mono);font-size:12px;color:var(--slate-400);margin-top:2px}
+  .alloc summary{cursor:pointer;list-style:none;display:flex;align-items:center;justify-content:space-between;min-height:44px}
+  .alloc summary::-webkit-details-marker{display:none}
+  .alloc[open] .caret{transform:rotate(90deg)}
+  .allocrow{display:flex;align-items:center;gap:10px;font-size:13px;color:var(--slate-300);margin-top:8px}
+  .allocrow .n{width:96px;color:var(--slate-400)}
+  .allocrow .track{flex:1;height:8px;background:var(--slate-800);border-radius:4px;overflow:hidden}
+  .allocrow .fill{display:block;height:8px;border-radius:4px}
+  .allocrow b{font-family:var(--mono);width:58px;text-align:right;color:var(--slate-100)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search"><label for="s2" style="position:absolute;left:-9999px">Buscar ticker</label>
+      <input id="s2" type="text" placeholder="Buscar ticker…"></div>
+    <nav aria-label="Navegación principal">
+      <a href="#"><i aria-hidden="true">▦</i> Heatmap</a>
+      <a href="#" aria-current="page"><i aria-hidden="true">◴</i> Resumen de portafolio</a>
+      <a href="#"><i aria-hidden="true">▤</i> Portafolio</a>
+      <a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a>
+      <a href="#"><i aria-hidden="true">⚡</i> Brief diario</a>
+      <a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a>
+      <a href="#"><i aria-hidden="true">▣</i> Fuentes</a>
+    </nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+
+  <main>
+    <h1>Resumen de portafolio</h1>
+
+    <section class="card totalbar" aria-labelledby="tt">
+      <div>
+        <span id="tt" class="label">Total consolidado</span>
+        <div class="t">15.268,14<span>USD</span></div>
+      </div>
+      <div class="divider" aria-hidden="true"></div>
+      <div class="chip"><span class="label">Invertido</span><br><b>11.948,68 USD</b></div>
+      <div class="chip"><span class="label">P/L no realizado</span><br><b class="pos">+723,02 USD (+6,05 %)</b></div>
+      <div class="chip"><span class="label">Caja</span><br><b>2.596,44 USD</b></div>
+      <div class="right">
+        <details class="fx">
+          <summary>1 USD = 948,20 CLP ›</summary>
+          <div class="body">TradingView (FX_IDC:USDCLP), hace 5 min.<br>
+            Ahorro Chile: 5.832.700 CLP ÷ 948,20 = 6.151,34 USD.<br>
+            Solo los perfiles en CLP usan esta conversión.</div>
+        </details>
+        <p class="stamp" role="status">Precios hace 5 min</p>
+        <button class="btn-utility" type="button">↻ Actualizar precios</button>
+      </div>
+    </section>
+
+    <section class="card compare" aria-label="Comparación de perfiles">
+      <div class="colbody gutter">
+        <div class="colhead gutter"><span class="label">Métrica</span><p class="share">Cada perfil en su moneda base</p></div>
+        <div class="metric">Valor del perfil</div>
+        <div class="metric">Acciones (mercado)</div>
+        <div class="metric">Invertido (costo)</div>
+        <div class="metric">P/L no realizado</div>
+        <div class="metric">Caja disponible</div>
+        <div class="metric">Equivalente en USD</div>
+      </div>
+
+      <div class="colbody">
+        <div class="colhead"><span class="pname">Racional</span><span class="badge">USD</span>
+          <p class="share">59,7 % del total · 3 posiciones</p></div>
+        <div class="val big">9.116,80 <small>USD</small></div>
+        <div class="val">7.416,80 <small>USD</small></div>
+        <div class="val">6.418,20 <small>USD</small></div>
+        <div class="val pos">+998,60 <small class="pos">+15,56 %</small></div>
+        <div class="val">1.700,00 <small>USD</small></div>
+        <div class="val">9.116,80 <small>sin conversión</small></div>
+        <div class="posbox">
+          <details class="pos">
+            <summary><span class="caret" aria-hidden="true">›</span> Posiciones</summary>
+            <table>
+              <thead><tr><th scope="col">Ticker</th><th scope="col" class="num">Cant.</th><th scope="col" class="num">Costo</th><th scope="col" class="num">Precio</th><th scope="col" class="num">P/L</th></tr></thead>
+              <tbody>
+                <tr><td class="tick">AAPL</td><td class="num">10</td><td class="num">182,40</td><td class="num">229,35</td><td class="num pos">+469,50</td></tr>
+                <tr><td class="tick">MSFT</td><td class="num">4</td><td class="num">401,10</td><td class="num">468,20</td><td class="num pos">+268,40</td></tr>
+                <tr><td class="tick">VOO</td><td class="num">6</td><td class="num">498,30</td><td class="num">541,75</td><td class="num pos">+260,70</td></tr>
+              </tbody>
+            </table>
+          </details>
+        </div>
+      </div>
+
+      <div class="colbody b2">
+        <div class="colhead"><span class="pname">Ahorro Chile</span><span class="badge">CLP</span>
+          <p class="share">40,3 % del total · 3 posiciones (1 sin precio)</p></div>
+        <div class="val big">5.832.700 <small>CLP</small></div>
+        <div class="val">4.982.700 <small>CLP</small></div>
+        <div class="val">5.244.000 <small>CLP</small></div>
+        <div class="val neg">−261.300 <small class="neg">−4,98 %</small></div>
+        <div class="val">850.000 <small>CLP</small></div>
+        <div class="val">6.151,34 <small>USD · tasa 948,20</small></div>
+        <p class="warn" role="status">⚠ CENCOSUD sin precio: excluido del valor de mercado y del P/L.</p>
+        <div class="posbox" style="padding-top:0">
+          <details class="pos" open>
+            <summary><span class="caret" aria-hidden="true">›</span> Posiciones</summary>
+            <table>
+              <thead><tr><th scope="col">Ticker</th><th scope="col" class="num">Cant.</th><th scope="col" class="num">Costo</th><th scope="col" class="num">Precio</th><th scope="col" class="num">P/L</th></tr></thead>
+              <tbody>
+                <tr><td class="tick">SQM-B</td><td class="num">120</td><td class="num">41.250</td><td class="num">38.910</td><td class="num neg">−280.800</td></tr>
+                <tr><td class="tick">CHILE</td><td class="num">3.000</td><td class="num">98</td><td class="num">104,50</td><td class="num pos">+19.500</td></tr>
+                <tr><td class="tick">CENCOSUD</td><td class="num">400</td><td class="num">1.780</td><td class="num muted">Sin precio</td><td class="num muted">—</td></tr>
+              </tbody>
+            </table>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="foot">
+      <div class="card">
+        <span class="label">Rendimiento del total (USD)</span>
+        <div class="perf" style="margin-top:10px">
+          <div class="pcell"><div class="k">1D</div><div class="v pos">+0,42 %</div><div class="a">+63,80 USD</div></div>
+          <div class="pcell"><div class="k">1S</div><div class="v neg">−1,10 %</div><div class="a">−169,80 USD</div></div>
+          <div class="pcell"><div class="k">1M</div><div class="v pos">+2,86 %</div><div class="a">+424,60 USD</div></div>
+          <div class="pcell"><div class="k">3M</div><div class="v pos">+7,31 %</div><div class="a">+1.040,10 USD</div></div>
+        </div>
+      </div>
+
+      <details class="card alloc">
+        <summary><span><span class="caret" aria-hidden="true">›</span> <span class="label">Asignación por estrategia</span></span>
+          <span class="stamp">4 pilares</span></summary>
+        <div class="allocrow"><span class="n">Dividendos</span><span class="track"><i class="fill" style="width:34.4%;background:#34d399"></i></span><b>34,4 %</b></div>
+        <div class="allocrow"><span class="n">Crecimiento</span><span class="track"><i class="fill" style="width:27.3%;background:#f59e0b"></i></span><b>27,3 %</b></div>
+        <div class="allocrow"><span class="n">Índices</span><span class="track"><i class="fill" style="width:21.3%;background:#94a3b8"></i></span><b>21,3 %</b></div>
+        <div class="allocrow"><span class="n">Caja</span><span class="track"><i class="fill" style="width:17.0%;background:#334155"></i></span><b>17,0 %</b></div>
+      </details>
+    </section>
+  </main>
+</div>
+</body>
+</html>

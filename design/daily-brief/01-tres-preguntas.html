@@ -1,0 +1,228 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Brief diario — Tres preguntas</title>
+<style>
+  :root{
+    --background:#020617; --surface:#0f172a; --primary:#f59e0b; --secondary:#94a3b8;
+    --text:#e2e8f0; --accent:#fbbf24;
+    --slate-800:#1e293b; --slate-700:#334155; --slate-600:#475569; --slate-500:#64748b;
+    --slate-400:#94a3b8; --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9;
+    --emerald-400:#34d399; --emerald-300:#6ee7b7; --emerald-700:#047857; --emerald-600:#059669;
+    --red-400:#f87171; --red-300:#fca5a5; --amber-400:#fbbf24;
+    --zinc-800:#27272a; --zinc-300:#d4d4d8; --zinc-700:#3f3f46;
+    --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--background);
+    color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+  a,button,summary{transition:all .2s ease-in-out}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .app{display:flex;height:900px}
+
+  /* Sidebar — components/Sidebar.tsx */
+  .sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);
+    display:flex;flex-direction:column;padding:20px 12px 12px}
+  .logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+  .search{margin:0 4px 12px;position:relative}
+  .search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;
+    padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+  .search input::placeholder{color:var(--slate-400)}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;
+    text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+  .sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+  .sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+  .sidebar nav a i{font-style:normal;width:18px;text-align:center;opacity:.9}
+  .sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+
+  main{flex:1;padding:16px 24px;overflow:hidden;display:flex;flex-direction:column;gap:14px}
+  .pagehead{display:flex;align-items:flex-start;justify-content:space-between}
+  h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 2px}
+  .sub{font-size:14px;color:var(--slate-400);margin:0}
+  .headright{display:flex;align-items:center;gap:12px}
+  .btn-utility{background:var(--zinc-800);color:var(--zinc-300);border:0;border-radius:4px;
+    padding:0 14px;min-height:44px;min-width:44px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-utility:hover{background:var(--zinc-700);transform:translateY(-1px)}
+  .stamp{font-size:12px;color:var(--slate-400);margin:0}
+
+  .card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;
+    padding:20px 24px;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+
+  .q{display:grid;grid-template-columns:40px 1fr;gap:18px}
+  .qnum{font-family:var(--mono);font-size:20px;font-weight:700;color:var(--primary);
+    border:1px solid var(--slate-700);border-radius:12px;height:40px;display:flex;align-items:center;justify-content:center}
+  .q h2{margin:0 0 6px;font-size:18px;font-weight:600;color:var(--slate-100)}
+  .answer{font-size:22px;line-height:1.35;color:#fff;font-weight:600;margin:0 0 6px}
+  .plain{font-size:14px;color:var(--slate-300);margin:0;max-width:92ch;line-height:1.5}
+
+  .chips{display:flex;gap:8px;flex-wrap:wrap;margin-top:12px}
+  .chip{display:inline-flex;align-items:center;gap:8px;border:1px solid var(--slate-700);border-radius:4px;
+    padding:6px 10px;font-size:13px;color:var(--slate-300);background:var(--slate-800)}
+  .chip b{font-family:var(--mono);color:var(--slate-100);font-weight:600}
+  .pos{color:var(--emerald-400)} .neg{color:var(--red-400)}
+
+  ul.todo{list-style:none;margin:12px 0 0;padding:0;display:flex;flex-direction:column;gap:8px}
+  ul.todo li{display:grid;grid-template-columns:62px 1fr auto;gap:16px;align-items:center;
+    border-top:1px solid var(--slate-700);padding:10px 0 2px}
+  ul.todo li:first-child{border-top:0;padding-top:2px}
+  .tick{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--slate-100)}
+  .why{font-size:14px;color:var(--slate-300);margin:0}
+  .why b{color:#fff;font-weight:600}
+  .link{color:var(--accent);text-decoration:none;font-size:13px;font-weight:600;
+    border:1px solid var(--slate-700);border-radius:4px;padding:11px 14px;min-height:44px;display:inline-flex;align-items:center}
+  .link:hover{background:var(--slate-800)}
+
+  .next{display:grid;grid-template-columns:repeat(3,1fr);gap:14px;margin-top:12px}
+  .ev{border:1px solid var(--slate-700);border-radius:8px;padding:12px 14px;background:var(--slate-800)}
+  .ev .d{font-size:12px;color:var(--slate-400);margin:0 0 6px;text-transform:uppercase;letter-spacing:.1em;font-weight:700}
+  .ev .t{font-family:var(--mono);font-size:15px;color:var(--slate-100);font-weight:600}
+  .ev .n{font-size:13px;color:var(--slate-300);margin:6px 0 0}
+
+  .notice{display:flex;align-items:center;gap:10px;border:1px solid var(--slate-700);border-radius:4px;
+    background:var(--slate-800);padding:10px 14px;font-size:13px;color:var(--amber-400);margin-top:12px}
+  .notice span{color:var(--slate-300)}
+
+  details.more{margin-top:12px}
+  details.more summary{cursor:pointer;list-style:none;display:inline-flex;align-items:center;gap:8px;
+    min-height:44px;color:var(--slate-400);font-size:13px;font-weight:600}
+  details.more summary::-webkit-details-marker{display:none}
+  details.more summary:hover{color:var(--slate-200)}
+  details.more[open] .caret{transform:rotate(90deg)}
+  .caret{display:inline-block;transition:transform .2s ease-in-out}
+  .detail{font-size:13px;color:var(--slate-300);line-height:1.6;margin:4px 0 0;max-width:100ch}
+  .detail b{font-family:var(--mono);color:var(--slate-100)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search">
+      <label for="s1" style="position:absolute;left:-9999px">Buscar ticker</label>
+      <input id="s1" type="text" placeholder="Buscar ticker…">
+    </div>
+    <nav aria-label="Navegación principal">
+      <a href="#"><i aria-hidden="true">▦</i> Heatmap</a>
+      <a href="#"><i aria-hidden="true">◴</i> Resumen de portafolio</a>
+      <a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a>
+      <a href="#" aria-current="page"><i aria-hidden="true">⚡</i> Brief diario</a>
+      <a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a>
+      <a href="#"><i aria-hidden="true">▣</i> Fuentes</a>
+      <a href="#"><i aria-hidden="true">▤</i> Gestión de activos</a>
+    </nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+
+  <main>
+    <div class="pagehead">
+      <div>
+        <h1>Brief diario</h1>
+        <p class="sub">Viernes 30 de octubre de 2026 · tres preguntas, tres respuestas</p>
+      </div>
+      <div class="headright">
+        <p class="stamp" role="status">Generado hoy a las 23:28</p>
+        <button class="btn-utility" type="button">↻ Regenerar brief</button>
+      </div>
+    </div>
+
+    <section class="card" aria-labelledby="q1">
+      <div class="q">
+        <div class="qnum" aria-hidden="true">1</div>
+        <div>
+          <h2 id="q1">¿Cómo está el mercado?</h2>
+          <p class="answer">Neutral: el mercado no tiene una tendencia clara.</p>
+          <p class="plain">
+            No hay motivo para apurarse ni para refugiarse. El índice S&amp;P 500 está 4,1 % por encima
+            de su promedio de los últimos 200 días (señal positiva), pero solo 7 de cada 100 de tus acciones
+            acompañan esa subida: el alza la sostienen pocas empresas.
+          </p>
+          <div class="chips">
+            <span class="chip">Miedo del mercado (VIX) <b>19,4</b> · normal</span>
+            <span class="chip">S&amp;P 500 vs. promedio 200 días <b class="pos">+4,1 %</b></span>
+            <span class="chip">Acciones que suben (amplitud) <b class="neg">7 %</b> · débil</span>
+            <span class="chip">Crédito corporativo <b>sano</b></span>
+          </div>
+          <details class="more">
+            <summary><span class="caret" aria-hidden="true">›</span> Ver cómo se calcula el régimen</summary>
+            <p class="detail">
+              Régimen <b>NEUTRAL</b> (puntaje <b>1</b>): se suman seis señales. VIX <b>19,42</b> neutral ·
+              S&amp;P vs. 200 días <b>+4,1 %</b> arriba · crédito HYG/LQD <b>0,743</b> sano ·
+              pendiente de tasas <b>+2,22</b> empinándose · amplitud <b>6,67 %</b> débil · dólar DXY <b>+3,85 %</b> arriba.
+              Dos tickers quedaron fuera del cálculo por falta de historial: TSMC y CASH_USD.
+            </p>
+          </details>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="q2">
+      <div class="q">
+        <div class="qnum" aria-hidden="true">2</div>
+        <div>
+          <h2 id="q2">¿Qué hago hoy?</h2>
+          <p class="answer">Nada obligatorio. Dos acciones merecen una mirada.</p>
+          <p class="plain">
+            El sistema no generó ninguna recomendación de compra o venta para hoy: todas tus posiciones
+            siguen dentro de su plan. Estas dos cayeron fuerte anoche y conviene entender por qué antes
+            de que publiquen resultados.
+          </p>
+          <ul class="todo">
+            <li>
+              <span class="tick">APP</span>
+              <p class="why"><b>Cayó 9,6 % anoche</b> (252,83 → 228,50 USD) y está en sobreventa (RSI 24,9). Publica resultados el 4 de noviembre.</p>
+              <a class="link" href="#">Abrir análisis</a>
+            </li>
+            <li>
+              <span class="tick">VITL</span>
+              <p class="why"><b>Cayó 6,6 % anoche</b> (9,28 → 8,67 USD). Publica resultados el 3 de noviembre, en 4 días.</p>
+              <a class="link" href="#">Abrir análisis</a>
+            </li>
+          </ul>
+          <div class="notice" role="status">
+            <span aria-hidden="true">⚠</span>
+            Análisis técnico no actualizado hoy — <span>los valores de RSI y tendencia son los del cierre anterior.</span>
+          </div>
+        </div>
+      </div>
+    </section>
+
+    <section class="card" aria-labelledby="q3">
+      <div class="q">
+        <div class="qnum" aria-hidden="true">3</div>
+        <div>
+          <h2 id="q3">¿Qué viene?</h2>
+          <p class="answer">Seis empresas publican resultados la próxima semana.</p>
+          <p class="plain">
+            Los resultados trimestrales suelen mover el precio con fuerza en un solo día. Sabiendo la fecha,
+            evitas sorpresas y decides antes, no después.
+          </p>
+          <div class="next">
+            <div class="ev">
+              <p class="d">Martes 3 nov · en 4 días</p>
+              <p><span class="t">BKNG</span> · <span class="t">VITL</span></p>
+              <p class="n">BKNG ya viene cayendo 3,0 % desde el cierre anterior.</p>
+            </div>
+            <div class="ev">
+              <p class="d">Miércoles 4 nov · en 5 días</p>
+              <p><span class="t">APP</span> · <span class="t">MCD</span> · <span class="t">NVO</span> · <span class="t">UBER</span></p>
+              <p class="n">NVO subió 2,7 % anoche; APP llega golpeada.</p>
+            </div>
+            <div class="ev">
+              <p class="d">Resto de la semana</p>
+              <p class="t" style="color:var(--slate-400)">Sin eventos</p>
+              <p class="n">Ninguna otra empresa de tu lista publica resultados antes del 7 de noviembre.</p>
+            </div>
+          </div>
+        </div>
+      </div>
+    </section>
+  </main>
+</div>
+</body>
+</html>

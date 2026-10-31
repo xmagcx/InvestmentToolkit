@@ -1,0 +1,220 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Brief diario — Semáforo</title>
+<style>
+  :root{
+    --background:#020617; --surface:#0f172a; --primary:#f59e0b; --secondary:#94a3b8;
+    --text:#e2e8f0; --accent:#fbbf24;
+    --slate-800:#1e293b; --slate-700:#334155; --slate-600:#475569; --slate-500:#64748b;
+    --slate-400:#94a3b8; --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9;
+    --emerald-400:#34d399; --emerald-300:#6ee7b7; --emerald-700:#047857; --emerald-600:#059669;
+    --red-400:#f87171; --red-300:#fca5a5; --amber-400:#fbbf24;
+    --zinc-800:#27272a; --zinc-300:#d4d4d8; --zinc-700:#3f3f46;
+    --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--background);
+    color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+  a,button,summary{transition:all .2s ease-in-out}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .app{display:flex;height:900px}
+
+  .sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);
+    display:flex;flex-direction:column;padding:20px 12px 12px}
+  .logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+  .search{margin:0 4px 12px}
+  .search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;
+    padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+  .search input::placeholder{color:var(--slate-400)}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;
+    text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+  .sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+  .sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+  .sidebar nav a i{font-style:normal;width:18px;text-align:center;opacity:.9}
+  .sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+
+  main{flex:1;padding:16px 24px;overflow:hidden;display:flex;flex-direction:column;gap:14px}
+  .pagehead{display:flex;align-items:flex-start;justify-content:space-between}
+  h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 2px}
+  .sub{font-size:14px;color:var(--slate-400);margin:0}
+  .headright{display:flex;align-items:center;gap:12px}
+  .btn-utility{background:var(--zinc-800);color:var(--zinc-300);border:0;border-radius:4px;
+    padding:0 14px;min-height:44px;min-width:44px;font-size:12px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-utility:hover{background:var(--zinc-700);transform:translateY(-1px)}
+  .stamp{font-size:12px;color:var(--slate-400);margin:0}
+
+  .card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;
+    padding:18px 22px;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+
+  .story p{margin:8px 0 0;font-size:16px;line-height:1.6;color:var(--slate-300);max-width:118ch}
+  .story p b{color:#fff;font-weight:600}
+  .story .mono{font-family:var(--mono);color:var(--slate-100)}
+
+  .board{display:grid;grid-template-columns:repeat(3,1fr);gap:16px;align-items:start}
+  .col{padding:0;overflow:hidden}
+  .colhead{display:flex;align-items:center;gap:12px;padding:14px 18px;border-bottom:1px solid var(--slate-800)}
+  .dot{width:14px;height:14px;border-radius:50%;flex:0 0 14px}
+  .colhead h2{margin:0;font-size:15px;font-weight:600;color:var(--slate-100)}
+  .colhead .n{margin-left:auto;font-family:var(--mono);font-size:15px;font-weight:700;color:var(--slate-100)}
+  .colhead .hint{display:block;font-size:12px;color:var(--slate-400);font-weight:400;margin-top:2px}
+
+  .green .dot{background:#34d399}
+  .amber .dot{background:#fbbf24}
+  .red .dot{background:#f87171}
+
+  ul.rows{list-style:none;margin:0;padding:6px 10px 12px;display:flex;flex-direction:column}
+  ul.rows li{display:grid;grid-template-columns:62px 1fr auto;gap:10px;align-items:center;
+    padding:9px 8px;border-radius:8px;border-top:1px solid var(--slate-800)}
+  ul.rows li:first-child{border-top:0}
+  ul.rows li:hover{background:rgba(30,41,59,.4)}
+  .tick{font-family:var(--mono);font-size:15px;font-weight:700;color:var(--slate-100)}
+  .note{font-size:13px;color:var(--slate-300);margin:0}
+  .chg{font-family:var(--mono);font-size:13px;font-weight:600}
+  .pos{color:var(--emerald-400)} .neg{color:var(--red-400)} .flat{color:var(--slate-400)}
+
+  .actionrow{display:flex;align-items:center;gap:12px;padding:12px 18px;border-top:1px solid var(--slate-800)}
+  .link{color:var(--accent);text-decoration:none;font-size:13px;font-weight:600;
+    border:1px solid var(--slate-700);border-radius:4px;padding:11px 14px;min-height:44px;
+    display:inline-flex;align-items:center}
+  .link:hover{background:var(--slate-800)}
+
+  .empty{padding:18px;text-align:center}
+  .empty p{margin:0;font-size:13px;color:var(--slate-400)}
+  .empty .big{color:var(--slate-300);font-size:14px;margin-bottom:6px;font-weight:600}
+
+  .legend{display:flex;gap:24px;flex-wrap:wrap;font-size:13px;color:var(--slate-300);padding:12px 20px}
+  .legend span{display:inline-flex;align-items:center;gap:8px}
+  .legend i{width:10px;height:10px;border-radius:50%;display:inline-block}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search">
+      <label for="s1" style="position:absolute;left:-9999px">Buscar ticker</label>
+      <input id="s1" type="text" placeholder="Buscar ticker…">
+    </div>
+    <nav aria-label="Navegación principal">
+      <a href="#"><i aria-hidden="true">▦</i> Heatmap</a>
+      <a href="#"><i aria-hidden="true">◴</i> Resumen de portafolio</a>
+      <a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a>
+      <a href="#" aria-current="page"><i aria-hidden="true">⚡</i> Brief diario</a>
+      <a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a>
+      <a href="#"><i aria-hidden="true">▣</i> Fuentes</a>
+      <a href="#"><i aria-hidden="true">▤</i> Gestión de activos</a>
+    </nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+
+  <main>
+    <div class="pagehead">
+      <div>
+        <h1>Brief diario</h1>
+        <p class="sub">Viernes 30 de octubre de 2026 · tus 16 acciones ordenadas por color</p>
+      </div>
+      <div class="headright">
+        <p class="stamp" role="status">Generado hoy a las 23:28</p>
+        <button class="btn-utility" type="button">↻ Regenerar brief</button>
+      </div>
+    </div>
+
+    <section class="card story" aria-labelledby="resumen">
+      <h2 id="resumen" class="label">Resumen de hoy</h2>
+      <p>
+        El mercado está <b>neutral</b>: no tiene una tendencia clara, así que no hay urgencia por comprar ni por vender.
+        El índice S&amp;P 500 va <span class="mono">4,1 %</span> sobre su promedio de 200 días, pero solo el
+        <span class="mono">7 %</span> de tus acciones acompaña esa subida. De tus 16 acciones, <b>2 piden atención hoy</b>
+        (APP y VITL cayeron fuerte anoche y publican resultados la próxima semana), <b>7 conviene revisarlas esta semana</b>
+        —seis de ellas publican resultados entre el 3 y el 4 de noviembre— y <b>6 siguen su plan sin cambios</b>.
+        El análisis técnico no se actualizó hoy, así que los indicadores de impulso son los del cierre anterior.
+      </p>
+    </section>
+
+    <div class="board">
+      <section class="card col red" aria-labelledby="g-rojo">
+        <div class="colhead">
+          <span class="dot" aria-hidden="true"></span>
+          <h2 id="g-rojo">Actuar <span class="hint">Revisar hoy antes del cierre</span></h2>
+          <span class="n">2</span>
+        </div>
+        <ul class="rows">
+          <li>
+            <span class="tick">APP</span>
+            <p class="note">Cayó fuerte anoche; sobreventa (RSI 24,9) y resultados el 4 nov.</p>
+            <span class="chg neg">−9,62 %</span>
+          </li>
+          <li>
+            <span class="tick">VITL</span>
+            <p class="note">Cayó fuerte anoche y publica resultados el 3 nov.</p>
+            <span class="chg neg">−6,57 %</span>
+          </li>
+        </ul>
+        <div class="actionrow"><a class="link" href="#">Abrir análisis de APP</a><a class="link" href="#">Abrir análisis de VITL</a></div>
+      </section>
+
+      <section class="card col amber" aria-labelledby="g-ambar">
+        <div class="colhead">
+          <span class="dot" aria-hidden="true"></span>
+          <h2 id="g-ambar">Revisar <span class="hint">Esta semana, sin apuro</span></h2>
+          <span class="n">7</span>
+        </div>
+        <ul class="rows">
+          <li><span class="tick">BKNG</span><p class="note">Resultados el 3 nov; viene cayendo.</p><span class="chg neg">−3,03 %</span></li>
+          <li><span class="tick">TMUS</span><p class="note">Subió sin noticia registrada.</p><span class="chg pos">+4,85 %</span></li>
+          <li><span class="tick">SFM</span><p class="note">Sobreventa (RSI 25,1) y la más volátil.</p><span class="chg pos">+3,78 %</span></li>
+          <li><span class="tick">NVO</span><p class="note">Resultados el 4 nov.</p><span class="chg pos">+2,70 %</span></li>
+          <li><span class="tick">MCD</span><p class="note">Resultados el 4 nov; tendencia fuerte.</p><span class="chg flat">sin cambio</span></li>
+          <li><span class="tick">UBER</span><p class="note">Resultados el 4 nov.</p><span class="chg flat">sin cambio</span></li>
+          <li><span class="tick">SFD</span><p class="note">Único con puntaje negativo: impulso a la baja.</p><span class="chg flat">sin cambio</span></li>
+        </ul>
+        <div class="actionrow"><a class="link" href="#">Ver las 7 en Análisis</a></div>
+      </section>
+
+      <div style="display:flex;flex-direction:column;gap:16px">
+        <section class="card col green" aria-labelledby="g-verde">
+          <div class="colhead">
+            <span class="dot" aria-hidden="true"></span>
+            <h2 id="g-verde">Mantener <span class="hint">Siguen su plan, nada que hacer</span></h2>
+            <span class="n">6</span>
+          </div>
+          <ul class="rows">
+            <li><span class="tick">NVDA</span><p class="note">La única en tendencia al alza.</p><span class="chg neg">−2,62 %</span></li>
+            <li><span class="tick">PEP</span><p class="note">Tendencia fuerte, sin cambios.</p><span class="chg flat">sin cambio</span></li>
+            <li><span class="tick">AXP</span><p class="note">Sin dirección clara.</p><span class="chg flat">sin cambio</span></li>
+            <li><span class="tick">DECK</span><p class="note">Sin cambios relevantes.</p><span class="chg flat">sin cambio</span></li>
+            <li><span class="tick">NFLX</span><p class="note">Impulso negativo, aún dentro del plan.</p><span class="chg flat">sin cambio</span></li>
+            <li><span class="tick">VICI</span><p class="note">Sin cambios relevantes.</p><span class="chg flat">sin cambio</span></li>
+          </ul>
+        </section>
+
+        <section class="card col" aria-labelledby="g-sin">
+          <div class="colhead">
+            <span class="dot" style="background:var(--slate-600)" aria-hidden="true"></span>
+            <h2 id="g-sin">Sin datos <span class="hint">No se pudo clasificar</span></h2>
+            <span class="n">1</span>
+          </div>
+          <div class="empty">
+            <p class="big">TSMC — sin historial de precios suficiente</p>
+            <p>Queda fuera del semáforo y del cálculo de amplitud hasta tener más días de precios.</p>
+          </div>
+        </section>
+      </div>
+    </div>
+
+    <section class="card legend" aria-label="Qué significa cada color">
+      <span><i style="background:#f87171" aria-hidden="true"></i> <b style="color:var(--slate-100);font-weight:600">Rojo:</b> movimiento fuerte o evento inminente — míralo hoy.</span>
+      <span><i style="background:#fbbf24" aria-hidden="true"></i> <b style="color:var(--slate-100);font-weight:600">Ámbar:</b> algo cambió o viene un evento — revísalo esta semana.</span>
+      <span><i style="background:#34d399" aria-hidden="true"></i> <b style="color:var(--slate-100);font-weight:600">Verde:</b> dentro de lo esperado — no necesita acción.</span>
+    </section>
+  </main>
+</div>
+</body>
+</html>

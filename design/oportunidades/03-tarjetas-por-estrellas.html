@@ -1,0 +1,464 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Oportunidades — Tarjetas por estrellas</title>
+<style>
+  :root{
+    --background:#020617; --surface:#0f172a; --primary:#f59e0b; --secondary:#94a3b8;
+    --text:#e2e8f0; --accent:#fbbf24;
+    --slate-800:#1e293b; --slate-700:#334155; --slate-600:#475569; --slate-500:#64748b;
+    --slate-400:#94a3b8; --slate-300:#cbd5e1; --slate-200:#e2e8f0; --slate-100:#f1f5f9;
+    --emerald-400:#34d399; --emerald-300:#6ee7b7; --emerald-700:#047857; --emerald-600:#059669;
+    --red-400:#f87171; --red-300:#fca5a5; --amber-400:#fbbf24;
+    --zinc-800:#27272a; --zinc-300:#d4d4d8; --zinc-700:#3f3f46;
+    --font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+    --mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace;
+  }
+  *{box-sizing:border-box}
+  body{margin:0;width:1440px;height:900px;overflow:hidden;background:var(--background);
+    color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+  a,button,summary{transition:all .2s ease-in-out}
+  :focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+  @media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+  .app{display:flex;height:900px}
+
+  .sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);
+    display:flex;flex-direction:column;padding:20px 12px 12px}
+  .logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+  .search{margin:0 4px 12px}
+  .search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;
+    padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+  .search input::placeholder{color:var(--slate-400)}
+  .sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+  .sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;
+    text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+  .sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+  .sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+  .sidebar nav a i{font-style:normal;width:18px;text-align:center;opacity:.9}
+  .sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+
+  main{flex:1;padding:16px 24px 10px;overflow:hidden;display:flex;flex-direction:column;gap:12px}
+  .pagehead{display:flex;align-items:flex-start;justify-content:space-between;gap:16px}
+  h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 2px}
+  .sub{font-size:14px;color:var(--slate-400);margin:0}
+  .headctl{display:flex;gap:8px;align-items:center}
+  .preset,.vista{background:var(--slate-800);color:var(--slate-300);border:1px solid var(--slate-700);border-radius:4px;
+    padding:0 14px;min-height:44px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .preset:hover,.vista:hover{background:var(--slate-700);color:#fff;transform:translateY(-1px)}
+  .preset[aria-pressed="true"],.vista[aria-pressed="true"]{background:rgba(245,158,11,.1);border-color:rgba(245,158,11,.3);color:var(--amber-400)}
+  .vistas{display:flex;gap:0;border:1px solid var(--slate-700);border-radius:4px;overflow:hidden}
+  .vistas .vista{border:0;border-radius:0}
+
+  .card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;padding:12px 16px;
+    box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+
+  .filtros{display:flex;gap:10px;align-items:flex-start;flex-wrap:wrap;margin-top:8px}
+  .gbox{border:1px solid var(--slate-700);border-radius:8px;padding:7px 10px;min-width:184px}
+  .gbox h3{margin:0 0 5px;font-size:12px;font-weight:600;color:var(--slate-100)}
+  .chiprow{display:flex;flex-wrap:wrap;gap:5px}
+  .chip{display:inline-flex;align-items:center;gap:5px;background:var(--slate-800);border:1px solid var(--slate-700);
+    border-radius:4px;padding:4px 8px;font-size:12px;color:var(--slate-300);cursor:pointer;font-family:inherit}
+  .chip:hover{background:var(--slate-700);color:#fff}
+  .chip[aria-pressed="true"]{border-color:rgba(245,158,11,.4);color:var(--amber-400);background:rgba(245,158,11,.1)}
+  details.umbral summary{font-size:11px;color:var(--slate-400);cursor:pointer;list-style:none;padding:4px 0}
+  details.umbral summary::-webkit-details-marker{display:none}
+  details.umbral summary:hover{color:var(--amber-400)}
+  .umbrales{display:flex;flex-direction:column;gap:4px}
+  .umbrales label{display:flex;align-items:center;justify-content:space-between;gap:6px;font-size:12px;color:var(--slate-300)}
+  .umbrales input{width:62px;background:var(--background);border:1px solid var(--slate-700);border-radius:4px;
+    color:#fff;font-family:var(--mono);font-size:12px;padding:4px 6px;text-align:right}
+  .etf{display:flex;align-items:center;gap:8px;font-size:13px;color:var(--slate-300)}
+
+  .embudo{display:flex;align-items:center;gap:8px;flex-wrap:wrap;margin-top:10px;padding-top:10px;border-top:1px solid var(--slate-800)}
+  .embudo .st{display:flex;align-items:baseline;gap:5px}
+  .embudo .n{font-family:var(--mono);font-size:15px;font-weight:700;color:#fff}
+  .embudo .n.dim{color:var(--slate-400)}
+  .embudo .n.final{color:var(--amber-400)}
+  .embudo .t{font-size:12px;color:var(--slate-400)}
+  .embudo .arrow{color:var(--slate-600)}
+
+  .lanes{flex:1;overflow:auto;display:flex;flex-direction:column;gap:12px}
+  .lane h2{margin:0 0 7px;font-size:14px;font-weight:600;color:var(--slate-100);display:flex;align-items:baseline;gap:10px}
+  .lane h2 .st{color:var(--primary);font-size:16px;letter-spacing:1px}
+  .lane h2 .off{color:var(--slate-600)}
+  .lane h2 .meta{font-size:12px;color:var(--slate-400);font-weight:400}
+  .row{display:flex;gap:12px;overflow-x:auto;padding-bottom:4px}
+  .tile{flex:0 0 268px;text-align:left;background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;
+    padding:12px 14px;cursor:pointer;font-family:inherit;color:inherit;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+  .tile:hover{transform:translateY(-1px);box-shadow:0 4px 20px rgba(0,0,0,.3);border-color:var(--slate-700)}
+  .tile .top{display:flex;justify-content:space-between;align-items:flex-start;gap:8px}
+  .tile .tick{font-family:var(--mono);font-size:17px;font-weight:700;color:#fff}
+  .tile .nm{font-size:12px;color:var(--slate-400);display:block;margin-top:2px;max-width:168px;overflow:hidden;text-overflow:ellipsis;white-space:nowrap}
+  .tile .st{color:var(--primary);font-size:14px;letter-spacing:1px}
+  .tile .st .off{color:var(--slate-600)}
+  .nums{display:flex;gap:14px;margin-top:10px}
+  .nums div{display:flex;flex-direction:column}
+  .nums .k{font-size:11px;color:var(--slate-400);text-transform:uppercase;letter-spacing:.06em;font-weight:700}
+  .nums .v{font-family:var(--mono);font-size:15px;font-weight:700;color:#fff;margin-top:2px}
+  .neg{color:var(--red-400)} .pos{color:var(--emerald-400)}
+  .nd{color:var(--slate-400);font-size:12px;font-style:italic;font-family:var(--font-sans)}
+  .mini{display:flex;gap:4px;margin-top:10px;flex-wrap:wrap}
+  .mini span{font-size:11px;border:1px solid var(--slate-700);border-radius:4px;padding:3px 6px;color:var(--slate-300);background:var(--slate-800)}
+  .mini .okm{color:var(--emerald-400);font-weight:700} .mini .nom{color:var(--red-400);font-weight:700}
+  .tile .foot{display:flex;justify-content:space-between;align-items:center;margin-top:10px;font-size:12px;color:var(--slate-300)}
+  .badge{font-size:11px;border:1px solid var(--slate-700);border-radius:4px;padding:3px 6px;color:var(--slate-300);background:var(--slate-800)}
+  .badge b{font-family:var(--mono);color:var(--amber-400);font-weight:700}
+
+  /* Diálogo de detalle */
+  .backdrop{position:fixed;inset:0;background:rgba(0,0,0,.6);display:flex;align-items:center;justify-content:center;z-index:20}
+  .backdrop[hidden]{display:none}
+  .dialog{width:940px;max-height:760px;overflow:auto;background:var(--surface);border:1px solid var(--slate-700);
+    border-radius:12px;padding:20px 24px;box-shadow:0 25px 50px -12px rgba(0,0,0,.8)}
+  .dialog h2{margin:0;font-size:20px;font-weight:700;color:#fff}
+  .dhead{display:flex;justify-content:space-between;align-items:flex-start;gap:16px;border-bottom:1px solid var(--slate-800);padding-bottom:12px}
+  .dcols{display:grid;grid-template-columns:1.2fr 1fr 1fr;gap:20px;margin-top:14px}
+  .dialog h3{margin:0 0 8px;font-size:13px;font-weight:600;color:var(--slate-100)}
+  .check{list-style:none;margin:0;padding:0;display:flex;flex-direction:column;gap:3px}
+  .check li{display:grid;grid-template-columns:16px 1fr auto;gap:8px;font-size:12px;color:var(--slate-300);align-items:baseline}
+  .check li .v{font-family:var(--mono);color:var(--slate-200)}
+  .gname{font-size:12px;font-weight:700;letter-spacing:.06em;text-transform:uppercase;color:var(--slate-400);margin:10px 0 3px}
+  .yes{color:var(--emerald-400);font-weight:700} .no{color:var(--red-400);font-weight:700}
+  .prose{font-size:12px;color:var(--slate-300);line-height:1.55;margin:0 0 8px}
+  .prose b{color:#fff;font-weight:600}
+  .formula{font-family:var(--mono);font-size:12px;color:var(--slate-200);background:var(--slate-800);
+    border:1px solid var(--slate-700);border-radius:4px;padding:8px;line-height:1.5}
+  .btn-primary{background:var(--emerald-700);color:#fff;border:0;border-radius:4px;padding:0 16px;min-height:44px;
+    font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-primary:hover{background:var(--emerald-600);transform:translateY(-1px)}
+  .btn-ghost,.close{background:var(--slate-800);color:var(--slate-200);border:1px solid var(--slate-700);border-radius:4px;
+    padding:0 14px;min-height:44px;min-width:44px;font-size:13px;font-weight:600;cursor:pointer;font-family:inherit}
+  .btn-ghost:hover,.close:hover{background:var(--slate-700)}
+  .acts{display:flex;gap:8px;margin-top:14px}
+  footer{font-size:12px;color:var(--slate-400);display:flex;justify-content:space-between;padding-top:2px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search">
+      <label for="s1" style="position:absolute;left:-9999px">Buscar ticker</label>
+      <input id="s1" type="text" placeholder="Buscar ticker…">
+    </div>
+    <nav aria-label="Navegación principal">
+      <a href="#"><i aria-hidden="true">▦</i> Heatmap</a>
+      <a href="#"><i aria-hidden="true">◴</i> Resumen de portafolio</a>
+      <a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a>
+      <a href="#" aria-current="page"><i aria-hidden="true">◎</i> Oportunidades</a>
+      <a href="#"><i aria-hidden="true">⚡</i> Brief diario</a>
+      <a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a>
+      <a href="#"><i aria-hidden="true">▣</i> Fuentes</a>
+      <a href="#"><i aria-hidden="true">▤</i> Gestión de activos</a>
+    </nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+
+  <main>
+    <div class="pagehead">
+      <div>
+        <h1>Oportunidades</h1>
+        <p class="sub">Agrupadas por estrellas: 5★ cumple los cinco grupos · universo Racional, 1.645 acciones</p>
+      </div>
+      <div class="headctl">
+        <div role="group" aria-label="Plantillas de condiciones" style="display:flex;gap:8px">
+          <button class="preset" aria-pressed="true" type="button">Oportunidades</button>
+          <button class="preset" aria-pressed="false" type="button">Graham</button>
+          <button class="preset" aria-pressed="false" type="button">Buffett</button>
+          <button class="preset" aria-pressed="false" type="button">Lynch</button>
+        </div>
+        <div class="vistas" role="group" aria-label="Vista de resultados">
+          <button class="vista" aria-pressed="true" type="button">Tarjetas</button>
+          <button class="vista" aria-pressed="false" type="button">Grilla</button>
+        </div>
+      </div>
+    </div>
+
+    <section class="card" aria-labelledby="filtros-h">
+      <div style="display:flex;align-items:center;justify-content:space-between;gap:16px">
+        <span class="label" id="filtros-h">Condiciones</span>
+        <label class="etf"><input type="checkbox" id="etf"> Incluir ETF (929 fondos)</label>
+      </div>
+      <div class="filtros">
+        <div class="gbox">
+          <h3>Calidad del negocio</h3>
+          <div class="chiprow">
+            <button class="chip" type="button" aria-pressed="true">ROIC</button>
+            <button class="chip" type="button" aria-pressed="true">ROE</button>
+            <button class="chip" type="button" aria-pressed="true">ROA</button>
+            <button class="chip" type="button" aria-pressed="true">FCF positivo</button>
+            <button class="chip" type="button" aria-pressed="true">Deuda baja</button>
+          </div>
+          <details class="umbral"><summary>Umbrales</summary>
+            <div class="umbrales">
+              <label>ROIC ≥ <input type="text" value="15 %" aria-label="Umbral ROIC"></label>
+              <label>ROE ≥ <input type="text" value="15 %" aria-label="Umbral ROE"></label>
+              <label>ROA ≥ <input type="text" value="7 %" aria-label="Umbral ROA"></label>
+              <label>Deuda/Patr. ≤ <input type="text" value="0,5" aria-label="Umbral deuda patrimonio"></label>
+            </div>
+          </details>
+        </div>
+        <div class="gbox">
+          <h3>Precio atractivo</h3>
+          <div class="chiprow">
+            <button class="chip" type="button" aria-pressed="true">P/E vs sector</button>
+            <button class="chip" type="button" aria-pressed="true">FCF yield</button>
+            <button class="chip" type="button" aria-pressed="true">PEG</button>
+            <button class="chip" type="button" aria-pressed="true">Margen Graham</button>
+            <button class="chip" type="button" aria-pressed="false">Precio objetivo</button>
+          </div>
+          <details class="umbral"><summary>Umbrales</summary>
+            <div class="umbrales">
+              <label>FCF yield ≥ <input type="text" value="5 %" aria-label="Umbral FCF yield"></label>
+              <label>PEG ≤ <input type="text" value="1,0" aria-label="Umbral PEG"></label>
+              <label>Margen ≥ <input type="text" value="25 %" aria-label="Umbral margen de seguridad"></label>
+            </div>
+          </details>
+        </div>
+        <div class="gbox">
+          <h3>Cayó de precio</h3>
+          <div class="chiprow">
+            <button class="chip" type="button" aria-pressed="true">Bajo máximo 52s</button>
+            <button class="chip" type="button" aria-pressed="true">Precio &lt; SMA200</button>
+          </div>
+          <details class="umbral"><summary>Umbrales</summary>
+            <div class="umbrales"><label>Caída ≥ <input type="text" value="20 %" aria-label="Umbral caída desde máximo"></label></div>
+          </details>
+        </div>
+        <div class="gbox">
+          <h3>Señal de giro</h3>
+          <div class="chiprow">
+            <button class="chip" type="button" aria-pressed="true">RSI bajo</button>
+            <button class="chip" type="button" aria-pressed="true">MACD alcista</button>
+            <button class="chip" type="button" aria-pressed="true">Precio &gt; SMA50</button>
+          </div>
+          <details class="umbral"><summary>Umbrales</summary>
+            <div class="umbrales"><label>RSI(14) &lt; <input type="text" value="35" aria-label="Umbral RSI"></label></div>
+          </details>
+        </div>
+        <div class="gbox">
+          <h3>Confirmación</h3>
+          <div class="chiprow">
+            <button class="chip" type="button" aria-pressed="true">Superinversores</button>
+            <button class="chip" type="button" aria-pressed="true">Insiders agrupados</button>
+          </div>
+          <details class="umbral"><summary>Umbrales</summary>
+            <div class="umbrales">
+              <label>Superinv. ≥ <input type="text" value="1" aria-label="Umbral compras de superinversores"></label>
+              <label>Insiders ≥ <input type="text" value="2" aria-label="Umbral insiders agrupados"></label>
+            </div>
+          </details>
+        </div>
+      </div>
+      <div class="embudo" aria-label="Cuántas acciones quedan en cada paso">
+        <span class="st"><span class="n dim">1.645</span><span class="t">universo</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="st"><span class="n">1.212</span><span class="t">rentables</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="st"><span class="n">486</span><span class="t">calidad</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="st"><span class="n">131</span><span class="t">baratas</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="st"><span class="n">38</span><span class="t">cayeron por causas externas</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="st"><span class="n">21</span><span class="t">señal de giro</span></span>
+        <span class="arrow" aria-hidden="true">→</span>
+        <span class="st"><span class="n final">12</span><span class="t">con confirmación</span></span>
+        <span class="t" style="margin-left:auto">Filtran “rentables” y “cayó de precio” → 38 resultados; el resto puntúa.</span>
+      </div>
+    </section>
+
+    <div class="lanes" id="lanes"></div>
+
+    <footer>
+      <span>Datos: TradingView (15 min de retraso, sin cuenta) · Dataroma · FRED AAA</span>
+      <span>Solo screener: la plataforma no envía órdenes.</span>
+    </footer>
+  </main>
+</div>
+
+<div class="backdrop" id="backdrop" hidden>
+  <div class="dialog" role="dialog" aria-modal="true" aria-labelledby="dlg-h" id="dialog"></div>
+</div>
+
+<script>
+var Y = 6.03;
+var DATA = [
+ {t:'TMO', n:'Thermo Fisher Scientific', s:'Salud', p:521.83, max52:729.00, eps:28.60, g:13,
+  roic:16.2, roe:17.4, roa:7.8, fcfPos:true, de:0.42, peSec:26.4, fcfy:5.4, peg:0.94, target:23,
+  belowSma200:true, aboveSma50:true, rsi:31.4, macd:'alcista', sup:3, supPrice:694.28, ins:1, insCluster:false,
+  why:'Recorte de presupuestos de investigación y menor demanda de equipos post-pandemia; el negocio de diagnóstico sigue creciendo.'},
+ {t:'APH', n:'Amphenol', s:'Tecnología', p:52.10, max52:68.90, eps:2.95, g:13,
+  roic:18.9, roe:24.1, roa:9.8, fcfPos:true, de:0.38, peSec:24.8, fcfy:5.6, peg:0.95, target:21,
+  belowSma200:true, aboveSma50:true, rsi:33.2, macd:'alcista', sup:2, supPrice:61.40, ins:0, insCluster:false,
+  why:'Castigo sectorial a proveedores de componentes tras dos trimestres de inventarios altos en clientes industriales.'},
+ {t:'DIS', n:'Walt Disney', s:'Comunicaciones', p:96.40, max52:144.15, eps:6.20, g:11,
+  roic:9.8, roe:10.4, roa:5.1, fcfPos:true, de:0.44, peSec:19.2, fcfy:7.9, peg:0.88, target:26,
+  belowSma200:true, aboveSma50:true, rsi:41.8, macd:'alcista', sup:3, supPrice:103.70, ins:0, insCluster:false,
+  why:'Pérdida de suscriptores en streaming y gasto en parques más débil; la caída excede lo que explican los resultados.'},
+ {t:'META', n:'Meta Platforms', s:'Comunicaciones', p:612.70, max52:781.50, eps:27.40, g:10,
+  roic:27.6, roe:31.2, roa:18.4, fcfPos:true, de:0.14, peSec:20.1, fcfy:5.1, peg:1.32, target:18,
+  belowSma200:true, aboveSma50:true, rsi:33.8, macd:'alcista', sup:2, supPrice:645.10, ins:0, insCluster:false,
+  why:'Temor del mercado al gasto en centros de datos de IA; los ingresos por publicidad siguen creciendo a doble dígito.'},
+ {t:'AMZN', n:'Amazon.com', s:'Consumo discrecional', p:198.30, max52:256.90, eps:6.85, g:14,
+  roic:15.8, roe:18.9, roa:7.4, fcfPos:true, de:0.46, peSec:24.1, fcfy:3.1, peg:1.48, target:19,
+  belowSma200:true, aboveSma50:false, rsi:44.1, macd:'bajista', sup:2, supPrice:214.60, ins:0, insCluster:false,
+  why:'Rotación fuera de consumo discrecional y margen de AWS bajo presión; aún no hay señal técnica de giro.'},
+ {t:'NVDA', n:'NVIDIA', s:'Tecnología', p:142.60, max52:212.20, eps:4.20, g:15,
+  roic:62.4, roe:78.3, roa:55.1, fcfPos:true, de:0.12, peSec:24.8, fcfy:2.6, peg:1.71, target:28,
+  belowSma200:true, aboveSma50:false, rsi:38.6, macd:'bajista', sup:3, supPrice:168.90, ins:0, insCluster:false,
+  why:'Corrección del sector de semiconductores tras dudas sobre el ritmo de inversión en IA; sigue por debajo de la SMA50.'},
+ {t:'NEE', n:'NextEra Energy', s:'Servicios públicos', p:58.20, max52:77.50, eps:4.10, g:9,
+  roic:null, roe:11.8, roa:3.2, fcfPos:null, de:1.42, peSec:17.6, fcfy:null, peg:null, target:22,
+  belowSma200:true, aboveSma50:true, rsi:29.8, macd:'alcista', sup:1, supPrice:62.80, ins:0, insCluster:false,
+  why:'Tasas largas altas castigan a las eléctricas reguladas; la cartera de renovables contratada no cambió.'},
+ {t:'CRBG', n:'Corebridge Financial', s:'Financiero', p:29.85, max52:38.40, eps:4.95, g:7,
+  roic:null, roe:14.2, roa:1.1, fcfPos:null, de:0.61, peSec:11.4, fcfy:null, peg:null, target:24,
+  belowSma200:true, aboveSma50:true, rsi:34.1, macd:'alcista', sup:0, supPrice:null, ins:5, insCluster:true,
+  why:'Arrastre del sector asegurador por expectativa de bajada de tasas; cinco directivos compraron en el mismo mes.'},
+ {t:'NBIS', n:'Nebius Group', s:'Tecnología', p:38.70, max52:65.80, eps:null, g:null,
+  roic:null, roe:null, roa:null, fcfPos:null, de:0.33, peSec:24.8, fcfy:null, peg:null, target:35,
+  belowSma200:true, aboveSma50:true, rsi:28.4, macd:'alcista', sup:0, supPrice:null, ins:4, insCluster:true,
+  why:'Empresa joven, aún en pérdidas: la caída sigue al enfriamiento del sector de infraestructura de IA.'}
+];
+
+function f(n,d){ if(n===null||n===undefined) return null; return n.toFixed(d).replace('.',','); }
+function pct(n,d){ var v=f(n,d===undefined?1:d); return v===null?null:v+' %'; }
+function graham(x){ if(x.eps===null||x.g===null) return null; return x.eps*(8.5+2*x.g)*4.4/Y; }
+function mos(x){ var v=graham(x); if(v===null) return null; return (v-x.p)/v*100; }
+function pe(x){ return x.eps===null?null:x.p/x.eps; }
+function drop(x){ return (x.p/x.max52-1)*100; }
+
+var GRUPOS = [
+ {id:'calidad', name:'Calidad del negocio', corto:'Calidad', items:[
+   {l:'ROIC', u:'≥ 15 %', v:function(x){return pct(x.roic)}, ok:function(x){return x.roic!==null&&x.roic>=15}},
+   {l:'ROE', u:'≥ 15 %', v:function(x){return pct(x.roe)}, ok:function(x){return x.roe!==null&&x.roe>=15}},
+   {l:'ROA', u:'≥ 7 %', v:function(x){return pct(x.roa)}, ok:function(x){return x.roa!==null&&x.roa>=7}},
+   {l:'Flujo de caja libre', u:'positivo', v:function(x){return x.fcfPos===null?null:(x.fcfPos?'positivo':'negativo')}, ok:function(x){return x.fcfPos===true}},
+   {l:'Deuda / Patrimonio', u:'≤ 0,5', v:function(x){return f(x.de,2)}, ok:function(x){return x.de!==null&&x.de<=0.5}}
+ ]},
+ {id:'precio', name:'Precio atractivo', corto:'Barata', items:[
+   {l:'P/E vs. su sector', u:'menor', v:function(x){var p=pe(x);return p===null?null:f(p,1)+' vs '+f(x.peSec,1)}, ok:function(x){var p=pe(x);return p!==null&&p<x.peSec}},
+   {l:'FCF yield', u:'≥ 5 %', v:function(x){return pct(x.fcfy)}, ok:function(x){return x.fcfy!==null&&x.fcfy>=5}},
+   {l:'PEG', u:'≤ 1,0', v:function(x){return f(x.peg,2)}, ok:function(x){return x.peg!==null&&x.peg<=1}},
+   {l:'Margen de seguridad (Graham)', u:'≥ 25 %', v:function(x){return pct(mos(x))}, ok:function(x){var m=mos(x);return m!==null&&m>=25}},
+   {l:'Precio objetivo analistas', u:'≥ +20 %', v:function(x){return x.target===null?null:'+'+f(x.target,0)+' %'}, ok:function(x){return x.target!==null&&x.target>=20}}
+ ]},
+ {id:'caida', name:'Cayó de precio', corto:'Cayó', items:[
+   {l:'Bajo el máximo de 52 semanas', u:'≥ 20 %', v:function(x){return f(drop(x),1)+' %'}, ok:function(x){return drop(x)<=-20}},
+   {l:'Precio bajo la SMA200', u:'sí', v:function(x){return x.belowSma200?'sí':'no'}, ok:function(x){return x.belowSma200===true}}
+ ]},
+ {id:'giro', name:'Señal de giro', corto:'Giro', items:[
+   {l:'RSI(14) bajo o MACD alcista', u:'RSI < 35', v:function(x){return 'RSI '+f(x.rsi,1)+' · MACD '+x.macd}, ok:function(x){return (x.rsi!==null&&x.rsi<35)||x.macd==='alcista'}},
+   {l:'Precio sobre la SMA50', u:'sí', v:function(x){return x.aboveSma50?'sí':'no'}, ok:function(x){return x.aboveSma50===true}}
+ ]},
+ {id:'confirm', name:'Confirmación', corto:'Confirmada', items:[
+   {l:'Compras de superinversores', u:'≥ 1', v:function(x){return x.sup+' compras'}, ok:function(x){return x.sup>=1}},
+   {l:'Compras de insiders agrupadas', u:'≥ 2', v:function(x){return x.ins+' compras'}, ok:function(x){return x.insCluster===true}}
+ ]}
+];
+function grupoOk(gr,x){
+  var oks = gr.items.map(function(it){return it.ok(x)});
+  return gr.id==='confirm' ? oks.some(Boolean) : oks.every(Boolean);
+}
+function faltanDatos(gr,x){ return gr.items.some(function(it){return it.v(x)===null}); }
+function estrellas(x){ return GRUPOS.filter(function(gr){return grupoOk(gr,x)}).length; }
+function starsHtml(k){ var s=''; for(var i=1;i<=5;i++){ s += i<=k?'★':'<span class="off">★</span>'; } return s; }
+
+function tileHtml(x,i){
+  var k=estrellas(x), m=mos(x);
+  var mini = GRUPOS.map(function(gr){
+    var ok=grupoOk(gr,x), nd=!ok&&faltanDatos(gr,x);
+    return '<span><span class="'+(ok?'okm':'nom')+'" aria-hidden="true">'+(ok?'✓':'✗')+'</span> '+gr.corto+(nd?' (n/d)':'')+'</span>';
+  }).join('');
+  var sig = x.rsi<35 ? '↯ Sobreventa' : (x.macd==='alcista' ? '↗ Giro al alza' : '↘ Sigue cayendo');
+  var badges = (x.sup>0?'<span class="badge">Superinv. <b>'+x.sup+'</b></span> ':'')+
+               (x.ins>0?'<span class="badge">Insiders <b>'+x.ins+'</b></span>':'');
+  return '<button class="tile" type="button" data-i="'+i+'" aria-label="'+x.t+', '+x.n+', '+k+' de 5 estrellas. Ver detalle.">'+
+    '<span class="top"><span><span class="tick">'+x.t+'</span><span class="nm">'+x.n+' · '+x.s+'</span></span>'+
+    '<span class="st" aria-hidden="true">'+starsHtml(k)+'</span></span>'+
+    '<span class="nums">'+
+      '<span><span class="k">Precio</span><span class="v">'+f(x.p,2)+'</span></span>'+
+      '<span><span class="k">Caída 52s</span><span class="v neg">'+f(drop(x),1)+' %</span></span>'+
+      '<span><span class="k">Margen Graham</span><span class="v '+(m===null?'':(m>=25?'pos':'neg'))+'">'+(m===null?'<span class="nd">n/d</span>':f(m,1)+' %')+'</span></span>'+
+    '</span>'+
+    '<span class="mini">'+mini+'</span>'+
+    '<span class="foot"><span>'+sig+'</span><span>'+(badges||'<span class="nd">sin registro Dataroma</span>')+'</span></span>'+
+  '</button>';
+}
+
+function dialogHtml(x){
+  var k=estrellas(x), v=graham(x), m=mos(x);
+  var checklist = GRUPOS.map(function(gr){
+    var ok=grupoOk(gr,x);
+    return '<p class="gname"><span class="'+(ok?'yes':'no')+'" aria-hidden="true">'+(ok?'✓':'✗')+'</span> '+gr.name+'</p>'+
+      '<ul class="check">'+gr.items.map(function(it){
+        var val=it.v(x), good=it.ok(x);
+        return '<li><span class="'+(good?'yes':'no')+'" aria-hidden="true">'+(good?'✓':'✗')+'</span><span>'+it.l+' '+it.u+'</span>'+
+          '<span class="v">'+(val===null?'<i class="nd">Datos insuficientes</i>':val)+'</span></li>';
+      }).join('')+'</ul>';
+  }).join('');
+  var grahamBlock = v===null
+    ? '<p class="prose">Sin beneficio por acción positivo no se puede calcular el valor de Graham: <b>datos insuficientes</b>. La tarjeta no muestra un valor inventado.</p>'
+    : '<p class="prose">Beneficio por acción <b>'+f(x.eps,2)+' USD</b>, crecimiento esperado <b>'+f(x.g,0)+' %</b> anual, bono corporativo AAA <b>6,03 %</b>:</p>'+
+      '<div class="formula">V = EPS × (8,5 + 2g) × 4,4 / Y<br>V = '+f(x.eps,2)+' × (8,5 + 2×'+f(x.g,0)+') × 4,4 / 6,03<br>V = <b>'+f(v,2)+' USD</b><br>Precio hoy '+f(x.p,2)+' USD → margen de seguridad '+f(m,1)+' %</div>';
+  var dataroma = (x.sup>0?'<p class="prose"><b>'+x.sup+' superinversores</b> compraron el último trimestre a un precio medio declarado de <b>'+f(x.supPrice,2)+' USD</b>; hoy cotiza '+f((x.p/x.supPrice-1)*100,1)+' % respecto a ese precio.</p>':'')+
+    (x.ins>0?'<p class="prose"><b>'+x.ins+' compras de directivos</b>'+(x.insCluster?' agrupadas en el mismo mes':'')+', ninguna de accionistas del 10 %.</p>':'')+
+    (x.sup===0&&x.ins===0?'<p class="prose">Sin compras registradas en Dataroma.</p>':'');
+
+  return '<div class="dhead"><div><h2 id="dlg-h">'+x.t+' · '+x.n+'</h2>'+
+    '<p class="prose" style="margin:6px 0 0">'+x.s+' · '+k+' de 5 estrellas <span aria-hidden="true" style="color:var(--primary)">'+starsHtml(k)+'</span></p></div>'+
+    '<button class="close" type="button" id="cerrar" aria-label="Cerrar detalle">✕</button></div>'+
+    '<div class="dcols">'+
+      '<section><h3>Qué cumple y qué no</h3>'+checklist+'</section>'+
+      '<section><h3>Cuánto vale según Graham</h3>'+grahamBlock+'</section>'+
+      '<section><h3>Por qué cayó</h3><p class="prose">'+x.why+'</p>'+
+        '<p class="prose">'+f(drop(x),1)+' % bajo el máximo de 52 semanas ('+f(x.max52,2)+' USD), '+(x.belowSma200?'bajo':'sobre')+' la media de 200 días y '+(x.aboveSma50?'ya sobre':'aún bajo')+' la de 50 días. RSI(14) '+f(x.rsi,1)+'.</p>'+
+        '<h3 style="margin-top:14px">Quién está comprando</h3>'+dataroma+
+        '<div class="acts"><button class="btn-primary" type="button">Agregar a seguimiento</button><button class="btn-ghost" type="button">Abrir análisis</button></div>'+
+      '</section>'+
+    '</div>';
+}
+
+var totales = {5:2, 4:2, 3:13};
+var lanes = [5,4,3];
+document.getElementById('lanes').innerHTML = lanes.map(function(k){
+  var items = DATA.map(function(x,i){return {x:x,i:i}}).filter(function(o){return estrellas(o.x)===k});
+  var head = '<h2><span class="st" aria-hidden="true">'+starsHtml(k)+'</span> '+k+' estrellas '+
+    '<span class="meta">'+(k===5?'cumple los cinco grupos':(k===4?'le falta un grupo':'le faltan dos grupos'))+
+    ' · '+totales[k]+' acciones'+(items.length<totales[k]?' ('+items.length+' visibles)':'')+'</span></h2>';
+  var row = '<div class="row">'+items.map(function(o){return tileHtml(o.x,o.i)}).join('')+'</div>';
+  return '<section class="lane" aria-label="'+k+' estrellas">'+head+row+'</section>';
+}).join('');
+
+var backdrop = document.getElementById('backdrop'), dialog = document.getElementById('dialog');
+document.getElementById('lanes').addEventListener('click', function(e){
+  var tile = e.target.closest('.tile'); if(!tile) return;
+  dialog.innerHTML = dialogHtml(DATA[Number(tile.dataset.i)]);
+  backdrop.hidden = false;
+  var c = document.getElementById('cerrar'); if(c) c.focus();
+});
+backdrop.addEventListener('click', function(e){
+  if(e.target===backdrop || e.target.id==='cerrar') backdrop.hidden = true;
+});
+document.addEventListener('keydown', function(e){ if(e.key==='Escape') backdrop.hidden = true; });
+document.querySelectorAll('.chip').forEach(function(c){
+  c.addEventListener('click', function(){ c.setAttribute('aria-pressed', c.getAttribute('aria-pressed')==='true'?'false':'true'); });
+});
+document.querySelectorAll('.preset').forEach(function(p){
+  p.addEventListener('click', function(){
+    document.querySelectorAll('.preset').forEach(function(o){o.setAttribute('aria-pressed','false')});
+    p.setAttribute('aria-pressed','true');
+  });
+});
+document.querySelectorAll('.vista').forEach(function(p){
+  p.addEventListener('click', function(){
+    document.querySelectorAll('.vista').forEach(function(o){o.setAttribute('aria-pressed','false')});
+    p.setAttribute('aria-pressed','true');
+  });
+});
+</script>
+</body>
+</html>
