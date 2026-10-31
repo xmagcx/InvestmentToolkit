@@ -24,7 +24,6 @@ import { HelpModalProvider } from './components/HelpModal';
 import { PrivacyProvider } from './context/PrivacyContext';
 
 import PortfolioPage from './pages/PortfolioPage';
-import TradeLog from './pages/TradeLog';
 import ThesesPage from './pages/ThesesPage';
 import DailyBriefPage from './pages/DailyBriefPage';
 import SourcesPage from './pages/SourcesPage';
@@ -45,7 +44,6 @@ function App() {
               <Route path="portfolio-table" element={<Navigate to="/portfolio" replace />} />
               <Route path="screener" element={<Navigate to="/portfolio" replace />} />
               <Route path="analysis" element={<Dashboard />} />
-              <Route path="trade-log" element={<TradeLog />} />
               <Route path="theses" element={<ThesesPage />} />
               <Route path="daily-brief" element={<DailyBriefPage />} />
               <Route path="sources" element={<SourcesPage />} />

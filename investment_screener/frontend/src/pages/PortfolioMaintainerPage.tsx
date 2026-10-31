@@ -3,7 +3,7 @@
  * =====================================
  *
  * Purpose:
- *     Manual portfolio maintenance ("Portafolio", Spanish UI): portfolio profiles
+ *     Manual portfolio maintenance ("Gestión de activos", Spanish UI): portfolio profiles
  *     (create / rename / delete), a per-profile wallet with deposits and
  *     withdrawals, the positions of the profile with buy / sell / delete actions,
  *     an "Agregar acción" (buy) form and the transaction history. Every write goes
@@ -173,7 +173,7 @@ export default function PortfolioMaintainerPage() {
 
     return (
         <div className="p-6">
-            <h1 className="text-2xl font-bold mb-1">Portafolio</h1>
+            <h1 className="text-2xl font-bold mb-1">Gestión de activos</h1>
             <p className="text-sm text-slate-400 mb-6">
                 Mantenedor manual: perfiles de portafolio, billetera en la moneda del perfil,
                 compras y ventas con costo promedio ponderado e historial de movimientos.
