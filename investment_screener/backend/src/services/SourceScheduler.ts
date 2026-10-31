@@ -30,7 +30,7 @@
  *
  * Key Input Dependencies:
  *   - env SOURCE_SYNC_SCHEDULER ("on" | "off", default "on")
- *   - env SOURCE_SYNC_INTERVALS ("racional_gsheet=24h,dataroma_insider_buys=6h,...")
+ *   - env SOURCE_SYNC_INTERVALS ("racional_gsheet=24h,dataroma_insider_buys=6h,tradingview_scanner=6h,...")
  *   - investment_screener/backend/data/domain_model.sqlite (source_sync_run, read via SourcesRepository)
  *
  * Key Output Dependencies:
@@ -40,8 +40,11 @@ import { SourceSyncService, sourceSyncService } from './SourceSyncService';
 import { SourcesRepository, SourceLastRuns } from './SourcesRepository';
 import { DOMAIN_MODEL_DB_FILE } from '../utils/paths';
 
+// tradingview_scanner every 6 h (intraday technicals move, the quote is 15 min delayed anyway);
+// fred_aaa every 24 h (FRED publishes the AAA yield monthly).
 export const DEFAULT_SOURCE_SYNC_INTERVALS =
-    'racional_gsheet=24h,dataroma_quarterly_buys=24h,dataroma_insider_buys=6h,yfinance_enrichment=1h';
+    'racional_gsheet=24h,dataroma_quarterly_buys=24h,dataroma_insider_buys=6h,yfinance_enrichment=1h,' +
+    'tradingview_scanner=6h,fred_aaa=24h';
 export const FIRST_TICK_DELAY_MS = 60_000;
 export const TICK_INTERVAL_MS = 600_000;
 /** A source that just failed waits this long before the scheduler tries again. */

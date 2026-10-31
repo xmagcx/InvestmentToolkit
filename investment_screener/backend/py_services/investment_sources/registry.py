@@ -24,6 +24,8 @@ Key Input Dependencies:
     - investment_sources.dataroma_quarterly_buys.DataromaQuarterlyBuysSource (S6)
     - investment_sources.dataroma_insider_buys.DataromaInsiderBuysSource (S7)
     - investment_sources.yfinance_enrichment.YFinanceProfileEnrichment (S10, enriches stocks_origin)
+    - investment_sources.tradingview_scanner.TradingViewScannerSource (S7, stock_screen_snapshot)
+    - investment_sources.fred_aaa.FredAaaSource (S7, market_rate 'AAA')
 
 Key Output Dependencies:
     - consumed by sync_cli.py and (later) the Express /api/sources routes
@@ -33,7 +35,9 @@ from __future__ import annotations
 from .base import InvestmentSource
 from .dataroma_insider_buys import DataromaInsiderBuysSource
 from .dataroma_quarterly_buys import DataromaQuarterlyBuysSource
+from .fred_aaa import FredAaaSource
 from .google_sheet_stocks import GoogleSheetStocksSource
+from .tradingview_scanner import TradingViewScannerSource
 from .yfinance_enrichment import YFinanceProfileEnrichment
 
 SOURCES: dict[str, type[InvestmentSource]] = {
@@ -41,6 +45,8 @@ SOURCES: dict[str, type[InvestmentSource]] = {
     DataromaQuarterlyBuysSource.source_code: DataromaQuarterlyBuysSource,
     DataromaInsiderBuysSource.source_code: DataromaInsiderBuysSource,
     YFinanceProfileEnrichment.source_code: YFinanceProfileEnrichment,
+    TradingViewScannerSource.source_code: TradingViewScannerSource,
+    FredAaaSource.source_code: FredAaaSource,
 }
 
 

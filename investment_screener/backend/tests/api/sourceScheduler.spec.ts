@@ -36,13 +36,15 @@ describe('SourceScheduler interval configuration', () => {
         expect(warnings.join(' ')).to.contain('c=12x');
     });
 
-    it('defaults to the four registered sources when the env var is unset', () => {
+    it('defaults to the six registered sources when the env var is unset', () => {
         expect(intervalsFromEnv({}, silent)).to.deep.equal(parseIntervals(DEFAULT_SOURCE_SYNC_INTERVALS, silent));
         expect(intervalsFromEnv({}, silent)).to.deep.equal({
             racional_gsheet: 24 * HOUR,
             dataroma_quarterly_buys: 24 * HOUR,
             dataroma_insider_buys: 6 * HOUR,
             yfinance_enrichment: HOUR,
+            tradingview_scanner: 6 * HOUR,
+            fred_aaa: 24 * HOUR,
         });
     });
 
