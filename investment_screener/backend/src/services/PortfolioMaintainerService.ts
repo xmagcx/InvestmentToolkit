@@ -71,6 +71,17 @@ export interface PositionView {
     avgCost: number | null;
 }
 
+/** GET /positions row: a position plus its stored market price (null when unpriced). */
+export interface MarketPositionView {
+    accountId: string;
+    ticker: string;
+    qty: number;
+    avgCost: number | null;
+    currency: string;
+    price: number | null;
+    priceAsOf: string | null;
+}
+
 /** One `trade_log_entry` row as the UI sees it (S4). `ticker` is the JSON name
  * of the SQL `symbol` column, per the repo's ticker-vs-symbol rule. */
 export interface TransactionView {
@@ -422,6 +433,16 @@ export class PortfolioMaintainerService {
                     `El perfil ${accountId} tiene ${cash.toFixed(2)} ${account.base_currency} en la billetera; confirma la eliminación para continuar`
                 );
             }
+            // The audit trail outlives the profile: detach its trade_log_entry rows (account_id is
+            // nullable) and tag them, instead of deleting history or tripping the foreign key.
+            this.db
+                .prepare(
+                    `UPDATE trade_log_entry
+                     SET account_id = NULL,
+                         notes = TRIM(COALESCE(notes, '') || ' [deleted profile: ' || ? || ']')
+                     WHERE account_id = ?`
+                )
+                .run(accountId, accountId);
             this.db.prepare('DELETE FROM account_investment WHERE account_id = ?').run(accountId);
             this.db.prepare('DELETE FROM account WHERE account_id = ?').run(accountId);
         });
@@ -549,8 +570,8 @@ export class PortfolioMaintainerService {
     /** Read view for the UI / routes. Filtered variant returns plain positions;
      * the unfiltered variant joins account + position currency for GET /positions. */
     listPositions(accountId: string): PositionView[];
-    listPositions(): Array<{ accountId: string; ticker: string; qty: number; avgCost: number | null; currency: string }>;
-    listPositions(accountId?: string): PositionView[] | Array<{ accountId: string; ticker: string; qty: number; avgCost: number | null; currency: string }> {
+    listPositions(): MarketPositionView[];
+    listPositions(accountId?: string): PositionView[] | MarketPositionView[] {
         if (accountId) {
             return this.db
                 .prepare(`
@@ -564,9 +585,11 @@ export class PortfolioMaintainerService {
         }
         return this.db
             .prepare(`
-                SELECT ai.account_id AS accountId, i.symbol AS ticker, ai.quantity, ai.average_cost, ai.currency
+                SELECT ai.account_id AS accountId, i.symbol AS ticker, ai.quantity, ai.average_cost, ai.currency,
+                       ip.price, ip.fetched_at
                 FROM account_investment ai
                 JOIN investment i ON i.investment_id = ai.investment_id
+                LEFT JOIN investment_price ip ON ip.investment_id = ai.investment_id
                 WHERE i.symbol NOT LIKE 'CASH_%'
                 ORDER BY ai.account_id, i.symbol`)
             .all()
@@ -576,6 +599,9 @@ export class PortfolioMaintainerService {
                 qty: r.quantity,
                 avgCost: r.average_cost ?? null,
                 currency: r.currency,
+                // The stored market price only: an unpriced position reports null, never its cost.
+                price: r.price ?? null,
+                priceAsOf: r.fetched_at ?? null,
             }));
     }
 }

@@ -962,6 +962,9 @@ export interface MaintainerPosition {
     qty: number;
     avgCost: number | null;
     currency: string;
+    /** Stored market price (investment_price); null when the ticker has never been priced. */
+    price: number | null;
+    priceAsOf: string | null;
 }
 
 export interface MaintainerTransactionRequest {

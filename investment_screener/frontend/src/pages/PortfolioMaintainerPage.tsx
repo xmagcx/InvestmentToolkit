@@ -7,8 +7,8 @@
  *     (create / rename / delete), a per-profile wallet with deposits and
  *     withdrawals, the positions of the profile with buy / sell / delete actions,
  *     an "Agregar acción" (buy) form and the transaction history. Every write goes
- *     through the `/api/portfolio-maintainer` client in services/api.ts; prices
- *     come from the existing read model (fetchPositionRows) when available.
+ *     through the `/api/portfolio-maintainer` client in services/api.ts; each position
+ *     carries its stored market price (null when unpriced — never its cost).
  *
  * Layer: Frontend / Pages / Portfolio Maintainer
  *
@@ -21,7 +21,6 @@ import {
     fetchMaintainerAccounts,
     fetchMaintainerPositions,
     fetchMaintainerTransactions,
-    fetchPositionRows,
     createMaintainerAccount,
     updateMaintainerAccount,
     deleteMaintainerAccount,
@@ -45,7 +44,6 @@ export default function PortfolioMaintainerPage() {
     const [accounts, setAccounts] = useState<MaintainerAccount[]>([]);
     const [positions, setPositions] = useState<MaintainerPosition[]>([]);
     const [transactions, setTransactions] = useState<MaintainerTransaction[]>([]);
-    const [prices, setPrices] = useState<Record<string, number>>({});
     const [selected, setSelected] = useState<string>('');
     const [loading, setLoading] = useState(true);
     const [error, setError] = useState<string | null>(null);
@@ -73,15 +71,6 @@ export default function PortfolioMaintainerPage() {
                 : accts[0]?.accountId ?? '';
             setSelected(active);
             setTransactions(active ? await fetchMaintainerTransactions(active) : []);
-            // Prices are a nice-to-have: a failing read model must not hide the portfolio.
-            try {
-                const rows = await fetchPositionRows();
-                setPrices(Object.fromEntries(
-                    rows.filter(r => r.currentPrice != null).map(r => [r.ticker, r.currentPrice as number])
-                ));
-            } catch {
-                setPrices({});
-            }
         } catch (err) {
             setError(err instanceof Error ? err.message : 'No se pudo cargar el portafolio');
         } finally {
@@ -280,7 +269,7 @@ export default function PortfolioMaintainerPage() {
                         ) : (
                             accountPositions.map(p => {
                                 const cost = (p.avgCost ?? 0) * p.qty;
-                                const price = prices[p.ticker] ?? null;
+                                const price = p.price ?? null;
                                 const pl = price == null || p.avgCost == null ? null : (price - p.avgCost) * p.qty;
                                 return (
                                     <tr key={`${p.accountId}:${p.ticker}`} className="hover:bg-slate-800/40">
@@ -385,7 +374,7 @@ export default function PortfolioMaintainerPage() {
             {/* Dialogs */}
             {dialog && (
                 <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/60">
-                    <div className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-800 p-6 shadow-xl">
+                    <div role="dialog" aria-modal="true" className="w-full max-w-md rounded-lg border border-slate-700 bg-slate-800 p-6 shadow-xl">
                         {dialog.kind === 'create' && (
                             <>
                                 <h3 className="mb-3 text-lg font-semibold text-slate-100">Nuevo perfil</h3>

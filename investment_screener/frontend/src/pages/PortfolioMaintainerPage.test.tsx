@@ -18,7 +18,6 @@ vi.mock('../services/api', async () => {
         fetchMaintainerAccounts: vi.fn(),
         fetchMaintainerPositions: vi.fn(),
         fetchMaintainerTransactions: vi.fn(),
-        fetchPositionRows: vi.fn(),
         createMaintainerAccount: vi.fn(),
         updateMaintainerAccount: vi.fn(),
         deleteMaintainerAccount: vi.fn(),
@@ -31,7 +30,7 @@ vi.mock('../services/api', async () => {
 const api = await import('../services/api');
 
 const account = { accountId: 'racional', name: 'racional', type: 'PROFILE', currency: 'USD', cash: 1700 };
-const position = { accountId: 'racional', ticker: 'AAPL', qty: 10, avgCost: 150, currency: 'USD' };
+const position = { accountId: 'racional', ticker: 'AAPL', qty: 10, avgCost: 150, currency: 'USD', price: 200, priceAsOf: '2026-10-30T20:00:00Z' };
 const transaction = {
     entryId: 'e1', ticker: 'AAPL', action: 'BUY', shares: 10, price: 150, totalCost: 1500,
     notes: 'opened', loggedAt: '2026-01-02T10:00:00Z',
@@ -47,9 +46,6 @@ describe('PortfolioMaintainerPage', () => {
         vi.mocked(api.fetchMaintainerAccounts).mockResolvedValue([account]);
         vi.mocked(api.fetchMaintainerPositions).mockResolvedValue([position]);
         vi.mocked(api.fetchMaintainerTransactions).mockResolvedValue([transaction]);
-        vi.mocked(api.fetchPositionRows).mockResolvedValue([
-            { ticker: 'AAPL', currentPrice: 200 } as never,
-        ]);
         vi.mocked(api.createMaintainerAccount).mockResolvedValue({ ...account, accountId: 'Nuevo', name: 'Nuevo', cash: 0 });
         vi.mocked(api.deleteMaintainerAccount).mockResolvedValue({ deleted: 'racional' });
         vi.mocked(api.moveMaintainerCash).mockResolvedValue({ accountId: 'racional', cash: 1800, currency: 'USD' });
@@ -62,6 +58,15 @@ describe('PortfolioMaintainerPage', () => {
     afterEach(() => {
         cleanup();
         vi.clearAllMocks();
+    });
+
+    it('shows no price and no P/L for an unpriced position instead of echoing its cost', async () => {
+        vi.mocked(api.fetchMaintainerPositions).mockResolvedValue([{ ...position, price: null, priceAsOf: null }]);
+        render(<PortfolioMaintainerPage />);
+        const row = (await screen.findAllByText('AAPL'))[0].closest('tr') as HTMLElement;
+        const cells = Array.from(row.querySelectorAll('td')).map(td => td.textContent?.trim());
+        expect(cells[4]).toBe('—'); // Precio actual
+        expect(cells[5]).toBe('—'); // P/L
     });
 
     it('renders the wallet, the positions and the transaction history of the profile', async () => {

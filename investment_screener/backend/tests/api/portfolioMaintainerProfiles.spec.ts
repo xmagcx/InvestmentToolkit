@@ -59,6 +59,50 @@ describe('portfolio maintainer — profiles, wallet, history, add stock', () => 
         cleanup(dbPath);
     });
 
+    // ── Positions carry the stored market price, never the cost as a stand-in ──
+
+    it('GET /positions returns price null when unpriced and the stored investment_price when priced', async () => {
+        await run(async base => {
+            await post(base, '/api/portfolio-maintainer/accounts', { name: 'Precios' });
+            const accounts = await (await fetch(`${base}/api/portfolio-maintainer/accounts`)).json();
+            const id = accounts.find((a: any) => a.name === 'Precios').accountId;
+            await post(base, `/api/portfolio-maintainer/accounts/${id}/cash/deposit`, { amount: 1000 });
+            await post(base, '/api/portfolio-maintainer/transaction', { accountId: id, ticker: 'AAPL', side: 'BUY', qty: 2, price: 100 });
+            await post(base, '/api/portfolio-maintainer/transaction', { accountId: id, ticker: 'MSFT', side: 'BUY', qty: 1, price: 300 });
+            const w = new Database(dbPath);
+            const msft = (w.prepare("SELECT investment_id FROM investment WHERE symbol = 'MSFT'").get() as any).investment_id;
+            w.prepare("INSERT INTO investment_price (investment_id, price, currency, fetched_at) VALUES (?, 310.5, 'USD', '2026-10-30T20:00:00Z')").run(msft);
+            w.close();
+            const positions = await (await fetch(`${base}/api/portfolio-maintainer/positions`)).json();
+            const byTicker = Object.fromEntries(positions.map((p: any) => [p.ticker, p]));
+            expect(byTicker.AAPL.price).to.equal(null);
+            expect(byTicker.AAPL.priceAsOf).to.equal(null);
+            expect(byTicker.MSFT.price).to.equal(310.5);
+            expect(byTicker.MSFT.priceAsOf).to.equal('2026-10-30T20:00:00Z');
+            expect(byTicker.AAPL.avgCost).to.equal(100);
+        });
+    });
+
+    it('S2: deleting a profile that has history keeps its audit rows (detached) instead of failing', async () => {
+        await run(async base => {
+            await post(base, '/api/portfolio-maintainer/accounts', { name: 'Con historial' });
+            const id = 'Con historial';
+            await post(base, `/api/portfolio-maintainer/accounts/${encodeURIComponent(id)}/cash/deposit`, { amount: 500 });
+            await post(base, '/api/portfolio-maintainer/transaction', { accountId: id, ticker: 'AAPL', side: 'BUY', qty: 1, price: 100 });
+            await post(base, '/api/portfolio-maintainer/transaction', { accountId: id, ticker: 'AAPL', side: 'SELL', qty: 1, price: 110 });
+            const before = countRows(dbPath, 'trade_log_entry');
+            expect(before).to.equal(3);
+            const res = await fetch(`${base}/api/portfolio-maintainer/accounts/${encodeURIComponent(id)}?force=true`, { method: 'DELETE' });
+            expect(res.status, await res.clone().text()).to.equal(200);
+            expect(countRows(dbPath, 'account', `WHERE account_id = '${id}'`)).to.equal(0);
+            expect(countRows(dbPath, 'account_investment', `WHERE account_id = '${id}'`)).to.equal(0);
+            expect(countRows(dbPath, 'trade_log_entry')).to.equal(before);
+            expect(countRows(dbPath, 'trade_log_entry', 'WHERE account_id IS NULL')).to.equal(3);
+            const notes = readDb(dbPath, db => db.prepare('SELECT notes FROM trade_log_entry').all() as Array<{ notes: string }>);
+            for (const n of notes) expect(n.notes).to.contain('[deleted profile: Con historial]');
+        });
+    });
+
     // ── S2: profiles ──────────────────────────────────────────────────────────
 
     it('S2: creates a profile from a free name alone (type PROFILE, currency USD)', async () => {
