@@ -6,8 +6,9 @@ Purpose:
     The broker sync updates positions, cash and trades but not prices, so the Daily
     Brief, weights and totals read yesterday's closes until prices are refreshed.
     This reads the refresh scope from domain_model.sqlite, resolves current prices
-    from TradingView real-time quotes only (`fetch_portfolio_heatmap.fetch_portfolio_data`
-    with tradingview_only=True; yfinance never supplies a price), and writes through the
+    from TradingView real-time quotes (`fetch_portfolio_heatmap.fetch_portfolio_data`; with
+    BROKER_INTEGRATION=on yfinance never supplies a price, in the default screener mode it
+    prices only the tickers TradingView cannot quote), and writes through the
     investment repositories. A symbol TradingView cannot quote keeps its previous price and
     is reported as failed/stale. It needs neither the Express backend nor a running web server.
 
@@ -65,10 +66,18 @@ def refresh_scope(conn) -> list[str]:
     return sorted(s for s in symbols if s and not is_cash(s) and not s.startswith("CASH_"))
 
 
+def _broker_on() -> bool:
+    """BROKER_INTEGRATION=on (opt-in); unset or anything else is the screener-only mode."""
+    return os.environ.get("BROKER_INTEGRATION", "").strip().lower() == "on"
+
+
 def _default_fetch(items: list[dict]) -> dict:
     from fetch_portfolio_heatmap import fetch_portfolio_data
 
-    return fetch_portfolio_data(items, bust_cache=True, tradingview_only=True)
+    # TradingView quotes come from its watchlist. In screener mode holdings are entered by hand
+    # and are often not on that watchlist, so tickers TradingView cannot quote fall back to
+    # yfinance; with the broker on, prices stay TradingView-only as before.
+    return fetch_portfolio_data(items, bust_cache=True, tradingview_only=_broker_on())
 
 
 def refresh_prices(conn, fetch: Callable[[list[dict]], dict] | None = None, now: str | None = None) -> dict:
@@ -131,7 +140,7 @@ def main(argv: list[str] | None = None) -> int:
         conn.close()
     # The USD->CAD refresh reads the broker panel; with the broker integration off (the default,
     # see backend src/utils/brokerIntegration.ts) it is skipped, never attempted.
-    broker_on = os.environ.get("BROKER_INTEGRATION", "").strip().lower() == "on"
+    broker_on = _broker_on()
     if args.skip_fx:
         result["exchange_rate_refreshed"] = None
     elif not broker_on:

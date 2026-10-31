@@ -146,3 +146,32 @@ def test_broker_on_still_refreshes_fx(tmp_path, monkeypatch):
     assert fx_called is True
     assert report["exchange_rate_refreshed"] is True
     assert "exchange_rate_skipped" not in report
+
+
+def _capture_default_fetch(monkeypatch, broker_env):
+    import types
+    import tv_price_refresh
+
+    seen = {}
+
+    def fake(items, bust_cache=False, tradingview_only=False):
+        seen["tradingview_only"] = tradingview_only
+        return {}
+
+    # A stand-in module: the real resolver imports yfinance, which the test runner may lack.
+    monkeypatch.setitem(sys.modules, "fetch_portfolio_heatmap", types.SimpleNamespace(fetch_portfolio_data=fake))
+    if broker_env is None:
+        monkeypatch.delenv("BROKER_INTEGRATION", raising=False)
+    else:
+        monkeypatch.setenv("BROKER_INTEGRATION", broker_env)
+    tv_price_refresh._default_fetch([{"symbol": "AAPL"}])
+    return seen["tradingview_only"]
+
+
+def test_screener_mode_lets_yfinance_price_tickers_tradingview_cannot_quote(monkeypatch):
+    """Broker off: held tickers outside the TradingView watchlist must still get a price."""
+    assert _capture_default_fetch(monkeypatch, None) is False
+
+
+def test_broker_mode_keeps_tradingview_only_prices(monkeypatch):
+    assert _capture_default_fetch(monkeypatch, "on") is True
