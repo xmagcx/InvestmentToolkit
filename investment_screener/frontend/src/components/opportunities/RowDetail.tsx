@@ -5,8 +5,9 @@
  * Purpose:
  *     The story of one opportunity, in three columns: why it has N stars (the checklist of every
  *     question with its value and threshold), what it is really worth (the Graham formula filled
- *     in), and why it fell plus who is buying it (Dataroma and analysts). Offers the two actions:
- *     add to the watchlist and open the analysis page.
+ *     in), and why it fell — whether the fall is healthy (Sortino, downside beta, EPS revisions),
+ *     who is buying it (Dataroma holdings and analysts) and the lazily fetched sentiment block.
+ *     Offers the two actions: add to the watchlist and open the analysis page.
  *
  * Layer: Frontend / UI / Opportunities
  *
@@ -19,6 +20,7 @@
  */
 import { useState } from 'react';
 import { useNavigate } from 'react-router-dom';
+import SentimentBlock from './SentimentBlock';
 import { GROUP_NAMES, GROUP_ORDER, num } from './format';
 import { addToWatchlist } from '../../services/api';
 import type { OpportunityRow } from '../../services/opportunities';
@@ -30,6 +32,46 @@ function Mark({ ok }: { ok: boolean | null }) {
             {ok ? '✓' : '✗'}
         </span>
     );
+}
+
+/** "En los últimos 3 años su peor caída fue −38 % y se recuperó en 214 días. …" (S11). */
+function healthSentences(row: OpportunityRow): string[] {
+    const sentences: string[] = [];
+    const risk = row.risk;
+    if (risk?.maxDrawdown !== null && risk?.maxDrawdown !== undefined) {
+        const drawdown = `En los últimos 3 años su peor caída fue −${num(Math.abs(risk.maxDrawdown) * 100, 0)} %`;
+        sentences.push(
+            risk.recoveryDays === null
+                ? `${drawdown} y todavía no se recupera.`
+                : `${drawdown} y se recuperó en ${risk.recoveryDays} días.`,
+        );
+    }
+    if (risk?.downsideBeta !== null && risk?.downsideBeta !== undefined) {
+        sentences.push(`Cuando el mercado cae, ella cae ${num(risk.downsideBeta, 1)} veces lo que cae el S&P.`);
+    }
+    if (risk === null) {
+        sentences.push('No tenemos suficiente historial de 3 años para medir cómo resistió las caídas.');
+    }
+    if (row.revisions) {
+        sentences.push(
+            `Los analistas subieron ${row.revisions.up30} estimaciones y bajaron ${row.revisions.down30} en el último mes.`,
+        );
+    } else {
+        sentences.push('No hay revisiones de analistas registradas en el último mes.');
+    }
+    return sentences;
+}
+
+/** RSI and MACD stay visible, but they no longer give a star (S11). */
+function shortTermLine(row: OpportunityRow): string {
+    const rsi = num(row.rsi, 0) ?? '—';
+    const macd =
+        row.macd === null || row.macdSignal === null
+            ? '—'
+            : row.macd > row.macdSignal
+              ? 'al alza'
+              : 'a la baja';
+    return `Indicadores de corto plazo (informativos): RSI ${rsi}, MACD ${macd}`;
 }
 
 export default function RowDetail({ row }: { row: OpportunityRow }) {
@@ -48,6 +90,7 @@ export default function RowDetail({ row }: { row: OpportunityRow }) {
     const graham = row.graham;
     const dataroma = row.dataroma;
     const analysts = row.analysts;
+    const topHolder = dataroma.topHolders.length > 0 ? dataroma.topHolders[0] : null;
 
     return (
         <div className="grid grid-cols-[1.25fr_1fr_1fr] gap-4 border-t border-slate-700 px-4 py-3.5">
@@ -129,6 +172,10 @@ export default function RowDetail({ row }: { row: OpportunityRow }) {
                     )}
                 </p>
 
+                <h5 className="mb-1 text-xs font-bold uppercase tracking-wider text-slate-400">¿Es una caída sana?</h5>
+                <p className="mb-2 text-xs leading-relaxed text-slate-300">{healthSentences(row).join(' ')}</p>
+                <p className="mb-2 text-[11px] leading-relaxed text-slate-400">{shortTermLine(row)}</p>
+
                 <h4 className="mb-2 mt-3 text-[13px] font-semibold text-slate-100">¿Quién está comprando?</h4>
                 {dataroma.superinvestors > 0 && (
                     <p className="mb-2 text-xs leading-relaxed text-slate-300">
@@ -145,6 +192,39 @@ export default function RowDetail({ row }: { row: OpportunityRow }) {
                 )}
                 {dataroma.superinvestors === 0 && dataroma.insiders === 0 && (
                     <p className="mb-2 text-xs leading-relaxed text-slate-300">Sin compras registradas en Dataroma.</p>
+                )}
+                {dataroma.holders > 0 && (
+                    <p className="mb-2 text-xs leading-relaxed text-slate-300">
+                        <b className="text-white">
+                            {dataroma.holders === 1 ? '1 gran inversor la tiene' : `${dataroma.holders} grandes inversores la tienen`}
+                        </b>
+                        {dataroma.holdersPrev !== null &&
+                            ` (${dataroma.holders - dataroma.holdersPrev >= 0 ? '+' : '−'}${Math.abs(dataroma.holders - dataroma.holdersPrev)} vs. el trimestre anterior)`}
+                        .
+                        {topHolder && topHolder.pct !== null && (
+                            <> Para <b className="text-white">{topHolder.manager}</b> pesa {num(topHolder.pct, 1)} % de su cartera.</>
+                        )}
+                        {dataroma.avgHoldPrice !== null && (
+                            <>
+                                {' '}Compraron en promedio a {num(dataroma.avgHoldPrice, 2)} USD y hoy cuesta {num(row.price, 2)} USD:{' '}
+                                <b className={dataroma.belowExpertsPrice ? 'text-emerald-300' : 'text-slate-200'}>
+                                    {dataroma.belowExpertsPrice ? 'bajo su precio de compra' : 'sobre su precio de compra'}
+                                </b>.
+                            </>
+                        )}
+                    </p>
+                )}
+                {dataroma.topHolders.length > 0 && (
+                    <ul className="mb-2 flex flex-col gap-0.5">
+                        {dataroma.topHolders.slice(0, 5).map(holder => (
+                            <li key={holder.manager} className="flex items-baseline justify-between gap-2 text-xs text-slate-300">
+                                <span>{holder.manager}</span>
+                                <span className="font-mono text-slate-400">
+                                    {holder.pct === null ? '—' : `${num(holder.pct, 1)} %`} · {holder.activity}
+                                </span>
+                            </li>
+                        ))}
+                    </ul>
                 )}
                 {analysts && analysts.total > 0 && (
                     <p className="mb-2 text-xs leading-relaxed text-slate-300">
@@ -171,6 +251,8 @@ export default function RowDetail({ row }: { row: OpportunityRow }) {
                     </button>
                     {feedback && <span role="status" className="text-xs text-emerald-300">{feedback}</span>}
                 </div>
+
+                <SentimentBlock ticker={row.ticker} />
             </section>
         </div>
     );

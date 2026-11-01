@@ -16,13 +16,16 @@
  * Key Functions:
  *     - fetchOpportunities(params) - the screened rows, the funnel counts and the star histogram;
  *       throws ScreenDataMissingError when the backend has no scanner snapshot yet (503).
+ *     - fetchSentiment(ticker) - market Fear & Greed and the ticker's headline sentiment, shown
+ *       only inside an expanded row (informative: never a star, never a filter).
  *
  * Key Input Dependencies:
- *     - Backend route GET /api/opportunities (contract S8 of odd/tasks/opportunities-and-brief.md)
+ *     - Backend routes GET /api/opportunities and GET /api/sentiment/:ticker (contract S15 of
+ *       odd/tasks/opportunities-and-brief.md)
  */
 
-/** Step numbers 1..6: gana, calidad, precio, caida, giro, expertos. */
-export type StepId = 'gana' | 'calidad' | 'precio' | 'caida' | 'giro' | 'expertos';
+/** Step numbers 1..6: gana, calidad, precio, caida, sana, expertos. */
+export type StepId = 'gana' | 'calidad' | 'precio' | 'caida' | 'sana' | 'expertos';
 
 export interface OpportunitiesParams {
     /** Step numbers the user demands; the rest only add a star. */
@@ -36,7 +39,10 @@ export interface OpportunitiesParams {
     peg: number;
     target: number;
     drop: number;
-    rsi: number;
+    /** Step 5 (S11): Sortino 3y ≥, downside beta 3y ≤, net EPS revisions 30d ≥. */
+    sortino: number;
+    dbeta: number;
+    rev: number;
     sup: number;
     ins: number;
     etf: boolean;
@@ -53,7 +59,9 @@ export const DEFAULT_OPPORTUNITIES_PARAMS: OpportunitiesParams = {
     peg: 1,
     target: 20,
     drop: 20,
-    rsi: 35,
+    sortino: 0.5,
+    dbeta: 1.2,
+    rev: 0,
     sup: 1,
     ins: 2,
     etf: false,
@@ -77,6 +85,48 @@ export interface OpportunityGroup {
 
 /** The five star-bearing groups (step 1 "gana" is a prerequisite and gives no star). */
 export type GroupId = Exclude<StepId, 'gana'>;
+
+/** 3-year risk history of the stock (S14 stock_risk_metrics); null when history < 2 years. */
+export interface RowRisk {
+    sortino: number | null;
+    sharpe: number | null;
+    downsideBeta: number | null;
+    /** Negative fraction: -0.38 = fell 38 %. */
+    maxDrawdown: number | null;
+    recoveryDays: number | null;
+    volatility: number | null;
+    asOf: string;
+}
+
+/** Analyst EPS revisions of the current year (S14 stock_eps_revisions). */
+export interface RowRevisions {
+    up30: number;
+    down30: number;
+    net: number;
+    up7: number;
+    down7: number;
+}
+
+export interface TopHolder {
+    manager: string;
+    pct: number | null;
+    activity: string;
+}
+
+/** Dataroma: the quarter gate plus the informational holding facts of S12. */
+export interface RowDataroma {
+    superinvestors: number;
+    holdPrice: number | null;
+    insiders: number;
+    insiderCluster: boolean;
+    holders: number;
+    holdersPrev: number | null;
+    maxPortfolioPct: number | null;
+    avgHoldPrice: number | null;
+    belowExpertsPrice: boolean;
+    netActivity: number | null;
+    topHolders: TopHolder[];
+}
 
 export interface OpportunityRow {
     ticker: string;
@@ -102,7 +152,28 @@ export interface OpportunityRow {
     aboveSma50: boolean;
     belowSma200: boolean;
     analysts: { buy: number; hold: number; sell: number; total: number; targetPct: number | null } | null;
-    dataroma: { superinvestors: number; holdPrice: number | null; insiders: number; insiderCluster: boolean };
+    risk: RowRisk | null;
+    revisions: RowRevisions | null;
+    dataroma: RowDataroma;
+}
+
+export interface SentimentHeadline {
+    title: string;
+    publisher: string;
+    url: string;
+    publishedAt: string;
+    score: number;
+}
+
+/** GET /api/sentiment/:ticker (S15): a failing part is null, never invented. */
+export interface SentimentResponse {
+    market: { score: number; rating: string; label: string; asOf: string } | null;
+    ticker: {
+        score: number;
+        label: 'Positivo' | 'Neutral' | 'Negativo';
+        headlines: SentimentHeadline[];
+        asOf: string;
+    } | null;
 }
 
 export interface StepSummary {
@@ -144,7 +215,9 @@ function query(params: OpportunitiesParams): string {
         peg: String(params.peg),
         target: String(params.target),
         drop: String(params.drop),
-        rsi: String(params.rsi),
+        sortino: String(params.sortino),
+        dbeta: String(params.dbeta),
+        rev: String(params.rev),
         sup: String(params.sup),
         ins: String(params.ins),
         etf: params.etf ? '1' : '0',
@@ -165,4 +238,13 @@ export async function fetchOpportunities(
         throw new Error(body?.error ?? `No se pudieron cargar las oportunidades (HTTP ${response.status})`);
     }
     return body as OpportunitiesResponse;
+}
+
+export async function fetchSentiment(ticker: string, signal?: AbortSignal): Promise<SentimentResponse> {
+    const response = await fetch(`/api/sentiment/${encodeURIComponent(ticker)}`, { signal });
+    const body = await response.json().catch(() => null);
+    if (!response.ok) {
+        throw new Error(body?.error ?? `No se pudo leer el sentimiento (HTTP ${response.status})`);
+    }
+    return body as SentimentResponse;
 }

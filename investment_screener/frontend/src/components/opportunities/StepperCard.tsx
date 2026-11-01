@@ -78,10 +78,14 @@ const STEPS: StepCopy[] = [
     },
     {
         n: 5,
-        question: '¿Ya empezó a recuperarse?',
-        why: 'Evita comprar un cuchillo que cae: busca señales de que dejó de bajar.',
-        note: 'O cruce alcista del MACD, con precio sobre su media de 50 días.',
-        fields: [{ key: 'rsi', label: 'RSI(14) <', aria: 'Umbral RSI' }],
+        question: '¿Es una caída sana?',
+        why: 'La acción resistió mejor que el mercado en las caídas y los analistas no están bajando sus estimaciones de ganancia.',
+        note: 'Sortino: cuánto rinde por cada unidad de caída. Beta bajista: cuánto cae cuando cae el S&P.',
+        fields: [
+            { key: 'sortino', label: 'Sortino 3 años ≥', aria: 'Umbral Sortino', step: 0.1 },
+            { key: 'dbeta', label: 'Beta bajista ≤', aria: 'Umbral beta bajista', step: 0.1 },
+            { key: 'rev', label: 'Revisiones netas 30 días ≥', aria: 'Umbral revisiones netas' },
+        ],
     },
     {
         n: 6,
