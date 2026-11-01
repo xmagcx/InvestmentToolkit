@@ -32,12 +32,12 @@ export function int(value: number): string {
 }
 
 /** The five star-bearing questions, in the order the funnel asks them. */
-export const GROUP_ORDER: GroupId[] = ['calidad', 'precio', 'caida', 'giro', 'expertos'];
+export const GROUP_ORDER: GroupId[] = ['calidad', 'precio', 'caida', 'sana', 'expertos'];
 
 export const GROUP_NAMES: Record<GroupId, string> = {
     calidad: '¿Es un buen negocio?',
     precio: '¿Está a buen precio?',
     caida: '¿Cayó por causas externas?',
-    giro: '¿Ya empezó a recuperarse?',
+    sana: '¿Es una caída sana?',
     expertos: '¿Lo compran los expertos?',
 };

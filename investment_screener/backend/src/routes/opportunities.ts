@@ -13,9 +13,9 @@
  * Routes Index (mounted at /api/opportunities):
  *   - GET / - screen the universe (200 payload, 400 invalid parameters, 503 no snapshot, 500 failure)
  *
- * Query parameters (S8 defaults in brackets):
+ * Query parameters (S8/S15 defaults in brackets):
  *   require [1,4] roic [15] roe [15] roa [7] de [0.5] mos [25] fcfy [5] peg [1] target [20]
- *   drop [20] rsi [35] sup [1] ins [2] etf [0]
+ *   drop [20] sortino [0.5] dbeta [1.2] rev [0] sup [1] ins [2] etf [0]
  *
  * Key Functions (Index):
  *   - opportunitiesQuery - the zod schema (defaults + bounds) of the query string
@@ -55,7 +55,11 @@ export const opportunitiesQuery = z.object({
     peg: threshold(100, 1),
     target: threshold(1000, 20),
     drop: threshold(100, 20),
-    rsi: threshold(100, 35),
+    // Step 5 "¿Es una caída sana?" (S11/S15): Sortino floor, downside-beta ceiling and the
+    // net 30-day revisions floor, which is legitimately negative (the analysts may be cutting).
+    sortino: threshold(100, 0.5),
+    dbeta: threshold(100, 1.2),
+    rev: z.coerce.number().int().min(-100).max(100).default(0),
     sup: z.coerce.number().int().min(0).max(100).default(1),
     ins: z.coerce.number().int().min(0).max(100).default(2),
     etf: z.coerce.number().int().min(0).max(1).default(0),

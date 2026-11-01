@@ -158,17 +158,41 @@ function PriceCell({ row }: { row: OpportunityRow }) {
     );
 }
 
-/** The artboard's "alcista" MACD is the live crossover: MACD above its signal line. */
-function isTurning(row: OpportunityRow): boolean {
-    const bullishMacd = row.macd !== null && row.macdSignal !== null && row.macd > row.macdSignal;
-    return row.aboveSma50 && ((row.rsi !== null && row.rsi < 35) || bullishMacd);
+/** "+3" / "-2": net analyst revisions of the last 30 days. */
+function netText(net: number): string {
+    return net > 0 ? `+${net}` : String(net);
 }
 
-function TurnCell({ row }: { row: OpportunityRow }) {
-    const turning = isTurning(row);
+/** Is the fall healthy (S11)? Sortino and downside beta held up, revisions did not drop. */
+function HealthCell({ row }: { row: OpportunityRow }) {
+    const group = row.groups.sana;
+    const hint = `Sortino ${num(row.risk?.sortino ?? null, 1) ?? '—'} · beta ${
+        num(row.risk?.downsideBeta ?? null, 1) ?? '—'
+    } · revisiones ${row.revisions ? netText(row.revisions.net) : '—'}`;
+
+    if (group.notApplicable || (row.risk === null && row.revisions === null)) {
+        return (
+            <Cell hint={hint}>
+                <Verdict tone="nd">Sin datos</Verdict>
+            </Cell>
+        );
+    }
+    if (group.ok) {
+        return (
+            <Cell hint={hint}>
+                <Verdict tone="ok">Sana</Verdict>
+            </Cell>
+        );
+    }
+    // Riesgosa: both resistance metrics failed, there is no risk history, or analysts are cutting.
+    const failed = group.items.filter(i => i.ok === false).map(i => i.key);
+    const risky =
+        (failed.includes('sortino') && failed.includes('dbeta')) ||
+        row.risk === null ||
+        (row.revisions !== null && row.revisions.net < 0);
     return (
-        <Cell hint={turning ? 'sobre su media de 50 días' : 'bajo su media de 50 días'}>
-            <Verdict tone={turning ? 'ok' : 'mid'}>{turning ? 'Ya sube' : 'Aún no'}</Verdict>
+        <Cell hint={hint}>
+            <Verdict tone={risky ? 'bad' : 'mid'}>{risky ? 'Riesgosa' : 'Revisar'}</Verdict>
         </Cell>
     );
 }
@@ -205,16 +229,22 @@ function AnalystsCell({ row }: { row: OpportunityRow }) {
 }
 
 function BuyersCell({ row }: { row: OpportunityRow }) {
-    const { superinvestors, insiders, insiderCluster } = row.dataroma;
-    if (superinvestors === 0 && insiders === 0) {
+    const { superinvestors, insiders, insiderCluster, holders, belowExpertsPrice } = row.dataroma;
+    if (superinvestors === 0 && insiders === 0 && holders === 0) {
         return <span className="text-[11px] text-slate-400">Sin compras recientes</span>;
     }
     const insiderText = insiders === 1 ? '1 compra de un directivo' : `${insiders} compras de directivos`;
+    const hints = [
+        insiders > 0 ? `${insiderText}${insiderCluster ? ' (varios a la vez)' : ''}` : null,
+        holders > 0 ? `${holders} la tienen` : null,
+    ].filter(Boolean) as string[];
     return (
         <Cell
             main={superinvestors > 0 ? (superinvestors === 1 ? '1 gran inversor' : `${superinvestors} grandes inversores`) : undefined}
-            hint={insiders > 0 ? `${insiderText}${insiderCluster ? ' (varios a la vez)' : ''}` : undefined}
-        />
+            hint={hints.length > 0 ? hints.join(' · ') : undefined}
+        >
+            {belowExpertsPrice && <Verdict tone="ok">Bajo su precio de compra</Verdict>}
+        </Cell>
     );
 }
 
@@ -286,10 +316,12 @@ export default function OpportunitiesTable({ rows, loading }: { rows: Opportunit
                         </th>
                         <th scope="col" className={`${TH} w-[10.1%]`}>
                             <span className="inline-flex items-center gap-1.5">
-                                ¿Dejó de caer?
-                                <HelpTip label="¿Dejó de caer?" align="right">
-                                    <p>Señal técnica de corto plazo. Evita comprar algo que <b className="text-white">sigue cayendo</b> sin freno.</p>
-                                    <p>Favorable: dejó de bajar o empezó a subir (RSI bajo y MACD al alza, precio sobre su media de 50 días).</p>
+                                ¿Es una caída sana?
+                                <HelpTip label="¿Es una caída sana?" align="right">
+                                    <p><b className="text-white">Sortino:</b> cuánto ganó en los últimos 3 años por cada unidad de caída. Más alto es mejor: bajó poco para lo que subió.</p>
+                                    <p><b className="text-white">Beta bajista:</b> cuánto cae ella cuando cae el S&amp;P. 0,9 significa que cae menos que el mercado.</p>
+                                    <p><b className="text-white">Revisiones:</b> cuántos analistas subieron menos los que bajaron su estimación de ganancia en los últimos 30 días.</p>
+                                    <p>Favorable: Sortino ≥ 0,5, beta bajista ≤ 1,2 y revisiones netas ≥ 0.</p>
                                 </HelpTip>
                             </span>
                         </th>
@@ -341,7 +373,7 @@ export default function OpportunitiesTable({ rows, loading }: { rows: Opportunit
                                 <td className="px-2.5 py-2 align-middle"><ValueCell row={row} /></td>
                                 <td className="px-2.5 py-2 align-middle"><BusinessCell row={row} /></td>
                                 <td className="px-2.5 py-2 align-middle"><PriceCell row={row} /></td>
-                                <td className="px-2.5 py-2 align-middle"><TurnCell row={row} /></td>
+                                <td className="px-2.5 py-2 align-middle"><HealthCell row={row} /></td>
                                 <td className="px-2.5 py-2 align-middle"><AnalystsCell row={row} /></td>
                                 <td className="px-2.5 py-2 align-middle"><BuyersCell row={row} /></td>
                             </tr>,

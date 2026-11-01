@@ -3,10 +3,12 @@
  * Purpose: the Oportunidades page walks the 6 guided questions over the Racional universe —
  * each step shows how many stocks remain, "Exigir" refetches with that step required, "Ajustar"
  * changes its thresholds, and the table explains every row in plain Spanish (chips, help "?",
- * detail with the Graham formula, watchlist add). Covers the empty/error states too.
+ * detail with the Graham formula, watchlist add). Covers step 5 "¿Es una caída sana?" (Sortino,
+ * beta bajista, revisiones), the Dataroma holding facts, the lazily fetched sentiment block and
+ * the empty/error states.
  * Layer: Frontend integration. Usage: npx vitest run src/pages/OpportunitiesPage.test.tsx
  * Key Functions: stepper counts, Exigir refetch, Ajustar threshold, row chips, help on focus,
- *     detail panel, watchlist add, SCREEN_DATA_MISSING state, zero results.
+ *     detail panel, sentiment on first expand, watchlist add, SCREEN_DATA_MISSING, zero results.
  * Key Input Dependencies: services/opportunities.ts and services/api.ts are mocked; no backend call.
  */
 import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
@@ -16,16 +18,19 @@ import { MemoryRouter } from 'react-router-dom';
 
 vi.mock('../services/opportunities', async () => {
     const actual = await vi.importActual<typeof import('../services/opportunities')>('../services/opportunities');
-    return { ...actual, fetchOpportunities: vi.fn() };
+    return { ...actual, fetchOpportunities: vi.fn(), fetchSentiment: vi.fn() };
 });
 vi.mock('../services/api', () => ({ addToWatchlist: vi.fn().mockResolvedValue({ success: true, message: 'ok' }) }));
 
 import OpportunitiesPage from './OpportunitiesPage';
+import { resetSentimentCache } from '../components/opportunities/sentimentCache';
 import {
     ScreenDataMissingError,
     fetchOpportunities,
+    fetchSentiment,
     type OpportunitiesResponse,
     type OpportunityRow,
+    type SentimentResponse,
 } from '../services/opportunities';
 import { addToWatchlist } from '../services/api';
 
@@ -51,9 +56,11 @@ const tmo: OpportunityRow = {
                 item('drop', 'Bajó desde su máximo del año', -28.4, '-28,4 %', '≥ 20 %', true),
             ],
         },
-        giro: {
+        sana: {
             ok: true, notApplicable: false, items: [
-                item('rsi', 'Vendieron de más o ya gira al alza (RSI / MACD)', 31.4, 'RSI 31,4 · MACD alcista', 'RSI < 35', true),
+                item('sortino', 'Rinde por cada unidad de caída (Sortino 3 años)', 0.8, '0,80', '≥ 0,5', true),
+                item('dbeta', 'Cuánto cae cuando cae el S&P (beta bajista)', 0.9, '0,90', '≤ 1,2', true),
+                item('rev', 'Revisiones netas de ganancia (30 días)', 2, '+2', '≥ 0', true),
             ],
         },
         expertos: {
@@ -67,7 +74,20 @@ const tmo: OpportunityRow = {
     roic: 16.2, pe: 18.2, sectorPe: 26.4, fcfYield: 5.4, rsi: 31.4, macd: 1.2, macdSignal: 0.8,
     sma50: 505, sma200: 610, aboveSma50: true, belowSma200: true,
     analysts: { buy: 21, hold: 5, sell: 0, total: 26, targetPct: 23 },
-    dataroma: { superinvestors: 3, holdPrice: 694.28, insiders: 1, insiderCluster: false },
+    risk: {
+        sortino: 0.8, sharpe: 0.42, downsideBeta: 0.9, maxDrawdown: -0.38, recoveryDays: 214,
+        volatility: 0.27, asOf: '2026-10-30',
+    },
+    revisions: { up30: 3, down30: 1, net: 2, up7: 1, down7: 0 },
+    dataroma: {
+        superinvestors: 3, holdPrice: 694.28, insiders: 1, insiderCluster: false,
+        holders: 12, holdersPrev: 10, maxPortfolioPct: 8.4, avgHoldPrice: 694.28,
+        belowExpertsPrice: true, netActivity: 2,
+        topHolders: [
+            { manager: 'Seth Klarman', pct: 8.4, activity: 'Compró 12 %' },
+            { manager: 'Chris Davis', pct: 3.1, activity: 'Sin cambios' },
+        ],
+    },
 };
 
 const crbg: OpportunityRow = {
@@ -80,7 +100,12 @@ const crbg: OpportunityRow = {
         },
         precio: { ok: true, notApplicable: false, items: [item('peg', 'Precio justo para su crecimiento (PEG)', 0.9, '0,90', '≤ 1,0', true)] },
         caida: { ok: true, notApplicable: false, items: [item('drop', 'Bajó desde su máximo del año', -22.3, '-22,3 %', '≥ 20 %', true)] },
-        giro: { ok: true, notApplicable: false, items: [item('rsi', 'Vendieron de más o ya gira al alza (RSI / MACD)', 34.1, 'RSI 34,1', 'RSI < 35', true)] },
+        sana: {
+            ok: false, notApplicable: false, items: [
+                item('sortino', 'Rinde por cada unidad de caída (Sortino 3 años)', null, 'Datos insuficientes', '≥ 0,5', null),
+                item('rev', 'Revisiones netas de ganancia (30 días)', -2, '-2', '≥ 0', false),
+            ],
+        },
         expertos: { ok: false, notApplicable: false, items: [item('sup', 'Grandes inversores compraron', 0, '0 compras', '≥ 1', false)] },
     },
     price: 29.85, high52: 38.4, dropPct: -22.3, eps: 4.95, growthPct: 7,
@@ -88,7 +113,13 @@ const crbg: OpportunityRow = {
     roic: null, pe: 6, sectorPe: 11.4, fcfYield: null, rsi: 34.1, macd: 0.2, macdSignal: 0.1,
     sma50: 28.4, sma200: 33.1, aboveSma50: true, belowSma200: true,
     analysts: { buy: 9, hold: 5, sell: 0, total: 14, targetPct: 24 },
-    dataroma: { superinvestors: 0, holdPrice: null, insiders: 5, insiderCluster: true },
+    risk: null,
+    revisions: { up30: 0, down30: 2, net: -2, up7: 0, down7: 1 },
+    dataroma: {
+        superinvestors: 0, holdPrice: null, insiders: 5, insiderCluster: true,
+        holders: 0, holdersPrev: null, maxPortfolioPct: null, avgHoldPrice: null,
+        belowExpertsPrice: false, netActivity: null, topHolders: [],
+    },
 };
 
 const response = (overrides: Partial<OpportunitiesResponse> = {}): OpportunitiesResponse => ({
@@ -101,12 +132,26 @@ const response = (overrides: Partial<OpportunitiesResponse> = {}): Opportunities
         { n: 2, id: 'calidad', required: false, remaining: 486 },
         { n: 3, id: 'precio', required: false, remaining: 131 },
         { n: 4, id: 'caida', required: true, remaining: 38 },
-        { n: 5, id: 'giro', required: false, remaining: 21 },
+        { n: 5, id: 'sana', required: false, remaining: 21 },
         { n: 6, id: 'expertos', required: false, remaining: 12 },
     ],
     resultCount: 2,
     starHistogram: { '5': 1, '4': 0, '3': 1, '2': 0, '1': 0, '0': 0 },
     rows: [tmo, crbg],
+    ...overrides,
+});
+
+const sentiment = (overrides: Partial<SentimentResponse> = {}): SentimentResponse => ({
+    market: { score: 28, rating: 'Miedo', label: 'El mercado está con miedo', asOf: '2026-10-31T13:00:00Z' },
+    ticker: {
+        score: 0.42,
+        label: 'Positivo',
+        headlines: [
+            { title: 'Thermo Fisher sube tras sus resultados', publisher: 'Reuters', url: 'https://ejemplo.com/1', publishedAt: '2026-10-31T12:00:00Z', score: 0.6 },
+            { title: 'Nuevo contrato en diagnóstico', publisher: 'Bloomberg', url: 'https://ejemplo.com/2', publishedAt: '2026-10-30T12:00:00Z', score: 0.3 },
+        ],
+        asOf: '2026-10-31T13:00:00Z',
+    },
     ...overrides,
 });
 
@@ -119,10 +164,20 @@ const settle = async () => {
     });
 };
 
+/** Lets the lazy sentiment promise resolve inside the expanded row. */
+const flush = async () => {
+    await act(async () => {
+        await Promise.resolve();
+        await Promise.resolve();
+    });
+};
+
 describe('OpportunitiesPage', () => {
     beforeEach(() => {
         vi.useFakeTimers();
         vi.mocked(fetchOpportunities).mockResolvedValue(response());
+        vi.mocked(fetchSentiment).mockResolvedValue(sentiment());
+        resetSentimentCache();
     });
 
     afterEach(() => {
@@ -154,6 +209,42 @@ describe('OpportunitiesPage', () => {
         expect(within(steps[3]).getByText('Exige')).toBeTruthy();
         expect(within(steps[1]).getByText('Suma ★')).toBeTruthy();
         expect(screen.getByRole('status').textContent).toContain('«sí» a las preguntas 1 y 4');
+    });
+
+    it('asks "¿Es una caída sana?" in step 5 and sends its three thresholds', async () => {
+        renderPage();
+        await settle();
+
+        const steps = screen.getAllByRole('listitem');
+        expect(within(steps[4]).getByText('¿Es una caída sana?')).toBeTruthy();
+        expect(
+            within(steps[4]).getByText(
+                'La acción resistió mejor que el mercado en las caídas y los analistas no están bajando sus estimaciones de ganancia.',
+            ),
+        ).toBeTruthy();
+        expect(within(steps[4]).getByText('Sortino 3 años ≥')).toBeTruthy();
+        expect(within(steps[4]).getByText('Beta bajista ≤')).toBeTruthy();
+        expect(within(steps[4]).getByText('Revisiones netas 30 días ≥')).toBeTruthy();
+        expect(
+            within(steps[4]).getByText(
+                'Sortino: cuánto rinde por cada unidad de caída. Beta bajista: cuánto cae cuando cae el S&P.',
+            ),
+        ).toBeTruthy();
+
+        const first = vi.mocked(fetchOpportunities).mock.calls[0][0];
+        expect(first.sortino).toBe(0.5);
+        expect(first.dbeta).toBe(1.2);
+        expect(first.rev).toBe(0);
+        expect('rsi' in first).toBe(false);
+
+        fireEvent.change(screen.getByLabelText('Umbral Sortino'), { target: { value: '1' } });
+        await settle();
+        fireEvent.change(screen.getByLabelText('Umbral beta bajista'), { target: { value: '0.8' } });
+        await settle();
+
+        const last = vi.mocked(fetchOpportunities).mock.calls.at(-1)![0];
+        expect(last.sortino).toBe(1);
+        expect(last.dbeta).toBe(0.8);
     });
 
     it('refetches with the step required and flips its badge when "Exigir" is switched on', async () => {
@@ -192,11 +283,40 @@ describe('OpportunitiesPage', () => {
         expect(within(rowTmo).getByText('Excelente')).toBeTruthy();
         expect(within(rowTmo).getByText('30 % más barata')).toBeTruthy();
         expect(within(rowTmo).getByText('Compra fuerte')).toBeTruthy();
-        expect(within(rowTmo).getByText('Ya sube')).toBeTruthy();
         expect(within(rowTmo).getByText(/21 de 26 dicen comprar · esperan \+23 %/)).toBeTruthy();
 
         const rowCrbg = screen.getByTestId('row-CRBG');
         expect(within(rowCrbg).getByText('No aplica')).toBeTruthy();
+    });
+
+    it('judges the fall as "Sana" or "Riesgosa" with its Sortino, beta and revisions hint', async () => {
+        renderPage();
+        await settle();
+
+        const rowTmo = screen.getByTestId('row-TMO');
+        expect(within(rowTmo).getByText('Sana')).toBeTruthy();
+        expect(within(rowTmo).getByText('Sortino 0,8 · beta 0,9 · revisiones +2')).toBeTruthy();
+
+        // CRBG has no risk history and negative net revisions.
+        const rowCrbg = screen.getByTestId('row-CRBG');
+        expect(within(rowCrbg).getByText('Riesgosa')).toBeTruthy();
+        expect(within(rowCrbg).getByText('Sortino — · beta — · revisiones -2')).toBeTruthy();
+
+        fireEvent.focus(screen.getByRole('button', { name: 'Qué significa: ¿Es una caída sana?' }));
+        expect(screen.getByRole('tooltip').textContent).toContain('Sortino');
+    });
+
+    it('shows how many superinvestors hold the stock and flags a price below theirs', async () => {
+        renderPage();
+        await settle();
+
+        const rowTmo = screen.getByTestId('row-TMO');
+        expect(within(rowTmo).getByText('3 grandes inversores')).toBeTruthy();
+        expect(within(rowTmo).getByText(/12 la tienen/)).toBeTruthy();
+        expect(within(rowTmo).getByText('Bajo su precio de compra')).toBeTruthy();
+
+        const rowCrbg = screen.getByTestId('row-CRBG');
+        expect(within(rowCrbg).queryByText('Bajo su precio de compra')).toBeNull();
     });
 
     it('shows a column help text when its "?" button takes keyboard focus', async () => {
@@ -228,6 +348,84 @@ describe('OpportunitiesPage', () => {
         expect(vi.mocked(addToWatchlist)).toHaveBeenCalledWith('TMO');
         await act(async () => { await Promise.resolve(); });
         expect(within(detail).getByText('Agregada a seguimiento')).toBeTruthy();
+    });
+
+    it('explains in the detail whether the fall is healthy, keeping RSI and MACD as information', async () => {
+        renderPage();
+        await settle();
+
+        fireEvent.click(screen.getByRole('button', { name: /TMO/ }));
+        const detail = screen.getByTestId('detail-TMO');
+        expect(within(detail).getAllByText('¿Es una caída sana?').length).toBeGreaterThan(0);
+        expect(within(detail).getByText(/su peor caída fue −38 % y se recuperó en 214 días/)).toBeTruthy();
+        expect(within(detail).getByText(/cae 0,9 veces lo que cae el S&P/)).toBeTruthy();
+        expect(within(detail).getByText(/subieron 3 estimaciones y bajaron 1 en el último mes/)).toBeTruthy();
+        expect(within(detail).getByText(/Indicadores de corto plazo \(informativos\): RSI 31, MACD al alza/)).toBeTruthy();
+    });
+
+    it('says the risk history is missing instead of inventing it', async () => {
+        renderPage();
+        await settle();
+
+        fireEvent.click(screen.getByRole('button', { name: /CRBG/ }));
+        const detail = screen.getByTestId('detail-CRBG');
+        expect(within(detail).getByText(/No tenemos suficiente historial/)).toBeTruthy();
+        expect(within(detail).getByText(/subieron 0 estimaciones y bajaron 2 en el último mes/)).toBeTruthy();
+    });
+
+    it('tells who holds the stock, with what conviction and at what price', async () => {
+        renderPage();
+        await settle();
+
+        fireEvent.click(screen.getByRole('button', { name: /TMO/ }));
+        const detail = screen.getByTestId('detail-TMO');
+        expect(detail.textContent).toContain('12 grandes inversores la tienen (+2 vs. el trimestre anterior)');
+        expect(detail.textContent).toContain('Para Seth Klarman pesa 8,4 % de su cartera');
+        expect(detail.textContent).toContain('Compraron en promedio a 694,28 USD y hoy cuesta 521,83 USD: bajo su precio de compra');
+        expect(within(detail).getByText('Chris Davis')).toBeTruthy();
+    });
+
+    it('fetches the sentiment only when a row is expanded, and once per ticker', async () => {
+        renderPage();
+        await settle();
+        expect(vi.mocked(fetchSentiment)).not.toHaveBeenCalled();
+
+        fireEvent.click(screen.getByRole('button', { name: /TMO/ }));
+        await flush();
+
+        expect(vi.mocked(fetchSentiment)).toHaveBeenCalledTimes(1);
+        expect(vi.mocked(fetchSentiment)).toHaveBeenCalledWith('TMO');
+
+        const detail = screen.getByTestId('detail-TMO');
+        expect(within(detail).getByText('Sentimiento')).toBeTruthy();
+        expect(within(detail).getByText(/Miedo/)).toBeTruthy();
+        expect(within(detail).getByText('28')).toBeTruthy();
+        expect(within(detail).getByText('Positivo')).toBeTruthy();
+        const link = within(detail).getByRole('link', { name: /Thermo Fisher sube tras sus resultados/ });
+        expect(link.getAttribute('href')).toBe('https://ejemplo.com/1');
+        expect(link.getAttribute('target')).toBe('_blank');
+        expect(link.getAttribute('rel')).toContain('noopener');
+        expect(within(detail).getByText(/Reuters/)).toBeTruthy();
+        expect(within(detail).getByText(/no suma estrellas ni filtra/)).toBeTruthy();
+
+        // Collapsing and expanding again reuses the cached answer.
+        fireEvent.click(screen.getByRole('button', { name: /TMO/ }));
+        fireEvent.click(screen.getByRole('button', { name: /TMO/ }));
+        await flush();
+        expect(vi.mocked(fetchSentiment)).toHaveBeenCalledTimes(1);
+    });
+
+    it('says "No disponible ahora" for the part of the sentiment that failed', async () => {
+        vi.mocked(fetchSentiment).mockResolvedValue(sentiment({ market: null }));
+        renderPage();
+        await settle();
+
+        fireEvent.click(screen.getByRole('button', { name: /TMO/ }));
+        await flush();
+
+        const detail = screen.getByTestId('detail-TMO');
+        expect(within(detail).getByText('No disponible ahora')).toBeTruthy();
+        expect(within(detail).getByText('Positivo')).toBeTruthy();
     });
 
     it('explains how to load the screener data when the backend has no snapshot yet', async () => {

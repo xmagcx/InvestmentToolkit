@@ -26,6 +26,8 @@ Key Input Dependencies:
     - investment_sources.yfinance_enrichment.YFinanceProfileEnrichment (S10, enriches stocks_origin)
     - investment_sources.tradingview_scanner.TradingViewScannerSource (S7, stock_screen_snapshot)
     - investment_sources.fred_aaa.FredAaaSource (S7, market_rate 'AAA')
+    - investment_sources.price_risk.PriceRiskSource (S11, stock_risk_metrics)
+    - investment_sources.eps_revisions.EpsRevisionsSource (S11, stock_eps_revisions)
 
 Key Output Dependencies:
     - consumed by sync_cli.py and (later) the Express /api/sources routes
@@ -33,10 +35,13 @@ Key Output Dependencies:
 from __future__ import annotations
 
 from .base import InvestmentSource
+from .dataroma_holdings import DataromaHoldingsSource
 from .dataroma_insider_buys import DataromaInsiderBuysSource
 from .dataroma_quarterly_buys import DataromaQuarterlyBuysSource
+from .eps_revisions import EpsRevisionsSource
 from .fred_aaa import FredAaaSource
 from .google_sheet_stocks import GoogleSheetStocksSource
+from .price_risk import PriceRiskSource
 from .tradingview_scanner import TradingViewScannerSource
 from .yfinance_enrichment import YFinanceProfileEnrichment
 
@@ -47,6 +52,9 @@ SOURCES: dict[str, type[InvestmentSource]] = {
     YFinanceProfileEnrichment.source_code: YFinanceProfileEnrichment,
     TradingViewScannerSource.source_code: TradingViewScannerSource,
     FredAaaSource.source_code: FredAaaSource,
+    PriceRiskSource.source_code: PriceRiskSource,
+    EpsRevisionsSource.source_code: EpsRevisionsSource,
+    DataromaHoldingsSource.source_code: DataromaHoldingsSource,
 }
 
 

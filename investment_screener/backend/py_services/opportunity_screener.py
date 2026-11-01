@@ -37,13 +37,15 @@ Key Classes / Functions (Index):
     - fmt_number / fmt_pct / fmt_signed_pct: the Spanish displays ("16,2 %", "+20 %")
     - build_groups(row, params, context): the five condition groups of one instrument
     - evaluate_row(row, params, context): one response row (metrics + groups + stars)
-    - build_response(conn, params): the exact S8 payload
+    - build_response(conn, params): the exact S8/S15 payload
     - main(argv): the CLI the Node bridge spawns
 
 Key Input Dependencies:
     - stock_screen_snapshot + market_rate (migration 0015), stocks_origin (0013),
-      recent_buys_q + recent_buys_insider (0014) of domain_model.sqlite
-    - params: require, roic, roe, roa, de, mos, fcfy, peg, target, drop, rsi, sup, ins, etf
+      recent_buys_q + recent_buys_insider (0014), stock_risk_metrics + stock_eps_revisions +
+      stock_superinvestor_holdings (0016) of domain_model.sqlite
+    - params: require, roic, roe, roa, de, mos, fcfy, peg, target, drop, sortino, dbeta, rev,
+      sup, ins, etf
 
 Key Output Dependencies:
     - stdout: one JSON object (the S8 contract) consumed by OpportunitiesService.ts
@@ -66,17 +68,18 @@ sys.path.insert(0, str(Path(__file__).resolve().parent))
 
 from domain_model.db_client import initialize_db  # noqa: E402
 
-#: The S8 query contract: GET /api/opportunities?require=1,4&roic=15&... (percent units).
+#: The S8/S15 query contract: GET /api/opportunities?require=1,4&roic=15&... (percent units).
 PARAM_DEFAULTS: dict[str, Any] = {
     "require": "1,4", "roic": 15.0, "roe": 15.0, "roa": 7.0, "de": 0.5, "mos": 25.0,
-    "fcfy": 5.0, "peg": 1.0, "target": 20.0, "drop": 20.0, "rsi": 35.0,
+    "fcfy": 5.0, "peg": 1.0, "target": 20.0, "drop": 20.0,
+    "sortino": 0.5, "dbeta": 1.2, "rev": 0,
     "sup": 1, "ins": 2, "etf": 0,
 }
 #: The six questions of the funnel, in order; step 1 is a prerequisite and earns no star.
 STEPS = (
-    (1, "gana"), (2, "calidad"), (3, "precio"), (4, "caida"), (5, "giro"), (6, "expertos"),
+    (1, "gana"), (2, "calidad"), (3, "precio"), (4, "caida"), (5, "sana"), (6, "expertos"),
 )
-GROUP_IDS = ("calidad", "precio", "caida", "giro", "expertos")
+GROUP_IDS = ("calidad", "precio", "caida", "sana", "expertos")
 #: Sectors where ROIC and free cash flow are not meaningful, so those items never cost a star.
 NOT_APPLICABLE_SECTORS = ("finance", "utilities")
 #: An insider purchase older than this no longer counts towards a cluster.
@@ -163,21 +166,27 @@ def fmt_signed_pct(value: float | None, decimals: int = 0) -> str | None:
 
 
 def item(key: str, label: str, value: float | None, display: str | None, threshold: str,
-         ok: bool | None, not_applicable: bool = False) -> dict:
+         ok: bool | None, not_applicable: bool = False, informational: bool = False) -> dict:
     """One checklist entry of a group, with the display the page prints verbatim.
 
-    ``ok`` is None for both kinds of "cannot say": the metric does not apply to this sector
-    (``not_applicable``, shown as "No aplica") or the source published no number (shown as
-    "Datos insuficientes"). Only the first one is excluded from its group's verdict.
+    ``ok`` is None for the three kinds of "cannot say": the metric does not apply to this
+    sector (``not_applicable``, shown as "No aplica"), the source published no number (shown
+    as "Datos insuficientes"), or the entry is ``informational`` — a number the detail shows
+    (the worst drawdown, the experts' average price) that is no condition at all. Neither an
+    inapplicable nor an informational entry takes part in its group's verdict, so neither can
+    ever cost or earn a star.
     """
     if not_applicable:
         return {"key": key, "label": label, "value": value, "display": NOT_APPLICABLE_DISPLAY,
-                "threshold": threshold, "ok": None, "notApplicable": True}
+                "threshold": threshold, "ok": None, "notApplicable": True,
+                "informational": False}
     if value is None or display is None:
         return {"key": key, "label": label, "value": None, "display": MISSING_DISPLAY,
-                "threshold": threshold, "ok": None, "notApplicable": False}
+                "threshold": threshold, "ok": None, "notApplicable": False,
+                "informational": informational}
     return {"key": key, "label": label, "value": value, "display": display,
-            "threshold": threshold, "ok": ok, "notApplicable": False}
+            "threshold": threshold, "ok": None if informational else ok,
+            "notApplicable": False, "informational": informational}
 
 
 # --- the five condition groups -----------------------------------------------------------
@@ -244,24 +253,47 @@ def fall_items(row: dict, params: dict, metrics: dict) -> list[dict]:
     ]
 
 
-def turn_items(row: dict, params: dict, metrics: dict) -> list[dict]:
-    """"¿Ya empezó a recuperarse?" — oversold or a bullish MACD, and back over the 50-day average."""
-    rsi, macd, signal = row.get("rsi"), row.get("macd"), row.get("macd_signal")
-    bullish = None if macd is None or signal is None else macd > signal
-    display = None if rsi is None or bullish is None else \
-        f"RSI {fmt_number(rsi, 1)} · MACD {'alcista' if bullish else 'bajista'}"
-    above = metrics["aboveSma50"]
+def healthy_items(params: dict, risk: dict | None, revisions: dict | None) -> list[dict]:
+    """"¿Es una caída sana?" — paid for its risk, fell less than the market, estimates holding.
+
+    Three conditions (Sortino, downside beta, net 30-day revisions) and two numbers the detail
+    shows without judging them: the worst three-year drawdown and how long it took to recover.
+    A symbol with less than two years of history has no risk row, so every condition reads
+    "Datos insuficientes" and the group is not met (S11).
+    """
+    sortino = (risk or {}).get("sortino")
+    dbeta = (risk or {}).get("downsideBeta")
+    drawdown = (risk or {}).get("maxDrawdown")
+    net = None if revisions is None else revisions["net"]
     return [
-        item("rsiMacd", "Vendieron de más o ya gira al alza (RSI / MACD)", rsi, display,
-             f"RSI < {fmt_number(params['rsi'], 0)}",
-             (rsi is not None and rsi < params["rsi"]) or bullish is True),
-        item("sma50", "Volvió sobre su promedio de 50 días", row.get("sma50"),
-             None if above is None else ("sí" if above else "no"), "sí", above is True),
+        item("sortino", "Rinde bien para el riesgo que corre (Sortino 3 años)", sortino,
+             fmt_number(sortino, 2), f"≥ {fmt_number(params['sortino'], 2)}",
+             sortino is not None and sortino >= params["sortino"]),
+        item("dbeta", "Cae menos que el mercado en días malos (beta bajista)", dbeta,
+             fmt_number(dbeta, 2), f"≤ {fmt_number(params['dbeta'], 2)}",
+             dbeta is not None and dbeta <= params["dbeta"]),
+        item("rev", "Los analistas no bajan sus estimaciones (revisiones 30 días)", net,
+             None if net is None else f"+{net}" if net > 0 else str(net),
+             f"≥ {int(params['rev'])}", net is not None and net >= params["rev"]),
+        item("drawdown", "Peor caída en 3 años", drawdown, _drawdown_display(drawdown, risk),
+             "informativo", None, informational=True),
     ]
 
 
-def expert_items(params: dict, dataroma: dict) -> list[dict]:
-    """"¿Lo compran los expertos?" — Dataroma superinvestor buys or a cluster of insiders."""
+def _drawdown_display(drawdown: float | None, risk: dict | None) -> str | None:
+    """"−38 % · se recuperó en 214 días" (or "· aún no se recupera") for the detail."""
+    if drawdown is None:
+        return None
+    days = (risk or {}).get("recoveryDays")
+    recovery = f"se recuperó en {int(days)} días" if days is not None else "aún no se recupera"
+    return f"−{fmt_number(abs(drawdown) * 100, 0)} % · {recovery}"
+
+
+def expert_items(params: dict, dataroma: dict, price: float | None) -> list[dict]:
+    """"¿Lo compran los expertos?" — the buys that gate the group, plus what they hold (S12)."""
+    max_pct = dataroma.get("maxPortfolioPct")
+    avg_price = dataroma.get("avgHoldPrice")
+    holders = dataroma.get("holders")
     return [
         item("superinvestors", "Grandes inversores compraron", dataroma["superinvestors"],
              f"{dataroma['superinvestors']} compras", f"≥ {int(params['sup'])}",
@@ -269,26 +301,40 @@ def expert_items(params: dict, dataroma: dict) -> list[dict]:
         item("insiders", "Varios directivos compraron", dataroma["insiders"],
              f"{dataroma['insiders']} compras", f"≥ {int(params['ins'])}",
              dataroma["insiderCluster"]),
+        item("holders", "Grandes inversores que la tienen", holders,
+             None if holders is None else f"{int(holders)} fondos", "informativo", None,
+             informational=True),
+        item("maxPortfolioPct", "Peso máximo en su cartera (convicción)", max_pct,
+             fmt_pct(max_pct), "informativo", None, informational=True),
+        item("expertsPrice", "Precio vs. el de compra de los expertos", avg_price,
+             None if avg_price is None or price is None
+             else f"{fmt_number(price, 1)} vs {fmt_number(avg_price, 1)}",
+             "informativo", None, informational=True),
     ]
 
 
 def group_verdict(items: Sequence[dict], any_of: bool = False) -> dict:
-    """Wrap a group's items with its verdict: every applicable item (or any, for 'expertos')."""
-    applicable = [entry for entry in items if not entry["notApplicable"]]
+    """Wrap a group's items with its verdict: every applicable item (or any, for 'expertos').
+
+    Informational entries are shown but never judged, so they cannot change the star count.
+    """
+    applicable = [entry for entry in items
+                  if not entry["notApplicable"] and not entry.get("informational")]
     oks = [entry["ok"] for entry in applicable]
     ok = any(value is True for value in oks) if any_of else all(value is True for value in oks)
     return {"ok": bool(ok) and bool(applicable), "notApplicable": not applicable, "items": list(items)}
 
 
-def build_groups(row: dict, params: dict, metrics: dict, dataroma: dict) -> dict:
+def build_groups(row: dict, params: dict, metrics: dict, dataroma: dict,
+                 risk: dict | None, revisions: dict | None) -> dict:
     """The five starred groups of one instrument, each with its items and verdict."""
     excluded = (row.get("sector") or "").strip().lower() in NOT_APPLICABLE_SECTORS
     return {
         "calidad": group_verdict(quality_items(row, params, excluded)),
         "precio": group_verdict(price_items(row, params, metrics, excluded)),
         "caida": group_verdict(fall_items(row, params, metrics)),
-        "giro": group_verdict(turn_items(row, params, metrics)),
-        "expertos": group_verdict(expert_items(params, dataroma), any_of=True),
+        "sana": group_verdict(healthy_items(params, risk, revisions)),
+        "expertos": group_verdict(expert_items(params, dataroma, row.get("close")), any_of=True),
     }
 
 
@@ -328,10 +374,16 @@ def analysts_block(row: dict, metrics: dict) -> dict | None:
 
 def evaluate_row(row: dict, params: dict, context: dict) -> dict:
     """One response row: the metrics the page prints, its five groups and its star count."""
-    dataroma = context["dataroma"].get(row["symbol"], _empty_dataroma())
-    dataroma = {**dataroma, "insiderCluster": dataroma["insiders"] >= params["ins"]}
+    symbol = row["symbol"]
+    risk = context["risk"].get(symbol)
+    revisions = context["revisions"].get(symbol)
+    dataroma = context["dataroma"].get(symbol, _empty_dataroma())
+    dataroma = {**dataroma, **context["holdings"].get(symbol, _empty_holdings()),
+                "insiderCluster": dataroma["insiders"] >= params["ins"]}
+    dataroma["belowExpertsPrice"] = _below_experts_price(row.get("close"),
+                                                         dataroma["avgHoldPrice"])
     metrics = row_metrics(row, context["sectorPe"], context["aaa"])
-    groups = build_groups(row, params, metrics, dataroma)
+    groups = build_groups(row, params, metrics, dataroma, risk, revisions)
     graham = None if metrics["grahamValue"] is None else {
         "value": metrics["grahamValue"], "mos": metrics["mos"],
         "formula": {"eps": row.get("eps_ttm"), "g": metrics["grahamGrowth"], "y": context["aaa"]},
@@ -346,6 +398,7 @@ def evaluate_row(row: dict, params: dict, context: dict) -> dict:
         "rsi": row.get("rsi"), "macd": row.get("macd"), "macdSignal": row.get("macd_signal"),
         "sma50": row.get("sma50"), "sma200": row.get("sma200"),
         "aboveSma50": metrics["aboveSma50"], "belowSma200": metrics["belowSma200"],
+        "risk": risk, "revisions": revisions,
         "analysts": analysts_block(row, metrics), "dataroma": dataroma,
         "_passes": _step_passes(row, groups),
     }
@@ -402,7 +455,11 @@ def build_response(conn: sqlite3.Connection, params: dict | None = None) -> dict
     if not rows:
         raise ScreenDataMissing("no TradingView scanner snapshot yet; sync 'tradingview_scanner'")
     aaa_value, aaa_as_of = load_aaa_yield(conn)
-    context = {"sectorPe": sector_median_pe(rows), "dataroma": load_dataroma(conn), "aaa": aaa_value}
+    context = {
+        "sectorPe": sector_median_pe(rows), "dataroma": load_dataroma(conn), "aaa": aaa_value,
+        "risk": load_risk(conn), "revisions": load_revisions(conn),
+        "holdings": load_holdings(conn),
+    }
     payloads = [evaluate_row(row, resolved, context) for row in rows]
     steps, kept = run_steps(payloads, required_steps(resolved))
     kept.sort(key=lambda row: (-row["stars"], -(_margin(row))))
@@ -451,6 +508,77 @@ def load_aaa_yield(conn: sqlite3.Connection) -> tuple[float | None, str | None]:
 
 def _empty_dataroma() -> dict:
     return {"superinvestors": 0, "holdPrice": None, "insiders": 0, "insiderCluster": False}
+
+
+def _empty_holdings() -> dict:
+    """What a symbol with no stock_superinvestor_holdings row reports (S15: nulls, not zeros)."""
+    return {"holders": None, "holdersPrev": None, "maxPortfolioPct": None,
+            "avgHoldPrice": None, "netActivity": None, "topHolders": None}
+
+
+def _below_experts_price(price: float | None, avg_hold_price: float | None) -> bool | None:
+    """Whether it trades under what the superinvestors paid on average (None without both)."""
+    if price is None or avg_hold_price is None:
+        return None
+    return price < avg_hold_price
+
+
+def _select(conn: sqlite3.Connection, sql: str) -> list[sqlite3.Row]:
+    """Rows of an optional screening table; a database without it yet simply has no rows."""
+    conn.row_factory = sqlite3.Row
+    try:
+        return conn.execute(sql).fetchall()
+    except sqlite3.OperationalError:
+        return []
+
+
+def load_risk(conn: sqlite3.Connection) -> dict[str, dict]:
+    """Per symbol: the three-year risk reading price_risk stored (migration 0016)."""
+    return {
+        row["symbol"]: {
+            "sortino": row["sortino_3y"], "sharpe": row["sharpe_3y"],
+            "downsideBeta": row["downside_beta_3y"], "maxDrawdown": row["max_drawdown_3y"],
+            "recoveryDays": row["recovery_days"], "volatility": row["volatility_ann"],
+            "asOf": row["as_of"],
+        }
+        for row in _select(conn, "SELECT * FROM stock_risk_metrics")
+    }
+
+
+def load_revisions(conn: sqlite3.Connection) -> dict[str, dict]:
+    """Per symbol: the analysts' revisions, with the 30-day net (up - down) the engine judges."""
+    revisions: dict[str, dict] = {}
+    for row in _select(conn, "SELECT * FROM stock_eps_revisions"):
+        up30, down30 = row["up_30d"], row["down_30d"]
+        revisions[row["symbol"]] = {
+            "up30": up30, "down30": down30,
+            "net": None if up30 is None or down30 is None else int(up30) - int(down30),
+            "up7": row["up_7d"], "down7": row["down_7d"],
+        }
+    return revisions
+
+
+def load_holdings(conn: sqlite3.Connection) -> dict[str, dict]:
+    """Per symbol: what the superinvestors hold (dataroma_holdings, S12); absent rows stay null."""
+    holdings: dict[str, dict] = {}
+    for row in _select(conn, "SELECT * FROM stock_superinvestor_holdings"):
+        holdings[row["symbol"]] = {
+            "holders": row["holders"], "holdersPrev": row["holders_prev"],
+            "maxPortfolioPct": row["max_portfolio_pct"],
+            "avgHoldPrice": row["avg_hold_price"], "netActivity": row["net_activity"],
+            "topHolders": _json_or_none(row["top_holders"]),
+        }
+    return holdings
+
+
+def _json_or_none(text: str | None) -> Any:
+    """The per-manager detail Dataroma stored as JSON; unparseable text is simply missing."""
+    if not text:
+        return None
+    try:
+        return json.loads(text)
+    except (TypeError, ValueError):
+        return None
 
 
 def load_dataroma(conn: sqlite3.Connection) -> dict[str, dict]:

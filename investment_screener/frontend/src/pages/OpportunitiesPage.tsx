@@ -118,7 +118,7 @@ export default function OpportunitiesPage() {
                         <span>
                             <b className="text-white">{int(data?.resultCount ?? 0)} resultados.</b> Cada fila responde:{' '}
                             <b className="text-white">¿buen negocio?</b> · <b className="text-white">¿cuesta menos de lo que vale?</b> ·{' '}
-                            <b className="text-white">¿dejó de caer?</b> Pasa el cursor por <b className="text-white">?</b> para entender
+                            <b className="text-white">¿es una caída sana?</b> Pasa el cursor por <b className="text-white">?</b> para entender
                             cada columna y pulsa una empresa para ver su historia.
                         </span>
                         <span className="ml-auto flex shrink-0 gap-2" aria-label="Leyenda de colores">

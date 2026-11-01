@@ -34,6 +34,7 @@
  *   - app.use('/api/daily-brief', dailybriefRouter)
  *   - app.use('/api', sourcesRouter) - /api/sources/**, /api/stocks-origin, /api/recent-buys/**
  *   - app.use('/api/opportunities', opportunitiesRouter) - GET /api/opportunities (screener funnel)
+ *   - app.use('/api/sentiment', sentimentRouter) - GET /api/sentiment/:ticker (market + headline mood)
  */
 import { getRecommendations } from './utils/helpers';
 
@@ -58,6 +59,7 @@ import tradingRouter from './routes/trading';
 import dailybriefRouter from './routes/dailybrief';
 import sourcesRouter from './routes/sources';
 import opportunitiesRouter from './routes/opportunities';
+import sentimentRouter from './routes/sentiment';
 import { SourceScheduler } from './services/SourceScheduler';
 import portfolioMaintainerRouter from './routes/portfolioMaintainer';
 import profilesSummaryRouter from './routes/profilesSummary';
@@ -114,6 +116,7 @@ app.use('/api/trading', tradingRouter);     // /api/trading/** (preflight, execu
 app.use('/api/daily-brief', dailybriefRouter); // /api/daily-brief/latest, /history, /conviction/:ticker
 app.use('/api', sourcesRouter);             // /api/sources/**, /api/stocks-origin, /api/recent-buys/**
 app.use('/api/opportunities', opportunitiesRouter); // /api/opportunities (Racional universe screener)
+app.use('/api/sentiment', sentimentRouter);  // /api/sentiment/:ticker (CNN Fear & Greed + headline sentiment)
 app.use('/api/portfolio-maintainer', portfolioMaintainerRouter); // /api/portfolio-maintainer/accounts, /positions, /transactions, /transaction
 
 app.listen(Number(port), HOST, () => {
