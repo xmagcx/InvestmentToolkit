@@ -35,6 +35,13 @@ import { runPythonScriptFresh } from './bridge';
 export const SYNC_CLI = 'investment_sources/sync_cli.py';
 /** Dataroma's insider feed paginates 14 pages at >= 2 s each, so a sync is minutes, not seconds. */
 export const SYNC_TIMEOUT_MS = 10 * 60_000;
+/** Sources whose full run is measured in many minutes (polite pacing to Yahoo / Dataroma):
+ * price_risk took ~15 min for 1.5k tickers, dataroma_holdings ≤ 600 pages at ≥ 2 s each. */
+export const SOURCE_TIMEOUT_MS: Record<string, number> = {
+    price_risk: 40 * 60_000,
+    dataroma_holdings: 30 * 60_000,
+    eps_revisions: 20 * 60_000,
+};
 export const LIST_TIMEOUT_MS = 60_000;
 
 export type SyncTrigger = 'manual' | 'scheduled' | 'cli';
@@ -85,14 +92,14 @@ export interface SourceSyncServiceOptions {
 
 export class SourceSyncService {
     private readonly runScript: ScriptRunner;
-    private readonly timeoutMs: number;
+    private readonly timeoutMs?: number;
     private readonly dbPath?: string;
     private readonly running = new Set<string>();
     private sourcesCache: SourceDescriptor[] | null = null;
 
     constructor(options: SourceSyncServiceOptions = {}) {
         this.runScript = options.runScript ?? runPythonScriptFresh;
-        this.timeoutMs = options.timeoutMs ?? SYNC_TIMEOUT_MS;
+        this.timeoutMs = options.timeoutMs;
         this.dbPath = options.dbPath;
     }
 
@@ -124,7 +131,8 @@ export class SourceSyncService {
         try {
             const args = ['--source', sourceCode, '--trigger', trigger];
             if (this.dbPath) args.push('--db', this.dbPath);
-            const run = await this.runScript(SYNC_CLI, args, this.timeoutMs);
+            const timeout = this.timeoutMs ?? SOURCE_TIMEOUT_MS[sourceCode] ?? SYNC_TIMEOUT_MS;
+            const run = await this.runScript(SYNC_CLI, args, timeout);
             if (!run.json || typeof run.json.status !== 'string') {
                 throw new Error(`sync_cli.py returned no SyncResult for '${sourceCode}'`);
             }

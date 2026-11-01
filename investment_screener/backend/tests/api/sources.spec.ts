@@ -89,6 +89,25 @@ describe('bridge.runPythonScriptFresh — a sync result is data, even on exit 1'
     });
 });
 
+describe('SourceSyncService — per-source timeouts', () => {
+    const listing = (code: string) => ({ exitCode: 0, json: { sources: [{ source_code: code, display_name: code }] } });
+
+    for (const [code, minutes] of [['price_risk', 40], ['dataroma_holdings', 30], ['eps_revisions', 20], ['racional_gsheet', 10]] as const) {
+        it(`gives ${code} a ${minutes}-minute budget (its full run must not be killed mid-way)`, async () => {
+            let seen = 0;
+            const svc = new SourceSyncService({
+                runScript: async (_script, args, timeoutMs) => {
+                    if (args.includes('--list')) return listing(code);
+                    seen = timeoutMs;
+                    return { exitCode: 0, json: SUCCESS_RESULT };
+                },
+            });
+            await svc.sync(code, 'scheduled');
+            expect(seen).to.equal(minutes * 60_000);
+        });
+    }
+});
+
 describe('SourceSyncService — per-source lock and code validation', () => {
     function service(runner: (script: string, args: string[]) => Promise<{ exitCode: number; json: any }>) {
         return new SourceSyncService({
