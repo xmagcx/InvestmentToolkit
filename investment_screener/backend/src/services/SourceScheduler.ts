@@ -41,10 +41,12 @@ import { SourcesRepository, SourceLastRuns } from './SourcesRepository';
 import { DOMAIN_MODEL_DB_FILE } from '../utils/paths';
 
 // tradingview_scanner every 6 h (intraday technicals move, the quote is 15 min delayed anyway);
-// fred_aaa every 24 h (FRED publishes the AAA yield monthly).
+// fred_aaa every 24 h (FRED publishes the AAA yield monthly); price_risk, eps_revisions and
+// dataroma_holdings every 24 h (three-year risk, analyst revisions and superinvestor filings
+// move far too slowly to be worth a faster poll, S14).
 export const DEFAULT_SOURCE_SYNC_INTERVALS =
     'racional_gsheet=24h,dataroma_quarterly_buys=24h,dataroma_insider_buys=6h,yfinance_enrichment=1h,' +
-    'tradingview_scanner=6h,fred_aaa=24h';
+    'tradingview_scanner=6h,fred_aaa=24h,price_risk=24h,eps_revisions=24h,dataroma_holdings=24h';
 export const FIRST_TICK_DELAY_MS = 60_000;
 export const TICK_INTERVAL_MS = 600_000;
 /** A source that just failed waits this long before the scheduler tries again. */
