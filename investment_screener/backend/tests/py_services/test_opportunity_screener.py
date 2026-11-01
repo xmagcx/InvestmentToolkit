@@ -4,7 +4,8 @@ Purpose:
     Covers ``opportunity_screener`` through its public interface (the pure valuation
     functions, ``build_response(conn, params)`` and the CLI) against a real migrated SQLite
     file: hand-checked Graham arithmetic, the five condition groups and their Spanish
-    displays, the "No aplica" rule for Finance/Utilities, missing data, the Dataroma join,
+    displays, the "No aplica" rule for Finance/Utilities, missing data, the risk/revisions
+    step 5 (S11), the superinvestor holdings of step 6 (S12), the Dataroma join,
     the sequential step counts over the required steps, sorting, the ETF toggle and the
     200-row cap. No network and no real database.
 
@@ -90,6 +91,43 @@ def add_quarter_buy(conn: sqlite3.Connection, symbol: str, buys: int, hold_price
     conn.commit()
 
 
+def add_risk(conn: sqlite3.Connection, symbol: str, sortino: float | None = 1.2,
+             dbeta: float | None = 0.8, drawdown: float | None = -0.38,
+             recovery: int | None = 214) -> None:
+    conn.execute(
+        "INSERT OR REPLACE INTO stock_risk_metrics (symbol, sortino_3y, sharpe_3y, "
+        "downside_beta_3y, max_drawdown_3y, recovery_days, volatility_ann, history_days, "
+        "as_of, fetched_at) VALUES (?, ?, 0.9, ?, ?, ?, 0.31, 756, '2026-10-30', "
+        "'2026-10-31T00:00:00+00:00')",
+        (symbol, sortino, dbeta, drawdown, recovery),
+    )
+    conn.commit()
+
+
+def add_revisions(conn: sqlite3.Connection, symbol: str, up30: int | None = 4,
+                  down30: int | None = 1, up7: int | None = 1, down7: int | None = 0) -> None:
+    conn.execute(
+        "INSERT OR REPLACE INTO stock_eps_revisions (symbol, up_7d, down_7d, up_30d, down_30d, "
+        "period, fetched_at) VALUES (?, ?, ?, ?, ?, '0y', '2026-10-31T00:00:00+00:00')",
+        (symbol, up7, down7, up30, down30),
+    )
+    conn.commit()
+
+
+def add_holdings(conn: sqlite3.Connection, symbol: str, holders: int = 7,
+                 holders_prev: int | None = 5, max_pct: float | None = 12.5,
+                 avg_price: float | None = 80.5, net_activity: int | None = 3,
+                 top_holders: str | None = '[{"manager": "Li Lu", "pct": 12.5, "activity": 1}]'
+                 ) -> None:
+    conn.execute(
+        "INSERT OR REPLACE INTO stock_superinvestor_holdings (symbol, holders, holders_prev, "
+        "max_portfolio_pct, avg_hold_price, net_activity, top_holders, fetched_at) "
+        "VALUES (?, ?, ?, ?, ?, ?, ?, '2026-10-31T00:00:00+00:00')",
+        (symbol, holders, holders_prev, max_pct, avg_price, net_activity, top_holders),
+    )
+    conn.commit()
+
+
 def add_insider(conn: sqlite3.Connection, symbol: str, name: str, days_ago: int = 5,
                 ten_pct: int = 0, shares: int = 100) -> None:
     conn.execute(
@@ -159,12 +197,14 @@ def test_a_five_star_row_reports_every_group_met_with_spanish_displays(conn):
     add_quarter_buy(conn, "GOOD", buys=2, hold_price=80.5)
     add_insider(conn, "GOOD", "Smith John")
     add_insider(conn, "GOOD", "Doe Jane")
+    add_risk(conn, "GOOD")
+    add_revisions(conn, "GOOD")
 
     response = engine.build_response(conn, {})
 
     row = _row(response, "GOOD")
     assert row["stars"] == 5
-    assert all(row["groups"][g]["ok"] for g in ("calidad", "precio", "caida", "giro", "expertos"))
+    assert all(row["groups"][g]["ok"] for g in ("calidad", "precio", "caida", "sana", "expertos"))
     assert row["dropPct"] == pytest.approx(-25.0)
     assert row["graham"]["value"] == pytest.approx(10 * (8.5 + 24) * 4.4 / AAA, abs=0.01)
     assert row["graham"]["formula"] == {"eps": 10.0, "g": 12.0, "y": AAA}
@@ -172,8 +212,12 @@ def test_a_five_star_row_reports_every_group_met_with_spanish_displays(conn):
     assert row["fcfYield"] == pytest.approx(10.0)
     assert row["analysts"] == {"buy": 17, "hold": 2, "sell": 1, "total": 20,
                                "targetPct": pytest.approx((130.0 / 75.0 - 1) * 100)}
-    assert row["dataroma"] == {"superinvestors": 2, "holdPrice": 80.5, "insiders": 2,
-                               "insiderCluster": True}
+    assert row["dataroma"]["superinvestors"] == 2 and row["dataroma"]["holdPrice"] == 80.5
+    assert row["dataroma"]["insiders"] == 2 and row["dataroma"]["insiderCluster"] is True
+    assert row["risk"] == {"sortino": 1.2, "sharpe": 0.9, "downsideBeta": 0.8,
+                           "maxDrawdown": -0.38, "recoveryDays": 214, "volatility": 0.31,
+                           "asOf": "2026-10-30"}
+    assert row["revisions"] == {"up30": 4, "down30": 1, "net": 3, "up7": 1, "down7": 0}
     roic = _item(row, "calidad", "roic")
     assert roic["label"] == "Gana por cada $1 invertido (ROIC)"
     assert roic["display"] == "18,0 %" and roic["threshold"] == "≥ 15 %" and roic["ok"] is True
@@ -238,25 +282,183 @@ def test_an_insider_cluster_needs_distinct_recent_non_ten_percent_names(conn):
 
 
 def test_stars_count_only_the_groups_met(conn):
-    add_stock(conn, "TWO", roe=1.0, roa=1.0, peg=5.0, price_target_average=10.0,
-              rsi=80.0, macd=0.1, macd_signal=0.9, sma50=90.0)
+    add_stock(conn, "TWO", roe=1.0, roa=1.0, peg=5.0, price_target_average=10.0)
 
     row = _row(engine.build_response(conn, {"require": "1"}), "TWO")
 
     assert row["groups"]["caida"]["ok"] is True
     assert row["groups"]["calidad"]["ok"] is False
     assert row["groups"]["precio"]["ok"] is False
-    assert row["groups"]["giro"]["ok"] is False
+    assert row["groups"]["sana"]["ok"] is False
     assert row["stars"] == sum(1 for g in row["groups"].values() if g["ok"])
 
 
-def test_turnaround_needs_the_price_above_its_fifty_day_average(conn):
-    add_stock(conn, "BELOW", sma50=90.0)
+# --- step 5 "\u00bfEs una ca\u00edda sana?" (S11) -------------------------------------------------
 
-    row = _row(engine.build_response(conn, {"require": "1"}), "BELOW")
 
+def test_a_healthy_fall_needs_sortino_downside_beta_and_revisions_together(conn):
+    add_stock(conn, "SANA")
+    add_risk(conn, "SANA", sortino=1.2, dbeta=0.8)
+    add_revisions(conn, "SANA", up30=4, down30=1)
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "SANA")
+
+    assert row["groups"]["sana"]["ok"] is True
+    sortino = _item(row, "sana", "sortino")
+    assert sortino["label"] == "Rinde bien para el riesgo que corre (Sortino 3 a\u00f1os)"
+    assert sortino["display"] == "1,20" and sortino["threshold"] == "\u2265 0,50"
+    dbeta = _item(row, "sana", "dbeta")
+    assert dbeta["label"] == "Cae menos que el mercado en d\u00edas malos (beta bajista)"
+    assert dbeta["display"] == "0,80" and dbeta["threshold"] == "\u2264 1,20"
+    revisions = _item(row, "sana", "rev")
+    assert revisions["label"] == "Los analistas no bajan sus estimaciones (revisiones 30 d\u00edas)"
+    assert revisions["value"] == 3 and revisions["display"] == "+3"
+
+
+@pytest.mark.parametrize("risk,revisions", [
+    ({"sortino": 0.2}, {}),            # pays too little for its risk
+    ({"dbeta": 1.9}, {}),              # falls harder than the market on bad days
+    ({}, {"up30": 1, "down30": 4}),    # the analysts are cutting their estimates
+])
+def test_a_fall_is_not_healthy_when_one_condition_fails(conn, risk, revisions):
+    add_stock(conn, "BAD")
+    add_risk(conn, "BAD", **risk)
+    add_revisions(conn, "BAD", **revisions)
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "BAD")
+
+    assert row["groups"]["sana"]["ok"] is False
+
+
+def test_negative_net_revisions_fail_the_condition_and_show_their_sign(conn):
+    add_stock(conn, "CUT")
+    add_risk(conn, "CUT")
+    add_revisions(conn, "CUT", up30=1, down30=4)
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "CUT")
+
+    assert row["revisions"]["net"] == -3
+    assert _item(row, "sana", "rev")["display"] == "-3"
+    assert _item(row, "sana", "rev")["ok"] is False
+    assert row["groups"]["sana"]["ok"] is False
+
+
+def test_without_three_years_of_history_step_five_reports_insufficient_data(conn):
+    add_stock(conn, "NEW")                     # no stock_risk_metrics, no stock_eps_revisions
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "NEW")
+
+    assert row["risk"] is None and row["revisions"] is None
+    for key in ("sortino", "dbeta", "rev", "drawdown"):
+        item = _item(row, "sana", key)
+        assert item["ok"] is None and item["display"] == "Datos insuficientes"
+    assert row["groups"]["sana"]["ok"] is False
+
+
+def test_the_worst_drawdown_is_informational_and_never_changes_the_stars(conn):
+    add_stock(conn, "DEEP")
+    add_risk(conn, "DEEP", sortino=0.1, dbeta=3.0, drawdown=-0.38, recovery=214)
+    add_revisions(conn, "DEEP", up30=0, down30=9)
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "DEEP")
+
+    drawdown = _item(row, "sana", "drawdown")
+    assert drawdown["label"] == "Peor ca\u00edda en 3 a\u00f1os"
+    assert drawdown["display"] == "\u221238 % \u00b7 se recuper\u00f3 en 214 d\u00edas"
+    assert drawdown["ok"] is None and drawdown["informational"] is True
+    assert row["groups"]["sana"]["ok"] is False      # the three conditions all failed
+    assert row["stars"] == sum(1 for g in row["groups"].values() if g["ok"])
+
+
+def test_an_instrument_still_under_water_says_so(conn):
+    add_stock(conn, "UNDER")
+    add_risk(conn, "UNDER", drawdown=-0.5, recovery=None)
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "UNDER")
+
+    assert _item(row, "sana", "drawdown")["display"] == "\u221250 % \u00b7 a\u00fan no se recupera"
+
+
+def test_the_thresholds_of_step_five_come_from_the_parameters(conn):
+    add_stock(conn, "EDGE")
+    add_risk(conn, "EDGE", sortino=0.4, dbeta=1.5)
+    add_revisions(conn, "EDGE", up30=1, down30=3)
+
+    strict = _row(engine.build_response(conn, {"require": "1"}), "EDGE")
+    loose = _row(engine.build_response(
+        conn, {"require": "1", "sortino": 0.3, "dbeta": 2.0, "rev": -5}), "EDGE")
+
+    assert strict["groups"]["sana"]["ok"] is False
+    assert loose["groups"]["sana"]["ok"] is True
+
+
+def test_rsi_macd_and_the_fifty_day_average_stay_on_the_row_as_information(conn):
+    add_stock(conn, "INFO", rsi=80.0, macd=0.1, macd_signal=0.9, sma50=90.0)
+    add_risk(conn, "INFO")
+    add_revisions(conn, "INFO")
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "INFO")
+
+    assert (row["rsi"], row["macd"], row["macdSignal"], row["sma50"]) == (80.0, 0.1, 0.9, 90.0)
     assert row["aboveSma50"] is False
-    assert row["groups"]["giro"]["ok"] is False
+    assert row["groups"]["sana"]["ok"] is True       # technicals no longer earn or cost a star
+
+
+# --- step 6 "\u00bfLo compran los expertos?" (S12) ----------------------------------------------
+
+
+def test_the_superinvestor_holdings_enrich_the_row_without_changing_the_gate(conn):
+    add_stock(conn, "HELD")
+    add_holdings(conn, "HELD", holders=7, holders_prev=5, max_pct=12.5, avg_price=80.5,
+                 net_activity=3)
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "HELD")
+
+    assert row["dataroma"]["holders"] == 7
+    assert row["dataroma"]["holdersPrev"] == 5
+    assert row["dataroma"]["maxPortfolioPct"] == 12.5
+    assert row["dataroma"]["avgHoldPrice"] == 80.5
+    assert row["dataroma"]["netActivity"] == 3
+    assert row["dataroma"]["topHolders"] == [{"manager": "Li Lu", "pct": 12.5, "activity": 1}]
+    assert row["dataroma"]["belowExpertsPrice"] is True       # it trades at 75 vs 80,5
+    assert row["groups"]["expertos"]["ok"] is False           # nobody bought this quarter
+
+
+def test_a_symbol_without_holdings_reports_null_fields(conn):
+    add_stock(conn, "NONE")
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "NONE")
+
+    for key in ("holders", "holdersPrev", "maxPortfolioPct", "avgHoldPrice", "netActivity",
+                "topHolders", "belowExpertsPrice"):
+        assert row["dataroma"][key] is None, key
+
+
+def test_above_the_experts_price_is_reported_as_false(conn):
+    add_stock(conn, "EXPENSIVE")
+    add_holdings(conn, "EXPENSIVE", avg_price=50.0)
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "EXPENSIVE")
+
+    assert row["dataroma"]["belowExpertsPrice"] is False
+
+
+def test_the_holdings_items_are_informational_and_never_change_the_stars(conn):
+    add_stock(conn, "HELD")
+    add_holdings(conn, "HELD")
+    add_quarter_buy(conn, "HELD", buys=2, hold_price=80.5)
+
+    row = _row(engine.build_response(conn, {"require": "1"}), "HELD")
+
+    labels = {entry["key"]: entry["label"] for entry in row["groups"]["expertos"]["items"]}
+    assert labels["holders"] == "Grandes inversores que la tienen"
+    assert labels["maxPortfolioPct"] == "Peso m\u00e1ximo en su cartera (convicci\u00f3n)"
+    assert labels["expertsPrice"] == "Precio vs. el de compra de los expertos"
+    for key in ("holders", "maxPortfolioPct", "expertsPrice"):
+        entry = _item(row, "expertos", key)
+        assert entry["ok"] is None and entry["informational"] is True
+    assert row["groups"]["expertos"]["ok"] is True            # the gate is the buys, unchanged
+    assert row["stars"] == sum(1 for g in row["groups"].values() if g["ok"])
 
 
 def test_required_steps_filter_the_rows_and_the_counts_are_sequential(conn):
@@ -271,7 +473,7 @@ def test_required_steps_filter_the_rows_and_the_counts_are_sequential(conn):
     assert response["universe"] == 4
     steps = {step["n"]: step for step in response["steps"]}
     assert [steps[n]["id"] for n in range(1, 7)] == [
-        "gana", "calidad", "precio", "caida", "giro", "expertos"]
+        "gana", "calidad", "precio", "caida", "sana", "expertos"]
     assert steps[1]["required"] is True and steps[4]["required"] is True
     assert steps[2]["required"] is False
     assert steps[1]["remaining"] == 3            # LOSS has no earnings

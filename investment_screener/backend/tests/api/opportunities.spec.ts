@@ -1,7 +1,7 @@
 /**
  * opportunities.spec.ts
  *
- * Purpose: covers B1a's Node surface of the opportunities screener (S8): the query-parameter
+ * Purpose: covers the Node surface of the opportunities screener (S8/S15): the query-parameter
  * contract of routes/opportunities.ts (defaults, 400 on invalid input, 503 when the engine
  * reports no scanner snapshot, 500 on failure) and the 60 s per-parameter memo of
  * OpportunitiesService.
@@ -80,7 +80,7 @@ describe('OpportunitiesService', () => {
 });
 
 describe('GET /api/opportunities', () => {
-    it('applies the S8 defaults when no query parameter is given', async () => {
+    it('applies the S8/S15 defaults when no query parameter is given', async () => {
         const { calls, run } = recorder();
         const router = createOpportunitiesRouter({ service: new OpportunitiesService({ runScript: run }) });
 
@@ -92,8 +92,21 @@ describe('GET /api/opportunities', () => {
 
         expect(paramsOf(calls[0])).to.deep.equal({
             require: '1,4', roic: 15, roe: 15, roa: 7, de: 0.5, mos: 25, fcfy: 5, peg: 1,
-            target: 20, drop: 20, rsi: 35, sup: 1, ins: 2, etf: 0,
+            target: 20, drop: 20, sortino: 0.5, dbeta: 1.2, rev: 0, sup: 1, ins: 2, etf: 0,
         });
+    });
+
+    it('passes the step 5 thresholds through, including a negative revisions floor', async () => {
+        const { calls, run } = recorder();
+        const router = createOpportunitiesRouter({ service: new OpportunitiesService({ runScript: run }) });
+
+        await withRouter(router, async base => {
+            const res = await fetch(`${base}/api/opportunities?sortino=1.5&dbeta=0.8&rev=-2`);
+            expect(res.status).to.equal(200);
+        }, '/api/opportunities');
+
+        expect(paramsOf(calls[0])).to.deep.include({ sortino: 1.5, dbeta: 0.8, rev: -2 });
+        expect(paramsOf(calls[0])).to.not.have.property('rsi');
     });
 
     it('passes the caller parameters through', async () => {
@@ -113,7 +126,8 @@ describe('GET /api/opportunities', () => {
         const router = createOpportunitiesRouter({ service: new OpportunitiesService({ runScript: run }) });
 
         await withRouter(router, async base => {
-            for (const query of ['require=9', 'require=abc', 'roic=high', 'mos=-5', 'etf=2']) {
+            for (const query of ['require=9', 'require=abc', 'roic=high', 'mos=-5', 'etf=2',
+                'sortino=-1', 'dbeta=high', 'rev=2.5']) {
                 const res = await fetch(`${base}/api/opportunities?${query}`);
                 expect(res.status, query).to.equal(400);
             }
