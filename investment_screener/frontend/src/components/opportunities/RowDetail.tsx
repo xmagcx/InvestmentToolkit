@@ -90,7 +90,8 @@ export default function RowDetail({ row }: { row: OpportunityRow }) {
     const graham = row.graham;
     const dataroma = row.dataroma;
     const analysts = row.analysts;
-    const topHolder = dataroma.topHolders.length > 0 ? dataroma.topHolders[0] : null;
+    const topHolders = dataroma.topHolders ?? [];
+    const topHolder = topHolders.length > 0 ? topHolders[0] : null;
 
     return (
         <div className="grid grid-cols-[1.25fr_1fr_1fr] gap-4 border-t border-slate-700 px-4 py-3.5">
@@ -214,9 +215,9 @@ export default function RowDetail({ row }: { row: OpportunityRow }) {
                         )}
                     </p>
                 )}
-                {dataroma.topHolders.length > 0 && (
+                {topHolders.length > 0 && (
                     <ul className="mb-2 flex flex-col gap-0.5">
-                        {dataroma.topHolders.slice(0, 5).map(holder => (
+                        {topHolders.slice(0, 5).map(holder => (
                             <li key={holder.manager} className="flex items-baseline justify-between gap-2 text-xs text-slate-300">
                                 <span>{holder.manager}</span>
                                 <span className="font-mono text-slate-400">

@@ -196,12 +196,7 @@ class EpsRevisionsSource(InvestmentSource):
         The rule itself is never restated here: the snapshot rows are judged by
         ``opportunity_screener``'s own step-4 items with the engine's default thresholds.
         """
-        params = screener.resolve_params(None)
-        symbols: list[str] = []
-        for row in screener.load_snapshot(conn):
-            metrics = screener.row_metrics(row, {}, None)
-            if screener.group_verdict(screener.fall_items(row, params, metrics))["ok"]:
-                symbols.append(row["symbol"])
+        symbols = screener.fallen_symbols(conn)
         return symbols[: self.limit] if self.limit else symbols
 
 

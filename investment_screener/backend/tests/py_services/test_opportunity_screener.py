@@ -430,8 +430,17 @@ def test_a_symbol_without_holdings_reports_null_fields(conn):
     row = _row(engine.build_response(conn, {"require": "1"}), "NONE")
 
     for key in ("holders", "holdersPrev", "maxPortfolioPct", "avgHoldPrice", "netActivity",
-                "topHolders", "belowExpertsPrice"):
+                "belowExpertsPrice"):
         assert row["dataroma"][key] is None, key
+    # S15 declares topHolders as a list: no holdings row is an empty list, never null
+    assert row["dataroma"]["topHolders"] == []
+
+
+def test_fallen_symbols_is_the_one_step_four_selection_the_sources_share(conn):
+    add_stock(conn, "FELL", close=70.0, sma200=90.0, price_52_week_high=100.0)
+    add_stock(conn, "FLAT", close=99.0, sma200=90.0, price_52_week_high=100.0)
+
+    assert engine.fallen_symbols(conn) == ["FELL"]
 
 
 def test_above_the_experts_price_is_reported_as_false(conn):

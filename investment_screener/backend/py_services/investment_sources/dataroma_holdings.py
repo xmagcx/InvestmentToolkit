@@ -74,14 +74,7 @@ from .dataroma import (
 )
 
 sys.path.insert(0, str(Path(__file__).resolve().parents[1]))
-from opportunity_screener import (  # noqa: E402
-    evaluate_row,
-    load_aaa_yield,
-    load_dataroma,
-    load_snapshot,
-    resolve_params,
-    sector_median_pe,
-)
+from opportunity_screener import fallen_symbols  # noqa: E402
 from ticker_aliases import normalize_ticker  # noqa: E402
 
 TABLE = "stock_superinvestor_holdings"
@@ -92,8 +85,6 @@ TOP_HOLDERS = 5
 #: Published header labels of the holders grid (the first column holds the history link).
 COLUMNS = ("Portfolio Manager", "% of portfolio", "Recent activity", "Shares", "Value")
 STOCK_URL = "https://www.dataroma.com/m/stock.php?sym={symbol}"
-#: The step of the funnel whose survivors are worth a page view ("¿cayó por causas externas?").
-STEP_CAIDA = 4
 
 
 def stock_url(symbol: str) -> str:
@@ -175,19 +166,7 @@ def select_symbols(conn: sqlite3.Connection) -> list[str]:
 
 def _step_four_symbols(conn: sqlite3.Connection) -> list[str]:
     """The snapshot symbols that answer the funnel's fourth question ("¿cayó?")."""
-    rows = load_snapshot(conn)
-    if not rows:
-        return []
-    params = resolve_params(None)
-    context = {
-        "sectorPe": sector_median_pe(rows),
-        "dataroma": load_dataroma(conn),
-        "aaa": load_aaa_yield(conn)[0],
-    }
-    return [
-        row["symbol"] for row in rows
-        if evaluate_row(row, params, context)["_passes"][STEP_CAIDA]
-    ]
+    return fallen_symbols(conn)
 
 
 # --- the DTO -----------------------------------------------------------------------------
