@@ -222,3 +222,17 @@ def test_second_sync_updates_the_same_row(conn):
     assert (second.status, second.inserted, second.updated) == ("success", 0, 1)
     assert conn.execute(f"SELECT COUNT(*) FROM {TABLE}").fetchone()[0] == 1
     assert _row(conn, "TMO")["fetched_at"] >= first
+
+
+def test_selection_includes_fallen_snapshot_symbols_through_the_real_engine(conn):
+    """No mocks: the step-4 survivors come from opportunity_screener.fallen_symbols."""
+    conn.execute(
+        "INSERT INTO stocks_origin (source_code, symbol, normalized_symbol, asset_type, is_active) "
+        "VALUES ('racional_gsheet', 'FELL', 'FELL', 'EQUITY', 1)"
+    )
+    conn.execute(
+        "INSERT INTO stock_screen_snapshot (symbol, tv_symbol, name, close, price_52_week_high, "
+        "sma200, fetched_at) VALUES ('FELL', 'NYSE:FELL', 'Fell Inc.', 70, 100, 90, '2026-11-01')"
+    )
+    conn.commit()
+    assert select_symbols(conn) == ["FELL"]

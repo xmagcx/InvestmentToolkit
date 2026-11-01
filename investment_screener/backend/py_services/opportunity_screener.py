@@ -372,6 +372,19 @@ def analysts_block(row: dict, metrics: dict) -> dict | None:
             "targetPct": metrics["targetPct"]}
 
 
+def fallen_symbols(conn: sqlite3.Connection) -> list[str]:
+    """Snapshot symbols answering step 4 ("¿Cayó por causas externas?") at default thresholds.
+
+    The one selection the follow-up sources (eps_revisions, dataroma_holdings) share, so the
+    step-4 rule is evaluated in this module only.
+    """
+    params = resolve_params(None)
+    return [
+        row["symbol"] for row in load_snapshot(conn)
+        if group_verdict(fall_items(row, params, row_metrics(row, {}, None)))["ok"]
+    ]
+
+
 def evaluate_row(row: dict, params: dict, context: dict) -> dict:
     """One response row: the metrics the page prints, its five groups and its star count."""
     symbol = row["symbol"]
@@ -513,7 +526,7 @@ def _empty_dataroma() -> dict:
 def _empty_holdings() -> dict:
     """What a symbol with no stock_superinvestor_holdings row reports (S15: nulls, not zeros)."""
     return {"holders": None, "holdersPrev": None, "maxPortfolioPct": None,
-            "avgHoldPrice": None, "netActivity": None, "topHolders": None}
+            "avgHoldPrice": None, "netActivity": None, "topHolders": []}
 
 
 def _below_experts_price(price: float | None, avg_hold_price: float | None) -> bool | None:
@@ -566,7 +579,7 @@ def load_holdings(conn: sqlite3.Connection) -> dict[str, dict]:
             "holders": row["holders"], "holdersPrev": row["holders_prev"],
             "maxPortfolioPct": row["max_portfolio_pct"],
             "avgHoldPrice": row["avg_hold_price"], "netActivity": row["net_activity"],
-            "topHolders": _json_or_none(row["top_holders"]),
+            "topHolders": _json_or_none(row["top_holders"]) or [],
         }
     return holdings
 
