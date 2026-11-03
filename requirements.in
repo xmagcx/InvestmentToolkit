@@ -16,3 +16,5 @@ requests>=2.33.0
 curl-cffi>=0.15.0
 # Claude Code plugin hooks (Stop hooks run against this venv's python3 on PATH)
 pyyaml
+# Portfolio optimization (min-volatility, HRP, max-Sharpe) for the Portafolio page
+PyPortfolioOpt

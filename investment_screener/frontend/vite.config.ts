@@ -23,7 +23,9 @@ export default defineConfig({
   server: {
     proxy: {
       '/api': {
-        target: 'http://127.0.0.1:3001',
+        // Defaults to the standard backend port; API_PROXY_TARGET lets a second checkout
+        // (a review worktree) point at its own backend without touching this file.
+        target: process.env.API_PROXY_TARGET ?? 'http://127.0.0.1:3001',
         changeOrigin: true,
         configure: (proxy) => {
           // Attach auth token on every proxied request so the frontend
