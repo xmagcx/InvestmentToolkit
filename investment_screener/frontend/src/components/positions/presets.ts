@@ -13,7 +13,8 @@
  *
  * Key Functions (Index):
  *     - THESIS_PRESET: the compact set used inside a thesis page
- *     - PORTFOLIO_PRESET: the default columns of the portfolio page (all others stay in the picker)
+ *     - PORTFOLIO_PRESET: the full analyst column set of the portfolio page (reachable from the column picker)
+ *     - ACCOUNTING_PRESET: the four accounting columns the two-panel Portafolio page opens with
  *
  * Key Input Dependencies:
  *     - columns.tsx (column ids)
@@ -40,5 +41,14 @@ export const PORTFOLIO_PRESET: PositionPreset = {
         'earnings', 'fairValue', 'price', 'gain', 'upside', 'ruleOf40', 'growth', 'model', 'change_1d', 'change_overall',
         'subStrategyId', 'lastAnalyzed'],
     sort: { id: 'action', dir: 'asc' },
+    totals: true,
+};
+
+/** The two-panel Portafolio page: ticker, name, value, weight and risk bars, gain; biggest weight first. */
+export const ACCOUNTING_PRESET: PositionPreset = {
+    // No `name`: the backend leaves it null for every holding today, so the column renders
+    // empty and pushes Ganancia out of view. The column picker can bring it back.
+    columns: ['symbol', 'acc_value', 'acc_riskWeight', 'acc_gain'],
+    sort: { id: 'acc_riskWeight', dir: 'desc' },
     totals: true,
 };

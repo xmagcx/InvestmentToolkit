@@ -33,12 +33,24 @@ import { PORTFOLIO_PERIODS } from '../../utils/priceChangePeriods';
 import { getActionPriority } from '../../utils/actionColors';
 import { RISK_REWARD_COLUMNS, actedOn, fairValueGap, riskRewardRowFields, stanceOf } from '../../utils/riskReward';
 import { RiskRewardCell } from '../RiskRewardCell';
+import { GainCell, ValueCell, WeightRiskCell } from '../portfolio/cells';
+import { esNum, esPct, holdingGain } from '../portfolio/portfolioMath';
 import { ActionCell, EarningsCell, MonoCell, NameCell, TextCell, TickerCell } from './cells';
 import type { PositionExtras } from './extras';
 import { formatGap, formatWeight, moneyText, weightHeat, type PositionRow, type PositionTotals } from './positionMath';
 
-/** A position row with the optional extras merged in (thesis tables carry none). */
-export type TableRow = PositionRow & Partial<PositionExtras>;
+/** Per-holding risk from GET /api/portfolio/risk and the optimizer's suggested weight (Portafolio page only). */
+export interface RiskFields {
+    /** Share of the portfolio's risk this holding contributes, in %. */
+    riskContributionPct: number | null;
+    /** True when the holding has too little history and its risk is an estimate. */
+    riskEstimated: boolean;
+    /** Target weight in % suggested by the last optimize call; never executed. */
+    optimizedTargetPct: number | null;
+}
+
+/** A position row with the optional extras and risk fields merged in (thesis tables carry none). */
+export type TableRow = PositionRow & Partial<PositionExtras> & Partial<RiskFields>;
 
 export interface CellContext {
     rec?: RecommendationRecord | null;
@@ -54,6 +66,8 @@ export interface PositionColumn {
     width: number;
     /** Cannot be hidden in the column picker. */
     always?: boolean;
+    /** This column holds the ticker: PositionsTable puts the ticker addon (watch star) before its cell. */
+    isTicker?: boolean;
     sort?: (row: TableRow, rec?: RecommendationRecord | null) => number | string | null;
     cell: (row: TableRow, ctx: CellContext) => ReactNode;
     /** Cell shading, for the change and weight columns. */
@@ -102,7 +116,7 @@ const periodColumns: PositionColumn[] = PORTFOLIO_PERIODS.map(p => {
 const dollar = (value: number | null | undefined, ctx: CellContext) => mono(moneyText(value, ctx.hidden, fmtDollar));
 
 export const COLUMNS: PositionColumn[] = [
-    { id: 'symbol', label: 'Ticker', align: 'left', width: 80, always: true,
+    { id: 'symbol', label: 'Ticker', align: 'left', width: 80, always: true, isTicker: true,
       sort: row => row.ticker,
       cell: row => createElement(TickerCell, { row }) },
     { id: 'name', label: 'Name', align: 'left', width: 170,
@@ -203,6 +217,21 @@ export const COLUMNS: PositionColumn[] = [
       title: 'When the saved valuation was made.',
       sort: row => row.lastAnalyzed ?? null,
       cell: row => mono(row.lastAnalyzed ? new Date(row.lastAnalyzed).toLocaleDateString() : '—') },
+    // Accounting columns of the Portafolio page; the cells live in components/portfolio/cells.tsx.
+    { id: 'acc_value', label: 'Valor (USD)', align: 'right', width: 105,
+      title: 'Market value of the holding in USD.',
+      sort: row => row.marketValue,
+      cell: (row, ctx) => createElement(ValueCell, { row, hidden: ctx.hidden }),
+      total: (t, ctx) => mono(moneyText(t.marketValue, ctx.hidden, v => esNum(v, 2))) },
+    { id: 'acc_riskWeight', label: 'Peso y riesgo', align: 'right', width: 250,
+      title: 'Weight of the money (grey) and share of the portfolio risk (amber) on one 0-40 % scale. Risk = weight × volatility, normalised to 100 %.',
+      sort: row => row.actualPct,
+      cell: row => createElement(WeightRiskCell, { row }),
+      total: t => mono(`${esPct(t.actualPct)} del total`) },
+    { id: 'acc_gain', label: 'Ganancia', align: 'right', width: 110,
+      title: 'Current price minus average cost, times shares. Not the valuation gap (see the Gain ($) column).',
+      sort: row => holdingGain(row)?.amount ?? null,
+      cell: (row, ctx) => createElement(GainCell, { row, hidden: ctx.hidden }) },
     { id: 'rationale', label: 'Rationale', align: 'left', width: 260,
       sort: row => row.rationale,
       cell: row => createElement(TextCell, null, row.rationale ?? '—') },

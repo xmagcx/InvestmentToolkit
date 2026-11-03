@@ -1,124 +1,131 @@
 /**
- * PortfolioPage.tsx (React Page)
- * =====================================
+ * PortfolioPage.tsx - The two-panel Portafolio page: accounting table on the left, risk detail on the right.
  *
  * Purpose:
- *     The one page for the positions table. It replaces the old Portfolio Table and Portfolio
- *     Advisor pages: a scope toggle (Holdings, Watchlist, All), action chips, sector and
- *     strategy filters, per-column filters, a column picker with saved choices, add-to-watchlist,
- *     the valuation range and reward:risk columns, trade and log buttons, totals and a refresh
- *     that syncs from the broker. Rows come from the shared position provider, the live price,
- *     sector and % changes from the heatmap (only for the tickers the scope needs), and every
- *     cell from the shared column registry.
+ *     Left: the shared PositionsTable with four accounting columns (ticker, value, weight and risk bars,
+ *     gain), biggest weight first; cash is never a row. Selecting a row drives the right panel (Riesgo and
+ *     Valoración tabs for that ticker) and, below it, "Mejorar la cartera" (suggested orders, never executed).
+ *     The header holds the hero total, gain line, cash and volatility chips and one insight sentence.
+ *     Demoted but reachable: status chips, sector/strategy filters, column picker and the full analyst
+ *     columns (under "Filtros y columnas"), thesis / review / guide modals ("Más"), trade buttons, journal
+ *     log and the link into Stock Analysis (the selected ticker's panel). Holdings / Watchlist / Todo scope,
+ *     watch star, add-ticker form, privacy masking and refresh are kept.
  *
  * Layer: Frontend / Pages
  *
  * Usage Examples:
- *     <Route path="portfolio" element={<PortfolioPage />} />
+ *     <Route path="/portfolio" element={<PortfolioPage />} />
  *
- * Key Functions:
- *     - PortfolioPage() - toolbar, filters and the PositionsTable with the portfolio preset
+ * Key Functions (Index):
+ *     - PortfolioPage(): state, row building (positions + live extras + risk + optimizer targets), layout
  *
  * Key Input Dependencies:
- *     - components/positions (provider, registry, scope, extras, table, picker, sizing)
- *     - contexts/useRecommendations, services/api (watchlist), existing modals
+ *     - GET /api/portfolio/risk (usePortfolioRisk), POST /api/portfolio/optimize (ImprovePanel),
+ *       positions/* (rows, columns, presets, scope), contexts/useRecommendations, context/PrivacyContext
  *
  * Key Output Dependencies:
- *     - /portfolio route and the sidebar
+ *     - App.tsx route
  */
 import { useCallback, useMemo, useState } from 'react';
 import { useNavigate } from 'react-router-dom';
-import { BookOpen, FileBarChart2, Filter, Star, Terminal } from 'lucide-react';
+import { Star } from 'lucide-react';
 import { useRecommendations } from '../contexts/useRecommendations';
 import { usePrivacy } from '../context/PrivacyContext';
-import { addToWatchlist, removeFromWatchlist } from '../services/api';
+import { addToWatchlist, removeFromWatchlist, type OptimizeResponse } from '../services/api';
 import { isReduceCandidate } from '../utils/riskReward';
 import AgentGuideModal from '../components/AgentGuideModal';
 import InvestmentThesisModal from '../components/InvestmentThesisModal';
 import LatestReviewModal from '../components/LatestReviewModal';
-import { HelpTrigger } from '../components/HelpModal';
-import { PriceSourceBadge } from '../components/PriceSourceBadge';
-import { ReduceCandidatesChip } from '../components/RiskRewardCell';
 import { TradeButtons } from '../components/TradeButtons';
 import { TradeLogModal } from '../components/TradeLogModal';
 import { useFeatureFlags } from '../hooks/useFeatureFlags';
-import { ColumnPicker } from '../components/positions/ColumnPicker';
+import { ImprovePanel } from '../components/portfolio/ImprovePanel';
+import { PortfolioHeader } from '../components/portfolio/PortfolioHeader';
+import { PortfolioToolbar } from '../components/portfolio/PortfolioToolbar';
+import { insightSentence, liveWeights, nameLine, portfolioGain } from '../components/portfolio/portfolioMath';
+import { RiskPanel } from '../components/portfolio/RiskPanel';
+import { usePortfolioRisk } from '../components/portfolio/usePortfolioRisk';
 import { COLUMNS, type TableRow } from '../components/positions/columns';
-import { moneyText } from '../components/positions/positionMath';
-import { PORTFOLIO_PRESET } from '../components/positions/presets';
+import { ACCOUNTING_PRESET } from '../components/positions/presets';
 import { PositionsTable, type SortState } from '../components/positions/PositionsTable';
-import { countsFor, filterRows, sectorOptions, strategyOptions, type FilterState, type Scope, type StatusFilter } from '../components/positions/scope';
+import { countsFor, filterRows, sectorOptions, strategyOptions, type FilterState, type StatusFilter } from '../components/positions/scope';
 import { suggestedShares } from '../components/positions/tradeSizing';
 import { useColumnPrefs } from '../components/positions/useColumnPrefs';
 import { useHeatmapExtras } from '../components/positions/useHeatmapExtras';
 import { usePositionRows } from '../components/positions/usePositionRows';
 
-const STORAGE_KEY = 'portfolio-table-prefs-v1';
-const SCOPES: Array<{ id: Scope; label: string }> = [
-    { id: 'holdings', label: '💼 Holdings' }, { id: 'watchlist', label: '⭐ Watchlist' }, { id: 'all', label: 'All' },
-];
-const CHIPS: Array<{ id: StatusFilter; label: string; tone: string }> = [
-    { id: 'actionable', label: '⚡ Actionable', tone: 'bg-cyan-600' },
-    { id: 'exit', label: '🔴 Exits', tone: 'bg-red-600' },
-    { id: 'trim', label: '🟠 Trims', tone: 'bg-orange-600' },
-    { id: 'initiate', label: '🟢 Initiate', tone: 'bg-green-600' },
-    { id: 'accumulate', label: '🔵 Accumulate', tone: 'bg-blue-600' },
-    { id: 'gaps', label: '🚨 Needs valuation', tone: 'bg-rose-600' },
-];
-
+// v3: the accounting columns are the default; the old analyst set is still in the column picker.
+const STORAGE_KEY = 'portfolio-accounting-prefs-v3';
 const SCOPE_ONLY: FilterState = { scope: 'holdings', status: 'all', sector: 'all', strategy: 'all', text: {} };
+const isCash = (r: { ticker: string; assetClass: string }) => r.assetClass === 'CASH' || r.ticker === 'CASH';
 
 export default function PortfolioPage() {
     const navigate = useNavigate();
     const recommendations = useRecommendations();
     const { isPrivacyMode } = usePrivacy();
-    const { rows: positionRows, loading, error, refresh: refreshRows } = usePositionRows();
+    const { rows: allPositionRows, loading, error, refresh: refreshRows } = usePositionRows();
+    const { risk, error: riskError, refresh: refreshRisk } = usePortfolioRisk();
+    const { broker_integration: brokerOn } = useFeatureFlags();
 
     const [filter, setFilter] = useState<FilterState>(SCOPE_ONLY);
     const [showFilterRow, setShowFilterRow] = useState(false);
-    const [sort, setSort] = useState<SortState>(PORTFOLIO_PRESET.sort);
+    const [sort, setSort] = useState<SortState>(ACCOUNTING_PRESET.sort);
+    const [selected, setSelected] = useState<string | null>(null);
+    const [optimization, setOptimization] = useState<OptimizeResponse | null>(null);
     const [showThesis, setShowThesis] = useState(false);
     const [showReview, setShowReview] = useState(false);
     const [showGuide, setShowGuide] = useState(false);
     const [logTicker, setLogTicker] = useState<string | null>(null);
-    // The trade journal posts to /api/trading/log, which is off with the broker; trades are
-    // recorded on the Portafolio page instead.
-    const { broker_integration: brokerOn } = useFeatureFlags();
 
-    const prefs = useColumnPrefs(STORAGE_KEY, COLUMNS, PORTFOLIO_PRESET.columns);
-
-    // Ask the heatmap only for the tickers the chosen scope shows.
+    // Cash belongs to the totals, never to a row.
+    const positionRows = useMemo(() => allPositionRows.filter(r => !isCash(r)), [allPositionRows]);
+    const prefs = useColumnPrefs(STORAGE_KEY, COLUMNS, ACCOUNTING_PRESET.columns);
     const wanted = useMemo(
         () => filterRows(positionRows, { ...SCOPE_ONLY, scope: filter.scope }, recommendations, () => null).map(r => r.ticker),
         [positionRows, filter.scope, recommendations],
     );
     const extras = useHeatmapExtras(wanted);
 
-    const tableRows: TableRow[] = useMemo(
-        () => positionRows.map(r => ({ ...r, ...extras.extrasFor(r.ticker) })),
-        [positionRows, extras],
-    );
+    // One valuation: live price for every row, weights over holdings plus cash. The risk API only supplies the risk fields.
+    const cashUsd = risk?.portfolio.cash_usd
+        ?? allPositionRows.filter(isCash).reduce((s, r) => s + (r.marketValue ?? 0), 0);
+    const targetByTicker = useMemo(() => new Map((optimization?.weights ?? []).map(w => [w.ticker, w.target_pct])), [optimization]);
+    const withExtras = useMemo(() => positionRows.map(r => ({ ...r, ...extras.extrasFor(r.ticker) })), [positionRows, extras]);
+    const live = useMemo(() => liveWeights(withExtras, cashUsd), [withExtras, cashUsd]);
+    const liveByTicker = useMemo(() => new Map(live.rows.map(r => [r.ticker, r])), [live]);
+    const riskByTicker = useMemo(() => new Map((risk?.rows ?? []).map(r => {
+        const l = liveByTicker.get(r.ticker);
+        return [r.ticker, { ...r, market_value: l?.marketValue ?? r.market_value, weight_pct: l?.actualPct ?? r.weight_pct }];
+    })), [risk, liveByTicker]);
+    const tableRows: TableRow[] = useMemo(() => live.rows.map(r => {
+        const rr = riskByTicker.get(r.ticker);
+        return {
+            ...r, name: nameLine(r),
+            riskContributionPct: rr?.risk_contribution_pct ?? null, riskEstimated: rr?.estimated ?? false,
+            optimizedTargetPct: targetByTicker.get(r.ticker) ?? null,
+        };
+    }), [live, riskByTicker, targetByTicker]);
+
     const sectorOf = useCallback((r: TableRow) => r.sector ?? null, []);
     const scopedRows = useMemo(
         () => filterRows(tableRows, { ...SCOPE_ONLY, scope: filter.scope }, recommendations, sectorOf),
         [tableRows, filter.scope, recommendations, sectorOf],
     );
-    const shown = useMemo(
-        () => filterRows(tableRows, filter, recommendations, sectorOf),
-        [tableRows, filter, recommendations, sectorOf],
-    );
+    // filterRows returns the same objects it was given, so the extras and risk fields are still on them.
+    const shown = useMemo(() => filterRows(tableRows, filter, recommendations, sectorOf) as TableRow[], [tableRows, filter, recommendations, sectorOf]);
     const scopeCounts = useMemo(() => countsFor(tableRows, recommendations), [tableRows, recommendations]);
     const chipCounts = useMemo(() => countsFor(scopedRows, recommendations), [scopedRows, recommendations]);
-    const sectors = useMemo(() => sectorOptions(tableRows, sectorOf), [tableRows, sectorOf]);
-    const strategies = useMemo(() => strategyOptions(tableRows), [tableRows]);
+    const reduceCount = useMemo(() => scopedRows.filter(r => isReduceCandidate(recommendations[r.ticker])).length, [scopedRows, recommendations]);
     const reduceActive = filter.status === 'reduce';
-    const reduceCount = useMemo(
-        () => scopedRows.filter(r => isReduceCandidate(recommendations[r.ticker])).length, [scopedRows, recommendations],
-    );
-
     const columnIds = useMemo(() => prefs.order.filter(id => prefs.visible.has(id)), [prefs.order, prefs.visible]);
-    const setStatus = (status: StatusFilter) => setFilter(f => ({ ...f, status: f.status === status ? 'all' : status }));
 
+    // The panel follows the clicked row; until then, the biggest shown holding.
+    const selectedRow = shown.find(r => r.ticker === selected)
+        ?? [...shown].sort((a, b) => (b.actualPct ?? 0) - (a.actualPct ?? 0))[0];
+    const heldRows = tableRows.filter(r => r.held);
+    const gain = useMemo(() => portfolioGain(heldRows), [heldRows]);
+
+    const setStatus = (status: StatusFilter) => setFilter(f => ({ ...f, status: f.status === status ? 'all' : status }));
     const toggleWatch = useCallback(async (row: TableRow) => {
         try {
             if (row.isWatched) await removeFromWatchlist(row.ticker); else await addToWatchlist(row.ticker);
@@ -127,11 +134,8 @@ export default function PortfolioPage() {
             console.error('Error toggling watchlist:', e);
         }
     }, [refreshRows]);
-
-    const refreshAll = async () => { await extras.refresh(); await refreshRows(); };
-
-    const heldCount = shown.filter(r => r.held).length;
-    const cad = extras.totals.cad;
+    const refreshAll = async () => { await extras.refresh(); await refreshRows(); await refreshRisk(); };
+    const analyze = (ticker: string) => navigate(`/analysis?ticker=${ticker}`);
 
     if (loading && positionRows.length === 0) {
         return <div className="flex h-64 items-center justify-center text-sm text-zinc-400">Loading portfolio…</div>;
@@ -141,127 +145,70 @@ export default function PortfolioPage() {
     }
 
     return (
-        <div className="flex h-full flex-col p-4">
-            <div className="mb-3 flex items-center justify-between">
-                <div>
-                    <h1 className="text-xl font-bold leading-tight text-white">Portfolio</h1>
-                    <div className="mt-0.5 flex items-center gap-3">
-                        <p className="text-xs text-slate-500">{heldCount} positions · {shown.length} shown</p>
-                        <span className="flex items-baseline gap-1.5 text-sm">
-                            <span className="font-bold text-white">{moneyText(extras.totals.usd, isPrivacyMode, v => `$${Math.round(v).toLocaleString()}`)}</span>
-                            <span className="text-xs text-zinc-500">USD</span>
-                            <span className="text-zinc-600">/</span>
-                            <span className="font-semibold text-zinc-400">{moneyText(cad, isPrivacyMode, v => `$${Math.round(v).toLocaleString()}`)}</span>
-                            <span className="text-xs text-zinc-500">CAD</span>
-                        </span>
-                        <PriceSourceBadge priceSource={extras.priceSource} lastRefreshedAt={extras.refreshedAt} />
-                    </div>
-                </div>
-                <div className="flex shrink-0 items-center gap-2">
-                    <button type="button" onClick={() => setShowThesis(true)} className="flex items-center gap-1.5 rounded-lg border border-indigo-500/20 bg-indigo-500/10 px-2.5 py-1.5 text-xs font-bold text-indigo-300 hover:bg-indigo-500/20"><BookOpen size={13} />Investment Thesis</button>
-                    <button type="button" onClick={() => setShowReview(true)} className="flex items-center gap-1.5 rounded-lg border border-amber-500/20 bg-amber-500/10 px-2.5 py-1.5 text-xs font-bold text-amber-300 hover:bg-amber-500/20"><FileBarChart2 size={13} />Latest Review</button>
-                    <button type="button" onClick={() => setShowGuide(true)} className="flex items-center gap-1.5 rounded-lg border border-emerald-500/20 bg-emerald-500/10 px-2.5 py-1.5 text-xs font-bold text-emerald-300 hover:bg-emerald-500/20"><Terminal size={13} />Agent Guide</button>
-                </div>
-            </div>
+        <div className="flex h-full flex-col gap-7 overflow-y-auto px-8 pb-10 pt-7">
+            <PortfolioHeader positions={heldRows.length} totalUsd={live.totalUsd}
+                risk={risk} riskError={riskError} gain={gain} insight={insightSentence([...riskByTicker.values()])} hidden={isPrivacyMode}
+                priceSource={extras.priceSource} refreshedAt={extras.refreshedAt} onRefresh={() => { void refreshAll(); }}
+                onThesis={() => setShowThesis(true)} onReview={() => setShowReview(true)} onGuide={() => setShowGuide(true)} />
 
-            <div className="mb-2 flex flex-wrap items-center gap-2 rounded-lg border border-zinc-800 bg-zinc-900/60 px-3 py-2 text-xs">
-                <div role="group" aria-label="Scope" className="inline-flex overflow-hidden rounded-md border border-zinc-700 font-bold">
-                    {SCOPES.map(s => (
-                        <button key={s.id} type="button" aria-pressed={filter.scope === s.id}
-                            onClick={() => setFilter(f => ({ ...f, scope: s.id }))}
-                            className={`px-3 py-1 ${filter.scope === s.id ? 'bg-emerald-600 text-white' : 'bg-zinc-900 text-zinc-400 hover:text-zinc-200'}`}>
-                            {s.label} <span className="ml-1 text-[10px] opacity-80">{scopeCounts[s.id === 'all' ? 'all' : s.id]}</span>
-                        </button>
-                    ))}
-                </div>
-                <span className="mx-1 h-4 w-px bg-zinc-700" />
-                {CHIPS.map(c => (
-                    <button key={c.id} type="button" aria-pressed={filter.status === c.id} onClick={() => setStatus(c.id)}
-                        className={`flex items-center gap-1.5 rounded-md px-2.5 py-1 font-bold ${filter.status === c.id ? `${c.tone} text-white` : 'text-zinc-400 hover:text-zinc-200'}`}>
-                        {c.label}
-                        <span className="rounded-full bg-zinc-800 px-1.5 text-[10px] text-zinc-300">{chipCounts[c.id as keyof typeof chipCounts]}</span>
-                    </button>
-                ))}
-                <HelpTrigger topicId="riskReward" size={13} />
-                <ReduceCandidatesChip count={reduceCount} active={reduceActive} onToggle={() => {
-                    if (!reduceActive) setSort({ id: 'rr_ratio', dir: 'asc' });
-                    setStatus('reduce');
-                }} />
-                <button type="button" onClick={() => setSort({ id: 'action', dir: 'asc' })}
-                    className="rounded border border-zinc-700 px-2 py-1 font-bold text-amber-400 hover:bg-zinc-800">⚡ Prioritize actions</button>
+            {extras.error && <div className="rounded bg-amber-900/30 px-3 py-1.5 text-xs text-amber-300">{extras.error}: live prices, sectors and % changes may be missing.</div>}
+            {extras.loading && <div className="text-xs text-zinc-500">Loading live prices…</div>}
 
-                <div className="ml-auto flex flex-wrap items-center gap-2">
-                    <label className="flex items-center gap-1 text-zinc-500">Sector
-                        <select aria-label="Sector" value={filter.sector} onChange={e => setFilter(f => ({ ...f, sector: e.target.value }))}
-                            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-zinc-300">
-                            <option value="all">All</option>
-                            {sectors.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </label>
-                    <label className="flex items-center gap-1 text-zinc-500">Strategy
-                        <select aria-label="Strategy" value={filter.strategy} onChange={e => setFilter(f => ({ ...f, strategy: e.target.value }))}
-                            className="rounded border border-zinc-700 bg-zinc-900 px-2 py-1 text-zinc-300">
-                            <option value="all">All</option>
-                            {strategies.map(s => <option key={s} value={s}>{s}</option>)}
-                        </select>
-                    </label>
-                    <form onSubmit={async e => {
-                        e.preventDefault();
-                        const input = e.currentTarget.elements.namedItem('watchlistTicker') as HTMLInputElement;
-                        const ticker = input.value.trim().toUpperCase();
-                        if (!ticker) return;
-                        try { await addToWatchlist(ticker); input.value = ''; await refreshRows(); } catch (err) { console.error('Error adding to watchlist:', err); }
-                    }} className="flex items-center rounded-lg border border-zinc-700 bg-zinc-800 px-2 py-0.5 focus-within:border-indigo-500/50">
-                        <input name="watchlistTicker" type="text" placeholder="Add ticker…" aria-label="Add ticker to watchlist"
-                            className="w-24 bg-transparent px-1 py-0.5 text-xs font-bold text-white placeholder:text-slate-500 focus:outline-none" />
-                        <button type="submit" className="px-2 text-xs font-black text-indigo-400 hover:text-indigo-300">+ Add</button>
-                    </form>
-                    <button type="button" onClick={() => setShowFilterRow(s => !s)} aria-pressed={showFilterRow}
-                        className={`flex items-center gap-1.5 rounded px-3 py-1 ${showFilterRow ? 'border border-amber-500/50 bg-amber-500/20 text-amber-400' : 'bg-zinc-800 text-zinc-300 hover:bg-zinc-700'}`}>
-                        <Filter size={13} /> Filter
-                    </button>
-                    <ColumnPicker order={prefs.order} visible={prefs.visible} columns={COLUMNS} onToggle={prefs.toggle} onMove={prefs.move} onReset={prefs.reset} />
-                    <button type="button" onClick={() => { void refreshAll(); }} className="rounded bg-zinc-800 px-3 py-1 text-zinc-300 hover:bg-zinc-700">↻ Refresh</button>
-                </div>
-            </div>
+            <div className="grid grid-cols-1 items-start gap-12 xl:grid-cols-[minmax(0,1fr)_400px]">
+                <section aria-label="Posiciones" className="min-w-0">
+                    <PortfolioToolbar filter={filter} onFilter={setFilter} scopeCounts={scopeCounts} chipCounts={chipCounts}
+                        sectors={sectorOptions(tableRows, sectorOf)} strategies={strategyOptions(tableRows)}
+                        reduceCount={reduceCount} reduceActive={reduceActive} onToggleStatus={setStatus}
+                        onToggleReduce={() => { if (!reduceActive) setSort({ id: 'rr_ratio', dir: 'asc' }); setStatus('reduce'); }}
+                        onPrioritize={() => setSort({ id: 'action', dir: 'asc' })}
+                        showFilterRow={showFilterRow} onToggleFilterRow={() => setShowFilterRow(s => !s)}
+                        onAddTicker={async t => { await addToWatchlist(t); await refreshRows(); }}
+                        picker={{ order: prefs.order, visible: prefs.visible, columns: COLUMNS, onToggle: prefs.toggle, onMove: prefs.move, onReset: prefs.reset }} />
+                    <p className="mb-2 flex items-center gap-3 text-xs text-slate-400">
+                        <span className="inline-flex items-center gap-1.5"><i className="inline-block h-1 w-3 rounded-sm bg-slate-600" />Peso</span>
+                        <span className="inline-flex items-center gap-1.5"><i className="inline-block h-1 w-3 rounded-sm bg-amber-400" />Riesgo</span>
+                        <span>misma escala, 0–40 %</span>
+                    </p>
+                    <PositionsTable
+                        rows={shown} columnIds={columnIds} initialSort={ACCOUNTING_PRESET.sort} sort={sort} onSortChange={setSort}
+                        totals={ACCOUNTING_PRESET.totals} totalLabel={n => `TOTAL (${n})`} widths={prefs.widths} onResize={prefs.resize}
+                        filters={showFilterRow ? filter.text : undefined}
+                        onFilterChange={(id, value) => setFilter(f => ({ ...f, text: { ...f.text, [id]: value } }))}
+                        selectedTicker={selectedRow?.ticker ?? null}
+                        onRowClick={row => setSelected(row.ticker)}
+                        tickerAddon={row => (
+                            <button type="button" onClick={e => { e.stopPropagation(); void toggleWatch(row); }}
+                                title={row.isWatched ? 'Remove from watchlist' : 'Add to watchlist'}
+                                aria-label={row.isWatched ? `Remove ${row.ticker} from watchlist` : `Add ${row.ticker} to watchlist`}
+                                className="p-0.5 focus:outline-none">
+                                <Star size={13} className={row.isWatched ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-600 hover:text-yellow-400'} />
+                            </button>
+                        )}
+                        emptyMessage={filter.scope === 'watchlist' ? 'Nothing on the watchlist matches.' : 'No stocks match these filters.'}
+                    />
+                    <p className="mx-2 mt-3 text-xs leading-relaxed text-slate-400">
+                        Riesgo = peso × volatilidad, normalizado a 100 % (sin correlaciones). Ganancia = precio actual − costo promedio, distinta del
+                        potencial de una valoración. Valor, peso y ganancia usan el precio en vivo (el de la fuente indicada arriba); pesos sobre el total con la caja
+                        incluida. El riesgo es un ranking que suma 100 %, no dinero.
+                    </p>
+                </section>
 
-            {extras.error && <div className="mb-2 rounded bg-amber-900/30 px-3 py-1.5 text-xs text-amber-300">{extras.error}: live prices, sectors and % changes may be missing.</div>}
-            {extras.loading && <div className="mb-2 text-xs text-zinc-500">Loading live prices…</div>}
-
-            <div className="min-h-0 flex-1 overflow-auto">
-                <PositionsTable
-                    rows={shown}
-                    columnIds={columnIds}
-                    initialSort={PORTFOLIO_PRESET.sort}
-                    sort={sort}
-                    onSortChange={setSort}
-                    totals={PORTFOLIO_PRESET.totals}
-                    widths={prefs.widths}
-                    onResize={prefs.resize}
-                    filters={showFilterRow ? filter.text : undefined}
-                    onFilterChange={(id, value) => setFilter(f => ({ ...f, text: { ...f.text, [id]: value } }))}
-                    onRowClick={row => navigate(`/analysis?ticker=${row.ticker}`)}
-                    tickerAddon={row => (
-                        <button type="button" onClick={e => { e.stopPropagation(); void toggleWatch(row); }}
-                            title={row.isWatched ? 'Remove from watchlist' : 'Add to watchlist'}
-                            aria-label={row.isWatched ? `Remove ${row.ticker} from watchlist` : `Add ${row.ticker} to watchlist`}
-                            className="p-0.5 focus:outline-none">
-                            <Star size={13} className={row.isWatched ? 'fill-yellow-400 text-yellow-400' : 'text-zinc-600 hover:text-yellow-400'} />
-                        </button>
+                <div className="flex flex-col gap-8">
+                    {selectedRow && (
+                        <RiskPanel key={selectedRow.ticker} row={selectedRow} riskRow={riskByTicker.get(selectedRow.ticker)} risk={risk}
+                            rec={recommendations[selectedRow.ticker]} hidden={isPrivacyMode} onAnalyze={() => analyze(selectedRow.ticker)}
+                            actions={(
+                                <>
+                                    <TradeButtons ticker={selectedRow.ticker} size="sm" shares={suggestedShares({
+                                        actualPct: selectedRow.actualPct, targetPct: selectedRow.targetPct,
+                                        price: selectedRow.livePrice ?? selectedRow.currentPrice, portfolioValue: extras.totals.usd })} />
+                                    {brokerOn && <button type="button" onClick={() => setLogTicker(selectedRow.ticker)} title="Log a trade to journal"
+                                        className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-400 hover:bg-zinc-700 hover:text-amber-400">Log</button>}
+                                </>
+                            )} />
                     )}
-                    renderActions={row => (
-                        <>
-                            <TradeButtons ticker={row.ticker} size="sm" shares={suggestedShares({
-                                actualPct: row.actualPct, targetPct: row.targetPct,
-                                price: row.livePrice ?? row.currentPrice, portfolioValue: extras.totals.usd })} />
-                            {brokerOn && <button type="button" onClick={() => setLogTicker(row.ticker)} title="Log a trade to journal"
-                                className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-400 hover:bg-zinc-700 hover:text-amber-400">Log</button>}
-                            <button type="button" onClick={() => navigate(`/analysis?ticker=${row.ticker}`)} title="Analyze in Stock Analysis"
-                                className="rounded bg-zinc-800 px-2 py-0.5 text-[10px] font-bold text-zinc-400 hover:bg-zinc-700 hover:text-white">Analyze</button>
-                        </>
-                    )}
-                    emptyMessage={filter.scope === 'watchlist' ? 'Nothing on the watchlist matches.' : 'No stocks match these filters.'}
-                />
+                    <ImprovePanel hidden={isPrivacyMode} onResult={setOptimization} />
+                </div>
             </div>
 
             {showThesis && <InvestmentThesisModal onClose={() => setShowThesis(false)} />}

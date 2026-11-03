@@ -1,6 +1,6 @@
 import { describe, expect, it } from 'vitest';
 import { COLUMNS, COLUMNS_BY_ID } from './columns';
-import { PORTFOLIO_PRESET, THESIS_PRESET } from './presets';
+import { ACCOUNTING_PRESET, PORTFOLIO_PRESET, THESIS_PRESET } from './presets';
 import type { TableRow } from './columns';
 import type { PositionRow } from './positionMath';
 
@@ -89,5 +89,39 @@ describe('action sort', () => {
         const big = sort({ ...base, livePrice: 50 }, rec('ACCUMULATE', { fair_value: 200 })) as number;
         const small = sort({ ...base, livePrice: 50 }, rec('ACCUMULATE', { fair_value: 60 })) as number;
         expect(big).toBeLessThan(small);
+    });
+});
+
+describe('PRESERVE: existing registry behaviour the accounting columns must not change', () => {
+    it('the gain column is still fair value minus price, whatever the average cost is', () => {
+        const rec = { fair_value: 30 } as never;
+        const row: TableRow = { ...base, averageCost: 5, livePrice: 20 };
+        expect(COLUMNS_BY_ID.gain.sort!(row, rec)).toBe(10);
+        expect(COLUMNS_BY_ID.gain.label).toBe('Gain ($)');
+    });
+    it('the portfolio preset still resolves every column and keeps its default sort', () => {
+        expect(PORTFOLIO_PRESET.columns).toEqual(expect.arrayContaining(['symbol', 'action', 'rr_range', 'gain', 'upside', 'actualPct']));
+        expect(PORTFOLIO_PRESET.sort).toEqual({ id: 'action', dir: 'asc' });
+        expect(COLUMNS_BY_ID.symbol.isTicker).toBe(true);
+    });
+});
+
+describe('accounting columns', () => {
+    it('the accounting preset resolves its registry columns, sorted by weight descending, with no action column', () => {
+        expect(ACCOUNTING_PRESET.columns).toEqual(['symbol', 'acc_value', 'acc_riskWeight', 'acc_gain']);
+        for (const id of ACCOUNTING_PRESET.columns) expect(COLUMNS_BY_ID[id], id).toBeDefined();
+        expect(ACCOUNTING_PRESET.sort).toEqual({ id: 'acc_riskWeight', dir: 'desc' });
+        // Exactly one ticker column: `symbol` is always forced in, so a second one would render twice.
+        expect(ACCOUNTING_PRESET.columns.filter(id => COLUMNS_BY_ID[id].isTicker)).toEqual(['symbol']);
+        expect(COLUMNS_BY_ID.acc_symbol).toBeUndefined();
+    });
+    it('acc_gain is price minus average cost (not the valuation gap) and sorts by it', () => {
+        const row: TableRow = { ...base, shares: 2, averageCost: 10, livePrice: 12 };
+        expect(COLUMNS_BY_ID.acc_gain.sort!(row, { fair_value: 99 } as never)).toBe(4);
+        expect(COLUMNS_BY_ID.acc_gain.sort!({ ...base, averageCost: null }, undefined)).toBeNull();
+    });
+    it('acc_value sorts by market value and acc_riskWeight by weight', () => {
+        expect(COLUMNS_BY_ID.acc_value.sort!(base)).toBe(30);
+        expect(COLUMNS_BY_ID.acc_riskWeight.sort!(base)).toBe(3);
     });
 });

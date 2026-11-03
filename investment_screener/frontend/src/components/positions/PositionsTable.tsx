@@ -52,6 +52,10 @@ interface PositionsTableProps {
     filters?: Record<string, string>;
     onFilterChange?: (id: string, value: string) => void;
     onRowClick?: (row: TableRow) => void;
+    /** The row driving a side panel: highlighted and marked aria-selected. None by default. */
+    selectedTicker?: string | null;
+    /** Text of the totals row's first cell; default is the English "TOTAL · N held". */
+    totalLabel?: (heldCount: number) => string;
     /** Extra cell content before the ticker (the watch star). */
     tickerAddon?: (row: TableRow) => ReactNode;
     /** A trailing actions column. */
@@ -64,7 +68,7 @@ const ACTIONS_WIDTH = 190;
 
 export function PositionsTable({
     rows, columnIds, initialSort, sort: controlledSort, onSortChange, totals = false, widths = {}, onResize,
-    filters, onFilterChange, onRowClick, tickerAddon, renderActions, actionsWidth = ACTIONS_WIDTH,
+    filters, onFilterChange, onRowClick, selectedTicker, totalLabel, tickerAddon, renderActions, actionsWidth = ACTIONS_WIDTH,
     emptyMessage = 'No stocks to show.',
 }: PositionsTableProps) {
     const recommendations = useRecommendations();
@@ -176,12 +180,13 @@ export function PositionsTable({
                         const rec = recommendations[row.ticker];
                         return (
                             <tr key={row.ticker} onClick={onRowClick ? () => onRowClick(row) : undefined}
-                                className={`border-b border-zinc-800 ${riskRewardRowAccent(rec)} ${onRowClick ? 'cursor-pointer' : ''} ${i % 2 ? 'bg-zinc-900/50' : 'bg-zinc-900'} hover:bg-zinc-800/70`}>
+                                aria-selected={selectedTicker != null ? row.ticker === selectedTicker : undefined}
+                                className={`border-b border-zinc-800 ${riskRewardRowAccent(rec)} ${onRowClick ? 'cursor-pointer' : ''} ${row.ticker === selectedTicker ? 'bg-slate-700/40 shadow-[inset_2px_0_0_0_#94a3b8]' : i % 2 ? 'bg-zinc-900/50' : 'bg-zinc-900'} hover:bg-zinc-800/70`}>
                                 {columns.map(col => (
                                     <td key={col.id}
                                         style={{ backgroundColor: col.background?.(row, rec) }}
                                         className={`overflow-hidden px-3 py-2 ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
-                                        {col.id === 'symbol' && tickerAddon
+                                        {col.isTicker && tickerAddon
                                             ? <span className="flex items-center gap-1.5">{tickerAddon(row)}{col.cell(row, { rec, hidden: isPrivacyMode })}</span>
                                             : col.cell(row, { rec, hidden: isPrivacyMode })}
                                     </td>
@@ -201,7 +206,7 @@ export function PositionsTable({
                             {columns.map((col, i) => (
                                 <td key={col.id} className={`px-3 py-2 ${col.align === 'right' ? 'text-right' : 'text-left'}`}>
                                     {i === 0
-                                        ? <span className="whitespace-nowrap">{`TOTAL · ${totalsRow.heldCount} held`}</span>
+                                        ? <span className="whitespace-nowrap">{totalLabel ? totalLabel(totalsRow.heldCount) : `TOTAL · ${totalsRow.heldCount} held`}</span>
                                         : col.total ? col.total(totalsRow, { hidden: isPrivacyMode }) : null}
                                 </td>
                             ))}

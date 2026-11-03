@@ -17,6 +17,8 @@
  *     - fetchPortfolioSummary() - Fetches account-level valuation metrics (USD/CAD) and YTD performance
  *     - saveProjection() - Persists a versioned DCF projection object to the backend
  *     - fetchPositionRows() - One row per ticker (shares, weights, target, thesis documents) for the shared positions table
+ *     - fetchPortfolioRisk() - Per-holding volatility, drawdown and risk contribution (GET /api/portfolio/risk)
+ *     - optimizePortfolio() - Suggested target weights and orders for one objective (POST /api/portfolio/optimize)
  */
 import { normalizePositionRows, type PositionRow } from '../components/positions/positionMath';
 export interface StockData {
@@ -615,6 +617,70 @@ export const removeFromWatchlist = async (ticker: string): Promise<{ success: bo
     });
     const data = await res.json();
     if (!res.ok) throw new Error(data.error || 'Failed to remove from watchlist');
+    return data;
+};
+
+// ─── Portfolio risk API ───────────────────────────────────────────────────────
+
+export interface RiskRow {
+    ticker: string;
+    market_value: number;
+    weight_pct: number;
+    volatility_ann: number | null;
+    max_drawdown_3y: number | null;
+    sharpe_3y: number | null;
+    sortino_3y: number | null;
+    downside_beta_3y: number | null;
+    risk_contribution_pct: number | null;
+    /** True when the holding has too little history and its risk is an estimate. */
+    estimated: boolean;
+}
+
+export interface PortfolioRisk {
+    as_of: string;
+    portfolio: {
+        volatility_ann: number | null;
+        holdings_with_history: number;
+        holdings_total: number;
+        market_value_usd: number;
+        cash_usd: number;
+    };
+    medians: { volatility_ann: number | null; max_drawdown_3y: number | null };
+    rows: RiskRow[];
+}
+
+export type OptimizeObjective = 'min_volatility' | 'risk_parity' | 'max_sharpe';
+
+export interface OptimizeResponse {
+    objective: OptimizeObjective;
+    as_of: string;
+    weights: Array<{ ticker: string; current_pct: number; target_pct: number }>;
+    orders: Array<{ action: 'BUY' | 'SELL'; ticker: string; shares: number; amount_usd: number }>;
+    effect: {
+        volatility_before: number | null;
+        volatility_after: number | null;
+        top_risk_before: { ticker: string; pct: number } | null;
+        top_risk_after: { ticker: string; pct: number } | null;
+    };
+    cash_after_usd: number | null;
+    warnings: string[];
+}
+
+export const fetchPortfolioRisk = async (): Promise<PortfolioRisk> => {
+    const res = await fetch('/api/portfolio/risk');
+    if (!res.ok) throw new Error('Failed to fetch portfolio risk');
+    return res.json();
+};
+
+/** Suggestions only: the backend never places an order. Slow (downloads three years of prices). */
+export const optimizePortfolio = async (objective: OptimizeObjective): Promise<OptimizeResponse> => {
+    const res = await fetch('/api/portfolio/optimize', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ objective }),
+    });
+    const data = await res.json();
+    if (!res.ok) throw new Error(data.error || 'Failed to optimize portfolio');
     return data;
 };
 
