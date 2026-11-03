@@ -1,0 +1,188 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Portafolio — Tablero de salud</title>
+<style>
+:root{--background:#020617;--surface:#0f172a;--primary:#f59e0b;--secondary:#94a3b8;--text:#e2e8f0;--accent:#fbbf24;
+--slate-800:#1e293b;--slate-700:#334155;--slate-600:#475569;--slate-400:#94a3b8;--slate-300:#cbd5e1;--slate-200:#e2e8f0;--slate-100:#f1f5f9;
+--emerald-400:#34d399;--emerald-300:#6ee7b7;--red-400:#f87171;--zinc-800:#27272a;--zinc-300:#d4d4d8;--zinc-700:#3f3f46;
+--font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+*{box-sizing:border-box}
+body{margin:0;width:1440px;background:var(--background);color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+a,button,summary{transition:all .2s ease-in-out}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);display:flex;flex-direction:column;padding:20px 12px 12px}
+.logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+.search{margin:0 4px 12px}
+.search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+.search input::placeholder{color:var(--slate-400)}
+.sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+.sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+.sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+.sidebar nav a i{font-style:normal;width:18px;text-align:center}
+.sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+main{flex:1;min-width:0;padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 2px}
+h2{font-size:18px;font-weight:600;color:var(--slate-100);margin:0}
+h3{font-size:14px;font-weight:600;color:var(--slate-100);margin:0}
+.sub{font-size:14px;color:var(--slate-400);margin:0}
+.label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+.card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;padding:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+.pos{color:var(--emerald-400)}.neg{color:var(--red-400)}.muted{color:var(--slate-400)}.mono{font-family:var(--mono)}
+.stamp{font-size:12px;color:var(--slate-400)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.head .actions{display:flex;align-items:center;gap:8px}
+button{font-family:inherit;cursor:pointer}
+.btn-utility{background:var(--zinc-800);color:var(--zinc-300);border:0;border-radius:4px;padding:0 14px;min-height:44px;font-size:12px;font-weight:600}
+.btn-utility:hover{background:var(--zinc-700);transform:translateY(-1px)}
+.btn-primary{background:#047857;color:#fff;border:0;border-radius:4px;padding:0 16px;min-height:44px;font-size:14px;font-weight:600}
+.btn-primary:hover{background:#059669;transform:translateY(-1px)}
+.btn-sm{background:rgba(245,158,11,.1);color:var(--accent);border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:0 10px;min-height:32px;font-size:12px;font-weight:700;white-space:nowrap}
+.btn-sm:hover{background:rgba(245,158,11,.2)}
+.btn-ghost{background:var(--slate-800);color:var(--slate-200);border:0;border-radius:4px;padding:0 14px;min-height:44px;font-size:13px;font-weight:600}
+.btn-ghost:hover{background:var(--slate-700)}
+.kpis{display:grid;gap:12px}
+.kpi .v{font-family:var(--mono);font-size:24px;font-weight:700;color:#fff;margin-top:6px;line-height:1.1}
+.kpi .v small{font-size:13px;font-weight:500;color:var(--slate-400)}
+.kpi .d{font-size:12px;color:var(--slate-400);margin-top:4px;font-family:var(--mono)}
+.seg{display:inline-flex;border:1px solid var(--slate-700);border-radius:8px;overflow:hidden}
+.seg button{background:var(--surface);color:var(--slate-400);border:0;padding:0 14px;min-height:44px;font-size:13px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--slate-800);color:var(--primary)}
+.seg button:hover{color:var(--slate-200)}
+.seg .c{font-family:var(--mono);font-size:11px;margin-left:6px;opacity:.9}
+.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.controls .grow{margin-left:auto;display:flex;gap:8px;align-items:center}
+.pending{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:12px;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--primary);display:inline-block}
+.tablewrap{overflow:auto;border:1px solid var(--slate-700);border-radius:8px;background:rgba(15,23,42,.8)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--slate-800);color:var(--slate-400);font-weight:600;text-align:left;padding:9px 12px;white-space:nowrap}
+td{padding:8px 12px;color:var(--slate-300);white-space:nowrap}
+tbody tr{border-top:1px solid var(--slate-700)}
+tbody tr:hover{background:rgba(30,41,59,.4)}
+tfoot td{background:var(--slate-800);color:#fff;font-weight:700;border-top:1px solid var(--slate-700)}
+.num{text-align:right;font-family:var(--mono)}
+th.num{font-family:var(--font-sans)}
+.tick{font-family:var(--mono);color:var(--slate-200);font-weight:600}
+.bar{height:6px;border-radius:3px;background:var(--slate-800);overflow:hidden;display:block}
+.bar i{display:block;height:100%;background:var(--secondary);border-radius:3px}
+.range{position:relative;height:10px;border-radius:5px;border:1px dashed var(--slate-600);background:repeating-linear-gradient(90deg,rgba(148,163,184,.08) 0 8px,transparent 8px 16px);margin:18px 0 6px}
+.range .mk{position:absolute;top:-5px;width:2px;height:18px;background:#fff;border-radius:1px}
+.range .mk b{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:#fff;white-space:nowrap}
+.range .zone{position:absolute;top:0;height:100%;border-radius:5px}
+.rl{display:flex;justify-content:space-between;font-size:11px;color:var(--slate-400);font-family:var(--mono)}
+.empty{border:1px dashed var(--slate-700);border-radius:8px;padding:14px 16px;color:var(--slate-400);font-size:13px}
+.callout{border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.1);border-radius:8px;padding:14px 16px}
+.sr{position:absolute;left:-9999px}
+.cashline{display:flex;justify-content:space-between;align-items:baseline}
+
+.k5{grid-template-columns:repeat(5,1fr)}
+.k5 .card{display:flex;flex-direction:column}
+.prog{height:8px;border-radius:4px;background:var(--slate-800);margin-top:10px;overflow:hidden}
+.prog i{display:block;height:100%;width:0;background:var(--emerald-400)}
+.k5 .kc{margin-top:auto;padding-top:10px}
+.k5 .kc a{color:var(--accent);font-size:12px;font-weight:700}
+.grp{display:flex;flex-direction:column;gap:8px}
+.grp .gh{display:flex;align-items:center;gap:10px}
+.cnt{font-family:var(--mono);font-size:12px;font-weight:700;border-radius:4px;padding:1px 8px;border:1px solid var(--slate-700);color:var(--slate-300)}
+.cnt.warn{color:var(--accent);border-color:rgba(245,158,11,.3);background:rgba(245,158,11,.1)}
+.cnt.ok{color:var(--emerald-400)}
+.queue td:first-child{width:36px}
+input[type=checkbox]{width:18px;height:18px;accent-color:#047857}
+.rank{font-family:var(--mono);color:var(--slate-400);font-size:12px}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search"><label for="s" class="sr">Buscar ticker</label><input id="s" type="text" placeholder="Buscar ticker…"></div>
+    <nav aria-label="Navegación principal"><a href="#"><i aria-hidden="true">▦</i> Heatmap</a><a href="#"><i aria-hidden="true">◴</i> Resumen de portafolio</a><a href="#" aria-current="page"><i aria-hidden="true">▤</i> Portafolio</a><a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a><a href="#"><i aria-hidden="true">⚡</i> Brief diario</a><a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a><a href="#"><i aria-hidden="true">▣</i> Fuentes</a></nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+  <main><header class="head">
+  <div>
+    <h1>Portafolio</h1>
+    <p class="sub">13 posiciones abiertas · valores en USD</p>
+  </div>
+  <div class="actions">
+    <span class="stamp" role="status">Precios de TradingView · hace 5 min · 13 de 13 con precio</span>
+    <button class="btn-utility" type="button">↻ Actualizar precios</button>
+    <button class="btn-utility" type="button" aria-haspopup="menu">Tesis · Última revisión · Guía ▾</button>
+  </div>
+</header>
+<section aria-label="Salud de los datos" class="kpis k5">
+  <div class="card kpi"><span class="label">Cobertura de valoración</span><div class="v" style="color:var(--accent)">0 / 13 <small>0 %</small></div><div class="prog" role="progressbar" aria-valuenow="0" aria-valuemin="0" aria-valuemax="13" aria-label="Posiciones valoradas"><i></i></div><div class="kc"><a href="#">Analizar las 13</a></div></div>
+  <div class="card kpi"><span class="label">Valoraciones vencidas</span><div class="v">0 <small>de 0 guardadas</small></div><div class="d" style="font-family:var(--font-sans)">Vencen a los 30 días. No hay ninguna que vencer: primero hay que crearlas.</div></div>
+  <div class="card kpi"><span class="label">Drift vs objetivo</span><div class="v" style="font-size:16px;color:var(--accent);line-height:1.3">Sin objetivos definidos</div><div class="d" style="font-family:var(--font-sans)">0 de 13 con peso objetivo. Peso mayor hoy: APP 20,8 %.</div><div class="kc"><a href="#">Definir objetivos</a></div></div>
+  <div class="card kpi" style="border-style:dashed;border-color:var(--slate-700)"><span class="label">Cash disponible</span><div class="v">124,38 <small>USD</small></div><div class="d" style="font-family:var(--font-sans)">3,2 % del total · no es una posición</div></div>
+  <div class="card kpi"><span class="label">Precios actualizados</span><div class="v" style="font-size:18px">hace 5 min</div><div class="d" style="font-family:var(--font-sans)">TradingView · 13 de 13 con precio</div><div class="kc"><button class="btn-utility" type="button" style="min-height:32px">↻ Actualizar</button></div></div>
+</section>
+<section aria-label="Totales" class="kpis" style="grid-template-columns:repeat(4,1fr)">
+  <div class="card kpi" style="padding:12px 16px"><span class="label">Valor total</span><div class="v" style="font-size:20px">3.908,80 <small>USD</small></div></div>
+  <div class="card kpi" style="padding:12px 16px"><span class="label">Acciones · costo</span><div class="v" style="font-size:20px">3.784,42 <small>/ 3.986,35</small></div></div>
+  <div class="card kpi" style="padding:12px 16px"><span class="label">Ganancia (precio − costo)</span><div class="v neg" style="font-size:20px">−201,93 <small>−5,07 %</small></div></div>
+  <div class="card kpi" style="padding:12px 16px"><span class="label">Potencial a valor justo</span><div class="v" style="font-size:14px;color:var(--accent);line-height:1.6">Sin valoración · Analizar</div></div>
+</section>
+<section class="controls" aria-label="Controles">
+  <div class="seg" role="group" aria-label="Alcance"><button type="button" aria-pressed="true">Tenencias<span class="c">13</span></button><button type="button" aria-pressed="false">Watchlist</button><button type="button" aria-pressed="false">Todo</button></div>
+  <div class="seg" role="group" aria-label="Vista"><button type="button" aria-pressed="true">Por estado de datos</button><button type="button" aria-pressed="false">Vista analista · 35 columnas</button></div>
+</section>
+<section class="grp" aria-labelledby="g1"><div class="gh"><h2 id="g1">Con valoración vigente</h2><span class="cnt ok">0</span></div>
+  <div class="empty">Aquí aparecerán las posiciones con una valoración de menos de 30 días: valor justo, rango bear–base–bull, reward:risk, soporte y check. Hoy ninguna llega aquí.</div></section>
+<section class="grp" aria-labelledby="g2"><div class="gh"><h2 id="g2">Vencidas (&gt;30 días)</h2><span class="cnt">0</span></div>
+  <div class="empty">Sin valoraciones vencidas porque no existe ninguna guardada. Cuando una pase de 30 días saltará aquí para reanalizarla.</div></section>
+<section class="grp" aria-labelledby="g3"><div class="gh"><h2 id="g3">Sin analizar</h2><span class="cnt warn">13</span><span class="muted" style="font-size:12px">Cola de trabajo ordenada por peso en el portafolio</span>
+  <div style="margin-left:auto;display:flex;gap:8px"><button class="btn-ghost" type="button">Analizar seleccionadas (0)</button><button class="btn-primary" type="button">Analizar las 13</button></div></div>
+  <div class="tablewrap"><table class="queue"><caption class="sr">Posiciones sin analizar</caption>
+  <thead><tr><th scope="col"><input type="checkbox" aria-label="Seleccionar todas"></th><th scope="col">#</th><th scope="col">Ticker</th><th scope="col" class="num">Acciones</th><th scope="col" class="num">Costo prom.</th><th scope="col" class="num">Precio</th><th scope="col" class="num">Valor de mercado</th><th scope="col" class="num">Peso</th><th scope="col" class="num" title="Precio actual menos costo promedio">Ganancia</th><th scope="col"><span class="sr">Acción</span></th></tr></thead>
+  <tbody><tr><td><input type="checkbox" aria-label="Seleccionar APP"></td><td class="rank">1</td><td><span class="tick">APP</span> <span class="muted" style="font-size:12px">Applovin</span></td>
+<td class="num">3,4015</td><td class="num">283,51</td><td class="num">238,51</td><td class="num">811,29</td><td class="num">20,8 %</td>
+<td class="num neg">−153,07 <span style="font-size:11px">(−15,9 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar SFD"></td><td class="rank">2</td><td><span class="tick">SFD</span> <span class="muted" style="font-size:12px">Smithfield Foods</span></td>
+<td class="num">28,5653</td><td class="num">19,67</td><td class="num">18,40</td><td class="num">525,60</td><td class="num">13,4 %</td>
+<td class="num neg">−36,28 <span style="font-size:11px">(−6,5 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar NFLX"></td><td class="rank">3</td><td><span class="tick">NFLX</span> <span class="muted" style="font-size:12px">Netflix</span></td>
+<td class="num">6,6108</td><td class="num">66,56</td><td class="num">62,40</td><td class="num">412,51</td><td class="num">10,6 %</td>
+<td class="num neg">−27,50 <span style="font-size:11px">(−6,2 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar AXP"></td><td class="rank">4</td><td><span class="tick">AXP</span> <span class="muted" style="font-size:12px">American Express</span></td>
+<td class="num">1,0003</td><td class="num">302,92</td><td class="num">326,30</td><td class="num">326,40</td><td class="num">8,4 %</td>
+<td class="num pos">+23,39 <span style="font-size:11px">(+7,7 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar SFM"></td><td class="rank">5</td><td><span class="tick">SFM</span> <span class="muted" style="font-size:12px">Sprouts Farmers Market</span></td>
+<td class="num">5,6138</td><td class="num">55,24</td><td class="num">53,27</td><td class="num">299,05</td><td class="num">7,7 %</td>
+<td class="num neg">−11,06 <span style="font-size:11px">(−3,6 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar GOOGL"></td><td class="rank">6</td><td><span class="tick">GOOGL</span> <span class="muted" style="font-size:12px">Alphabet</span></td>
+<td class="num">1</td><td class="num">278,00</td><td class="num">277,29</td><td class="num">277,29</td><td class="num">7,1 %</td>
+<td class="num neg">−0,71 <span style="font-size:11px">(−0,3 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar VICI"></td><td class="rank">7</td><td><span class="tick">VICI</span> <span class="muted" style="font-size:12px">VICI Properties</span></td>
+<td class="num">10,283</td><td class="num">24,61</td><td class="num">24,64</td><td class="num">253,37</td><td class="num">6,5 %</td>
+<td class="num pos">+0,31 <span style="font-size:11px">(+0,1 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar VITL"></td><td class="rank">8</td><td><span class="tick">VITL</span> <span class="muted" style="font-size:12px">Vital Farms</span></td>
+<td class="num">20,8589</td><td class="num">8,87</td><td class="num">9,05</td><td class="num">188,77</td><td class="num">4,8 %</td>
+<td class="num pos">+3,75 <span style="font-size:11px">(+2,0 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar DECK"></td><td class="rank">9</td><td><span class="tick">DECK</span> <span class="muted" style="font-size:12px">Deckers Outdoor</span></td>
+<td class="num">2</td><td class="num">83,00</td><td class="num">83,49</td><td class="num">166,98</td><td class="num">4,3 %</td>
+<td class="num pos">+0,98 <span style="font-size:11px">(+0,6 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar TMUS"></td><td class="rank">10</td><td><span class="tick">TMUS</span> <span class="muted" style="font-size:12px">T-Mobile US</span></td>
+<td class="num">1</td><td class="num">149,91</td><td class="num">157,12</td><td class="num">157,12</td><td class="num">4,0 %</td>
+<td class="num pos">+7,21 <span style="font-size:11px">(+4,8 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar BKNG"></td><td class="rank">11</td><td><span class="tick">BKNG</span> <span class="muted" style="font-size:12px">Booking Holdings</span></td>
+<td class="num">1</td><td class="num">157,00</td><td class="num">152,26</td><td class="num">152,26</td><td class="num">3,9 %</td>
+<td class="num neg">−4,74 <span style="font-size:11px">(−3,0 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar UBER"></td><td class="rank">12</td><td><span class="tick">UBER</span> <span class="muted" style="font-size:12px">Uber Technologies</span></td>
+<td class="num">1,999</td><td class="num">69,03</td><td class="num">66,43</td><td class="num">132,79</td><td class="num">3,4 %</td>
+<td class="num neg">−5,20 <span style="font-size:11px">(−3,8 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr><tr><td><input type="checkbox" aria-label="Seleccionar NVO"></td><td class="rank">13</td><td><span class="tick">NVO</span> <span class="muted" style="font-size:12px">Novo Nordisk</span></td>
+<td class="num">2</td><td class="num">40,00</td><td class="num">40,49</td><td class="num">80,98</td><td class="num">2,1 %</td>
+<td class="num pos">+0,98 <span style="font-size:11px">(+1,2 %)</span></td>
+<td style="text-align:right"><button class="btn-sm" type="button">Sin valoración · Analizar</button></td></tr></tbody></table></div>
+  <p class="stamp" style="margin:0">Caja (124,38 USD) se muestra arriba; no entra en la cola porque no es una posición analizable.</p></section></main>
+</div>
+</body>
+</html>

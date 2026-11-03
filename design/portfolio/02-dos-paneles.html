@@ -1,0 +1,295 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Portafolio — Riesgo y mejora de cartera</title>
+<style>
+:root{--background:#020617;--surface:#0f172a;--primary:#f59e0b;--secondary:#94a3b8;--text:#e2e8f0;
+--slate-800:#1e293b;--slate-700:#334155;--slate-400:#94a3b8;--slate-300:#cbd5e1;--slate-200:#e2e8f0;--slate-100:#f1f5f9;
+--emerald-400:#34d399;--red-400:#f87171;
+--font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+*{box-sizing:border-box}
+body{margin:0;width:1440px;background:var(--background);color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+a,button,summary{transition:all .2s ease-in-out}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);display:flex;flex-direction:column;padding:20px 12px 12px}
+.logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+.search{margin:0 4px 12px}
+.search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+.search input::placeholder{color:var(--slate-400)}
+.sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+.sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+.sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+.sidebar nav a i{font-style:normal;width:18px;text-align:center}
+.sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+.sr{position:absolute;left:-9999px}
+button{font-family:inherit;cursor:pointer}
+.pos{color:var(--emerald-400)}.neg{color:var(--red-400)}.muted{color:var(--slate-400)}
+main{flex:1;min-width:0;padding:28px 32px 40px;display:flex;flex-direction:column;gap:28px}
+/* hero */
+.top{display:flex;justify-content:space-between;align-items:flex-start;gap:24px}
+h1{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em;margin:0 0 6px}
+.hero{display:flex;align-items:baseline;gap:16px;flex-wrap:wrap}
+.hero .v{font-family:var(--mono);font-size:40px;font-weight:700;color:#fff;line-height:1.1}
+.hero .v small{font-size:16px;font-weight:500;color:var(--slate-400);margin-left:6px}
+.chip{font-size:13px;color:var(--slate-300);border:1px solid var(--slate-700);border-radius:999px;padding:3px 12px;white-space:nowrap}
+.chip b{font-family:var(--mono);font-weight:600;color:var(--slate-100)}
+.story{margin:10px 0 0;font-size:16px;color:var(--slate-200);max-width:760px;line-height:1.5}
+.story .g{font-family:var(--mono);font-weight:600}
+.stamp{font-size:12px;color:var(--slate-400);margin:8px 0 0}
+.tools{display:flex;align-items:center;gap:4px}
+.link{background:none;border:0;color:var(--slate-400);font-size:13px;font-weight:600;min-height:44px;padding:0 12px;border-radius:4px}
+.link:hover{color:var(--slate-200);background:var(--slate-800)}
+/* workspace */
+.split{display:grid;grid-template-columns:minmax(0,1fr) 400px;gap:48px;align-items:start}
+.scope{display:flex;gap:20px;border-bottom:1px solid var(--slate-700)}
+.scope button{background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--slate-400);min-height:44px;padding:0 2px;font-size:14px;font-weight:600}
+.scope button[aria-pressed="true"]{color:#fff;border-bottom-color:var(--slate-200)}
+.scope button:hover{color:var(--slate-200)}
+table{width:100%;border-collapse:collapse;font-size:14px}
+thead th{color:var(--slate-400);font-size:12px;font-weight:600;text-align:left;padding:12px 8px 8px}
+thead th.num{text-align:right}
+tbody th,tbody td{padding:9px 8px;border-bottom:1px solid var(--slate-800);font-weight:400;text-align:left}
+tbody tr:hover{background:rgba(30,41,59,.4)}
+tr.sel{background:rgba(148,163,184,.08)!important;box-shadow:inset 2px 0 0 var(--slate-400)}
+.num{text-align:right!important;font-family:var(--mono);font-variant-numeric:tabular-nums;color:var(--slate-200)}
+.tk{background:none;border:0;padding:0;color:inherit;font:inherit;text-align:left;display:flex;flex-direction:column;min-height:40px;justify-content:center}
+.tk .t{font-family:var(--mono);font-weight:700;color:var(--slate-100);font-size:14px}
+.tk .n{font-size:12px;color:var(--slate-400)}
+.wt{display:inline-flex;align-items:center;gap:10px}
+.bar{width:72px;height:4px;border-radius:2px;background:var(--slate-800);display:block}
+.bar i{display:block;height:100%;background:var(--slate-400);border-radius:2px}
+.wv{width:52px;text-align:right;display:inline-block}
+.g{display:inline-block;width:68px;text-align:right}
+.gp{display:inline-block;width:68px;text-align:right;font-size:12px;color:var(--slate-400)}
+tfoot td,tfoot th{padding:12px 8px;border-top:1px solid var(--slate-700);font-weight:700;color:#fff;text-align:left}
+tfoot .num{color:#fff}
+tfoot .gp{color:var(--slate-400);font-weight:400}
+.foot{font-size:12px;color:var(--slate-400);margin:12px 8px 0;line-height:1.6}
+.foot a{color:var(--slate-200)}
+/* panel */
+.panel{display:flex;flex-direction:column;gap:20px;padding-top:6px}
+.panel .id{display:flex;justify-content:space-between;align-items:baseline}
+.panel h2{margin:0;font-family:var(--mono);font-size:24px;font-weight:700;color:#fff}
+.panel .px{font-family:var(--mono);font-size:20px;font-weight:700;color:#fff}
+.panel .meta{font-size:12px;color:var(--slate-400);margin:4px 0 0;line-height:1.5}
+.tab{display:flex;gap:20px;border-bottom:1px solid var(--slate-700)}
+.tab button{background:none;border:0;border-bottom:2px solid transparent;margin-bottom:-1px;color:var(--slate-400);min-height:44px;padding:0 2px;font-size:14px;font-weight:600}
+.tab button[aria-selected="true"]{color:#fff;border-bottom-color:var(--slate-200)}
+.verdict{font-size:16px;line-height:1.55;color:var(--slate-100);margin:0}
+.verdict .g{font-family:var(--mono);width:auto;font-weight:600}
+.btn-primary{background:var(--slate-200);color:var(--background);border:0;border-radius:4px;padding:0 20px;min-height:44px;font-size:14px;font-weight:700;align-self:flex-start}
+.btn-primary:hover{background:#fff;transform:translateY(-1px)}
+details{border-top:1px solid var(--slate-800);padding-top:4px}
+summary{cursor:pointer;color:var(--slate-400);font-size:13px;font-weight:600;min-height:44px;display:flex;align-items:center;list-style:none}
+summary::-webkit-details-marker{display:none}
+summary::before{content:"▸";margin-right:8px;font-size:11px}
+details[open] summary::before{content:"▾"}
+summary:hover{color:var(--slate-200)}
+details ul{margin:0 0 12px;padding-left:18px;color:var(--slate-300);font-size:13px;line-height:1.7}
+details p{margin:0 0 8px;font-size:12px;color:var(--slate-400);line-height:1.6}
+details a{color:var(--slate-200)}
+/* riesgo vs peso */
+.b{display:grid;grid-template-columns:120px 64px 52px;gap:8px;align-items:center;justify-content:end;height:20px}
+.b .bar{width:120px}
+.b .bv{font-size:12px;color:var(--slate-300);text-align:right}
+.b.r .bar i{background:var(--slate-100)}
+.b.w .bar i{background:#475569}
+.b.est .bar{background:none;outline:1px dashed var(--slate-400);outline-offset:0}
+.b.est .bar i{background:repeating-linear-gradient(90deg,var(--slate-400) 0 3px,transparent 3px 6px)}
+.bars{width:260px}
+.bars .lg{font-weight:400;display:inline-flex;gap:12px;margin-left:8px}
+.lg i{display:inline-block;width:12px;height:4px;border-radius:2px;margin-right:5px;vertical-align:middle}
+.lg .lw i{background:#475569}.lg .lr i{background:var(--slate-100)}
+.tg{display:none;font-size:12px;color:var(--slate-300);border:1px dashed var(--slate-400);border-radius:4px;padding:0 4px;text-align:center}
+body[data-opt="hrp"] .tg{display:block}
+.tg.same{color:var(--slate-400);border-color:var(--slate-700)}
+.sim{border:1px dashed var(--slate-400)}
+/* mejorar */
+.rail{display:flex;flex-direction:column;gap:32px}
+.improve h2{margin:0 0 2px;font-size:18px;font-weight:600;color:var(--slate-100)}
+.improve .sub{margin:0 0 8px;font-size:13px;color:var(--slate-400)}
+.steps{display:flex;align-items:center;gap:8px;margin:0 0 14px;padding:0;list-style:none;font-size:12px;color:var(--slate-400)}
+.steps li{display:flex;align-items:center;gap:6px}
+.steps li::after{content:"";width:14px;height:1px;background:var(--slate-700);margin-left:4px}
+.steps li:last-child::after{display:none}
+.steps .n{display:inline-flex;align-items:center;justify-content:center;width:18px;height:18px;border-radius:50%;border:1px solid var(--slate-700);font-size:11px;font-weight:700;color:var(--slate-300)}
+.steps .on .n{background:var(--slate-200);border-color:var(--slate-200);color:var(--background)}
+.steps .on{color:var(--slate-100);font-weight:600}
+.opts{border:0;margin:0;padding:0;display:grid;grid-template-columns:repeat(3,1fr);gap:8px}
+.opts label{position:relative;display:block;padding:12px;border:1px solid var(--slate-800);border-radius:8px;background:rgba(15,23,42,.5);cursor:pointer;min-height:44px}
+.opts label:hover{border-color:var(--slate-700)}
+.opts input{position:absolute;opacity:0;width:1px;height:1px}
+.opts label:has(input:checked){border-color:var(--slate-200);background:rgba(226,232,240,.06)}
+.opts label:has(input:focus-visible){outline:2px solid var(--primary);outline-offset:2px}
+.opts .viz{display:block;margin-bottom:8px}
+.opts b{display:block;color:var(--slate-100);font-size:14px;line-height:1.3}
+.opts span{display:block;margin-top:2px;font-size:12px;color:var(--slate-400);line-height:1.4}
+.simbox{margin-top:16px;padding:14px;border-radius:8px}
+.badge{display:inline-block;font-size:11px;font-weight:700;letter-spacing:.1em;text-transform:uppercase;color:var(--slate-300);border:1px dashed var(--slate-400);border-radius:4px;padding:2px 8px}
+.simbox p{margin:8px 0;font-size:12px;color:var(--slate-400);line-height:1.5}
+.orders{margin:8px 0 0;padding:0;list-style:none;font-size:14px;color:var(--slate-100)}
+.orders li{padding:7px 0;border-bottom:1px solid var(--slate-800)}
+.orders .m{font-family:var(--mono)}
+.fx{margin:12px 0 0;font-size:14px;color:var(--slate-100);line-height:1.5}
+.fx .m{font-family:var(--mono);font-weight:600}
+.nosim{display:none}
+body:not([data-opt="hrp"]) .simbox .yes{display:none}
+body:not([data-opt="hrp"]) .simbox .nosim{display:block}
+.card-r{display:flex;flex-direction:column;gap:0;margin:0}
+.card-r div{display:grid;grid-template-columns:96px 1fr;gap:12px;align-items:baseline;padding:9px 0;border-bottom:1px solid var(--slate-800)}
+.card-r dd{margin:0;font-size:13px;color:var(--slate-300)}
+.card-r dd b{display:block;color:var(--slate-100);font-size:14px;font-weight:600}
+.card-r dd span{font-size:12px;color:var(--slate-400)}
+.card-r dd .v{display:inline-block;margin-right:6px;padding:1px 6px;border-radius:4px;font-size:11px;font-weight:700;letter-spacing:.02em;text-transform:uppercase}
+.v-alto{background:rgba(248,113,113,.14);color:#f87171}
+.v-medio{background:rgba(148,163,184,.14);color:var(--slate-300)}
+.fine{margin:10px 0 0;font-size:11px;color:var(--slate-400);line-height:1.5}
+.card-r dt{font-family:var(--mono);font-size:20px;font-weight:700;color:#fff;text-align:right}
+[hidden]{display:none!important}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search"><label for="s" class="sr">Buscar ticker</label><input id="s" type="text" placeholder="Buscar ticker…"></div>
+    <nav aria-label="Navegación principal"><a href="#"><i aria-hidden="true">▦</i> Heatmap</a><a href="#"><i aria-hidden="true">◴</i> Resumen de portafolio</a><a href="#" aria-current="page"><i aria-hidden="true">▤</i> Portafolio</a><a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a><a href="#"><i aria-hidden="true">⚡</i> Brief diario</a><a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a><a href="#"><i aria-hidden="true">▣</i> Fuentes</a></nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+  <main>
+    <header class="top">
+      <div>
+        <h1>Portafolio · 13 posiciones</h1>
+        <div class="hero">
+          <span class="v" aria-label="Valor total 3.908,60 dólares">3.908,60<small>USD</small></span>
+          <span class="chip">Caja <b>124,38</b> USD · 3,2 %</span>
+          <span class="chip" title="Suma ponderada de volatilidades, sin correlaciones">Volatilidad anual <b>~43,6 %</b></span>
+        </div>
+        <p class="story">APP es una quinta parte de tu dinero (20,8 %) y más de un tercio del riesgo (36,5 %). <span class="g neg">−202,11 USD (−5,07 %)</span> sobre tu costo.</p>
+        <p class="stamp" role="status">Precios de TradingView · hace 5 min · 13 de 13 con precio · Riesgo: 3 años de historia, 12 de 13</p>
+      </div>
+      <div class="tools"><button class="link" type="button">↻ Actualizar precios</button><button class="link" type="button" aria-haspopup="menu">Más ▾</button></div>
+    </header>
+    <div class="split">
+      <section aria-label="Posiciones">
+        <div class="scope" role="group" aria-label="Alcance"><button type="button" aria-pressed="true">Tenencias</button><button type="button" aria-pressed="false">Watchlist</button><button type="button" aria-pressed="false">Todo</button></div>
+        <table>
+          <caption class="sr">Posiciones abiertas ordenadas por peso, con su peso y su contribución al riesgo en la misma escala</caption>
+          <thead><tr><th scope="col">Ticker</th><th scope="col" class="num">Valor (USD)</th><th scope="col" class="num bars">Peso y riesgo <span class="lg"><span class="lw"><i></i>Peso</span><span class="lr"><i></i>Riesgo</span></span></th><th scope="col" class="num" title="Precio actual menos costo promedio">Ganancia</th></tr></thead>
+          <tbody>
+<tr class="sel" aria-selected="true"><th scope="row"><button type="button" class="tk"><span class="t">APP</span><span class="n">Applovin</span></button></th><td class="num">811,29</td><td class="num bars"><span class="sr">Peso 20,8 %, riesgo 36,5 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:52%"></i></span><span class="bv">20,8 %</span><span class="tg sim">→ 13,3</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:91%"></i></span><span class="bv">36,5 %</span></span></td><td class="num"><span class="g neg">−153,07</span><span class="gp">−15,9 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">SFD</span><span class="n">Smithfield Foods · sin histórico</span></button></th><td class="num">525,60</td><td class="num bars"><span class="sr">Peso 13,4 %, riesgo estimado 13,9 % por falta de historia</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:33%"></i></span><span class="bv">13,4 %</span><span class="tg same">→ 13,4</span></span><span class="b r est" aria-hidden="true"><span class="bar"><i style="width:35%"></i></span><span class="bv" title="Sin historia suficiente: riesgo estimado">~13,9 % est.</span></span></td><td class="num"><span class="g neg">−36,28</span><span class="gp">−6,5 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">NFLX</span><span class="n">Netflix</span></button></th><td class="num">412,48</td><td class="num bars"><span class="sr">Peso 10,6 %, riesgo 8,0 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:26%"></i></span><span class="bv">10,6 %</span><span class="tg same">→ 10,6</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:20%"></i></span><span class="bv">8,0 %</span></span></td><td class="num"><span class="g neg">−27,53</span><span class="gp">−6,3 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">AXP</span><span class="n">American Express</span></button></th><td class="num">326,38</td><td class="num bars"><span class="sr">Peso 8,4 %, riesgo 5,2 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:21%"></i></span><span class="bv">8,4 %</span><span class="tg same">→ 8,4</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:13%"></i></span><span class="bv">5,2 %</span></span></td><td class="num"><span class="g pos">+23,38</span><span class="gp">+7,7 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">SFM</span><span class="n">Sprouts Farmers Market</span></button></th><td class="num">299,02</td><td class="num bars"><span class="sr">Peso 7,7 %, riesgo 7,6 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:19%"></i></span><span class="bv">7,7 %</span><span class="tg same">→ 7,7</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:19%"></i></span><span class="bv">7,6 %</span></span></td><td class="num"><span class="g neg">−11,07</span><span class="gp">−3,6 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">GOOGL</span><span class="n">Alphabet</span></button></th><td class="num">277,29</td><td class="num bars"><span class="sr">Peso 7,1 %, riesgo 5,1 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:18%"></i></span><span class="bv">7,1 %</span><span class="tg same">→ 7,1</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:13%"></i></span><span class="bv">5,1 %</span></span></td><td class="num"><span class="g neg">−0,71</span><span class="gp">−0,3 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">VICI</span><span class="n">VICI Properties</span></button></th><td class="num">253,37</td><td class="num bars"><span class="sr">Peso 6,5 %, riesgo 2,8 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:16%"></i></span><span class="bv">6,5 %</span><span class="tg sim">→ 9,0</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:7%"></i></span><span class="bv">2,8 %</span></span></td><td class="num"><span class="g pos">+0,31</span><span class="gp">+0,1 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">VITL</span><span class="n">Vital Farms</span></button></th><td class="num">188,67</td><td class="num bars"><span class="sr">Peso 4,8 %, riesgo 6,3 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:12%"></i></span><span class="bv">4,8 %</span><span class="tg same">→ 4,8</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:16%"></i></span><span class="bv">6,3 %</span></span></td><td class="num"><span class="g pos">+3,65</span><span class="gp">+2,0 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">DECK</span><span class="n">Deckers Outdoor</span></button></th><td class="num">166,98</td><td class="num bars"><span class="sr">Peso 4,3 %, riesgo 4,4 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:11%"></i></span><span class="bv">4,3 %</span><span class="tg same">→ 4,3</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:11%"></i></span><span class="bv">4,4 %</span></span></td><td class="num"><span class="g pos">+0,98</span><span class="gp">+0,6 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">TMUS</span><span class="n">T-Mobile US</span></button></th><td class="num">157,12</td><td class="num bars"><span class="sr">Peso 4,0 %, riesgo 2,5 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:10%"></i></span><span class="bv">4,0 %</span><span class="tg sim">→ 5,6</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:6%"></i></span><span class="bv">2,5 %</span></span></td><td class="num"><span class="g pos">+7,21</span><span class="gp">+4,8 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">BKNG</span><span class="n">Booking Holdings</span></button></th><td class="num">152,26</td><td class="num bars"><span class="sr">Peso 3,9 %, riesgo 2,8 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:10%"></i></span><span class="bv">3,9 %</span><span class="tg same">→ 3,9</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:7%"></i></span><span class="bv">2,8 %</span></span></td><td class="num"><span class="g neg">−4,74</span><span class="gp">−3,0 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">UBER</span><span class="n">Uber</span></button></th><td class="num">132,78</td><td class="num bars"><span class="sr">Peso 3,4 %, riesgo 2,9 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:9%"></i></span><span class="bv">3,4 %</span><span class="tg same">→ 3,4</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:7%"></i></span><span class="bv">2,9 %</span></span></td><td class="num"><span class="g neg">−5,21</span><span class="gp">−3,8 %</span></td></tr>
+<tr><th scope="row"><button type="button" class="tk"><span class="t">NVO</span><span class="n">Novo Nordisk</span></button></th><td class="num">80,97</td><td class="num bars"><span class="sr">Peso 2,1 %, riesgo 2,0 %</span><span class="b w" aria-hidden="true"><span class="bar"><i style="width:5%"></i></span><span class="bv">2,1 %</span><span class="tg same">→ 2,1</span></span><span class="b r" aria-hidden="true"><span class="bar"><i style="width:5%"></i></span><span class="bv">2,0 %</span></span></td><td class="num"><span class="g pos">+0,97</span><span class="gp">+1,2 %</span></td></tr>
+          </tbody>
+          <tfoot><tr><th scope="row">Total acciones</th><td class="num">3.784,21</td><td class="num bars">96,8 % del total</td><td class="num"><span class="g neg">−202,11</span><span class="gp">−5,07 %</span></td></tr></tfoot>
+        </table>
+        <p class="foot">Riesgo = peso × volatilidad, normalizado a 100 % (sin correlaciones). Ganancia = precio actual − costo promedio (costo total 3.986,32 USD), distinta del potencial de una valoración. Peso sobre 3.908,60 USD, caja incluida. SFD no tiene historia suficiente: su riesgo es una estimación.</p>
+      </section>
+      <div class="rail">
+      <aside class="panel" aria-label="Detalle de APP">
+        <div>
+          <div class="id"><h2>APP</h2><span class="px">238,51</span></div>
+          <p class="meta">Applovin · 3,4015 acc. · costo prom. 283,51 · Ganancia <span class="neg">−153,07 (−15,9 %)</span></p>
+        </div>
+        <div class="tab" role="tablist" aria-label="Secciones"><button role="tab" id="t-r" aria-controls="p-r" aria-selected="true" type="button">Riesgo</button><button role="tab" id="t-v" aria-controls="p-v" aria-selected="false" type="button">Valoración</button></div>
+        <div id="p-r" role="tabpanel" aria-labelledby="t-r">
+          <dl class="card-r">
+            <div><dt>76,8 %</dt><dd><b>Cuánto se mueve al año</b><span><span class="v v-alto">Alto</span>2,2× la mediana de tu cartera (35,2 %)</span></dd></div>
+            <div><dt class="neg">−68,9 %</dt><dd><b>Peor caída en 3 años</b><span><span class="v v-alto">Alto</span>Tu mediana cayó −49,2 % en el mismo periodo</span></dd></div>
+            <div><dt>36,5 %</dt><dd><b>Cuánto riesgo aporta</b><span><span class="v v-alto">Alto</span>1,8× su peso (20,8 %): aporta más riesgo que dinero</span></dd></div>
+          </dl>
+          <p class="fine">Alto, medio o bajo se mide contra tus otras 11 posiciones con historia, no contra el mercado.</p>
+          <details>
+            <summary>Ver más riesgo de la cartera</summary>
+            <ul><li>Sortino 1,60 y beta bajista 2,20: APP paga bien el riesgo, pero cae más que el mercado</li><li>Peores caídas de otras grandes: VITL −84,4 %, NVO −74,7 %, SFM −73,3 %</li><li>SFD: sin historia suficiente, riesgo estimado</li><li>Volatilidad de la cartera ~43,6 % sin correlaciones; con correlaciones será menor</li></ul>
+            <p>Datos reales de 3 años de precios (12 de 13 posiciones).</p>
+          </details>
+        </div>
+        <div id="p-v" role="tabpanel" aria-labelledby="t-v" hidden>
+          <p class="verdict">Aún no sabemos si APP está cara o barata: nunca se ha analizado.</p>
+          <p><button class="btn-primary" type="button">Analizar APP</button></p>
+        </div>
+      </aside>
+      <section class="improve" aria-label="Mejorar la cartera">
+        <h2>Mejorar la cartera</h2>
+        <p class="sub">Solo necesita precios, no valoraciones.</p>
+        <ol class="steps" aria-label="Pasos">
+          <li class="on"><span class="n">1</span>Elige qué mejorar</li>
+          <li><span class="n">2</span>Mira las órdenes</li>
+          <li><span class="n">3</span>Decides tú</li>
+        </ol>
+        <fieldset class="opts">
+          <legend class="sr">Qué quieres mejorar</legend>
+          <label>
+            <input type="radio" name="o" value="minvol">
+            <svg class="viz" width="100%" height="34" viewBox="0 0 120 34" aria-hidden="true">
+              <path d="M2 30 C 22 30, 26 4, 36 4 C 46 4, 50 30, 70 30" fill="none" stroke="#334155" stroke-width="2"/>
+              <path d="M52 30 C 74 30, 78 14, 88 14 C 98 14, 102 30, 118 30" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+            </svg>
+            <b>Que se mueva menos</b><span>Menos sustos, menos sube y baja</span>
+          </label>
+          <label>
+            <input type="radio" name="o" value="hrp" checked>
+            <svg class="viz" width="100%" height="34" viewBox="0 0 120 34" aria-hidden="true">
+              <rect x="2" y="4" width="14" height="26" fill="#334155"/><rect x="20" y="20" width="14" height="10" fill="#334155"/><rect x="38" y="24" width="14" height="6" fill="#334155"/>
+              <rect x="70" y="16" width="14" height="14" fill="#cbd5e1"/><rect x="88" y="16" width="14" height="14" fill="#cbd5e1"/><rect x="106" y="16" width="12" height="14" fill="#cbd5e1"/>
+            </svg>
+            <b>Que no dependa de una sola</b><span>Hoy APP carga un tercio del riesgo</span>
+          </label>
+          <label>
+            <input type="radio" name="o" value="sharpe">
+            <svg class="viz" width="100%" height="34" viewBox="0 0 120 34" aria-hidden="true">
+              <line x1="2" y1="30" x2="118" y2="30" stroke="#334155" stroke-width="2"/>
+              <path d="M6 28 L 40 22 L 74 14 L 112 5" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+              <path d="M104 4 L 114 4 L 114 14" fill="none" stroke="#cbd5e1" stroke-width="2"/>
+            </svg>
+            <b>Que rinda más por el riesgo que corres</b><span>Mismo riesgo, mejor retorno esperado</span>
+          </label>
+        </fieldset>
+        <div class="simbox sim" role="status">
+          <span class="badge">Simulación</span>
+          <div class="yes">
+            <p>Tres órdenes para pasar de donde estás a donde quieres. No se ejecuta nada: tú decides.</p>
+            <ul class="orders">
+              <li>Vender 1,2 de APP · <span class="m">290 USD</span></li>
+              <li>Comprar 4 de VICI · <span class="m">99 USD</span></li>
+              <li>Comprar TMUS · <span class="m">60 USD</span></li>
+            </ul>
+            <p class="fx">Volatilidad de la cartera <span class="m">43,6 %</span> → <span class="m">~39 %</span> (simulado). Riesgo de APP <span class="m">36,5 %</span> → <span class="m">~26 %</span> (simulado). La caja pasa a 255 USD.</p>
+          </div>
+          <p class="nosim">Este boceto solo trae el ejemplo de la segunda opción; las otras dos darán sus propias órdenes.</p>
+          <p class="small">Órdenes ilustrativas, no calculadas: el optimizador aún no está instalado.</p>
+        </div>
+        <details><summary>Cómo se calcula</summary><p>Sobre los precios de los últimos 3 años, con PyPortfolioOpt, Riskfolio-Lib o skfolio. En orden: «que se mueva menos» es mínima volatilidad, «que no dependa de una sola» es paridad jerárquica de riesgo (HRP) y «que rinda más por el riesgo» es máximo Sharpe. Las dos primeras no necesitan ninguna valoración, solo precios.</p></details>
+      </section>
+      </div>
+    </div>
+  </main>
+</div>
+<script>
+(function(){
+var tr=document.getElementById('t-r'),tv=document.getElementById('t-v'),pr=document.getElementById('p-r'),pv=document.getElementById('p-v');
+function tab(r){tr.setAttribute('aria-selected',r);tv.setAttribute('aria-selected',!r);pr.hidden=!r;pv.hidden=r}
+tr.onclick=function(){tab(true)};tv.onclick=function(){tab(false)};
+document.querySelectorAll('input[name=o]').forEach(function(i){i.onchange=function(){document.body.dataset.opt=i.value}});
+document.body.dataset.opt='hrp';
+})();
+</script>
+</body>
+</html>

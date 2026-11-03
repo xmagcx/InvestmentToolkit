@@ -1,0 +1,82 @@
+{
+  "version": 1,
+  "comments": [
+    {
+      "id": "icopme0a",
+      "file": "02-dos-paneles.html",
+      "selector": "body > div > main",
+      "excerpt": "Portafolio 13 posiciones abiertas · valores en USD Precios de TradingView · hace 5 min · 13 de 13 con precio ↻ Actualizar precios Tesis · Última revisión · Guía ▾ VALOR TOTAL 3.908,80 USD acciones + caja ACCIONES 3.784,42 USD costo 3.986,35 GANANCIA −201,93 USD −5,07 % sobre costo CAJA · NO ES UNA P",
+      "comment": "me gusta la idea general, pero podemos buscar lago mas simple de cara al usuario. Apliquemos UX/UI best practices, storytelling with data y GESTALT principios. Vamos con algo mas simple y que genere valor al usuario",
+      "createdAt": "2026-11-03T16:17:17.859Z",
+      "status": "resolved",
+      "sentAt": "2026-11-03T16:17:17.878Z",
+      "resolvedAt": "2026-11-03T16:20:06.904Z"
+    },
+    {
+      "id": "ly9ayckk",
+      "file": "02-dos-paneles.html",
+      "selector": "body > div > main > section:nth-of-type(2) > span",
+      "excerpt": "Tabla = solo contabilidad (7 columnas). Todo lo de valoración está en el panel de la derecha.",
+      "comment": "esto esta demas",
+      "createdAt": "2026-11-03T16:18:07.035Z",
+      "status": "resolved",
+      "sentAt": "2026-11-03T16:18:07.048Z",
+      "resolvedAt": "2026-11-03T16:20:31.190Z"
+    },
+    {
+      "id": "3vfrhtd5",
+      "file": "02-dos-paneles.html",
+      "selector": "body > div > main > section:nth-of-type(2) > div:nth-of-type(2) > button:nth-of-type(1)",
+      "excerpt": "Columnas ▾",
+      "comment": "no se entiende el objetivo de este boton, eliminalo sino aporta",
+      "createdAt": "2026-11-03T16:18:27.277Z",
+      "status": "resolved",
+      "sentAt": "2026-11-03T16:18:27.287Z",
+      "resolvedAt": "2026-11-03T16:20:38.968Z"
+    },
+    {
+      "id": "606gc6uq",
+      "file": "02-dos-paneles.html",
+      "selector": "body > div > main > div > aside > div:nth-of-type(3) > div:nth-of-type(5)",
+      "excerpt": "Potencial a valor justo = valor justo − precio actual. Ganancia = precio actual − costo promedio. Son números distintos.",
+      "comment": "quitemos esto no ayuda",
+      "createdAt": "2026-11-03T16:18:44.167Z",
+      "status": "resolved",
+      "sentAt": "2026-11-03T16:18:44.173Z",
+      "resolvedAt": "2026-11-03T16:20:56.820Z"
+    },
+    {
+      "id": "mwv86p12",
+      "file": "02-dos-paneles.html",
+      "selector": "body > div > main",
+      "excerpt": "PORTAFOLIO · 13 POSICIONES 3.908,80USD Caja 124,38 USD · 3,2 % −201,93 USD (−5,07 %) sobre tu costo. APP pesa el 20,8 % y explica el 76 % de la caída. Precios de TradingView · hace 5 min · 13 de 13 con precio ↻ Actualizar precios Más ▾ Tenencias Watchlist Todo Posiciones abiertas ordenadas por peso,",
+      "comment": "interesante alternativa, pero esta muy similar a gestion de activos, agreguemos contenido manteniendo el sentido de simplicidad, con variables que nos ayuden a mejorar el portfolio y su gestion, habian herramientas: https://pyportfolioopt.readthedocs.io/en/latest/\nhttps://github.com/dcajasn/Riskfolio-Lib\nhttps://skfolio.org/\nutilizando estas herramienta reestructura el diseño enfocado de forma simple y que genere valor para el usuario de inversiones",
+      "createdAt": "2026-11-03T16:38:07.328Z",
+      "status": "resolved",
+      "sentAt": "2026-11-03T16:38:07.345Z",
+      "resolvedAt": "2026-11-03T16:42:40.107Z"
+    },
+    {
+      "id": "txta3dwa",
+      "file": "02-dos-paneles.html",
+      "selector": "body > div > main > div > div > aside",
+      "excerpt": "APP 238,51 Applovin · 3,4015 acc. · costo prom. 283,51 · Ganancia −153,07 (−15,9 %) Riesgo Valoración 76,8 % Volatilidad anual Sube y baja con fuerza −68,9 % Peor caída histórica Desde su máximo, en 3 años 36,5 % Contribución al riesgo Casi el doble de su peso 1,60 Sortino Retorno por riesgo de caíd",
+      "comment": "me gusta la idea, pero simplifica lo que estamos mostrando, esto para las descripciones \"Sube y baja con fuerza\" que significa o como saber si es bueno o malo y bajo que criterios?",
+      "createdAt": "2026-11-03T16:44:03.093Z",
+      "status": "resolved",
+      "sentAt": "2026-11-03T16:44:03.109Z",
+      "resolvedAt": "2026-11-03T16:45:12.695Z"
+    },
+    {
+      "id": "acg8mswi",
+      "file": "02-dos-paneles.html",
+      "selector": "body > div > main > div > div > section",
+      "excerpt": "Mejorar la cartera Solo necesita precios, no valoraciones. Objetivo de la mejora Bajar el riesgo Mínima volatilidad Repartir el riesgo Paridad jerárquica de riesgo (HRP) Máximo retorno por unidad de riesgo Máximo Sharpe SIMULACIÓN Pesos y órdenes ilustrativos, no calculados: el optimizador aún no es",
+      "comment": "en la parte de Mejorar la cartera, utilizar un elemento grafico mas adecuado para indicar cual es el procedimiento a aplicar, lo mismo para la descripcion de los elementos debemos simplificarlo para los usuarios finales, utilzia buenas practicas de UX /UI",
+      "createdAt": "2026-11-03T16:46:19.281Z",
+      "status": "resolved",
+      "sentAt": "2026-11-03T16:46:19.299Z",
+      "resolvedAt": "2026-11-03T16:48:06.856Z"
+    }
+  ]
+}

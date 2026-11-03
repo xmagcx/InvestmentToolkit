@@ -1,0 +1,15 @@
+{
+  "version": 1,
+  "chosen": "02-dos-paneles.html",
+  "handoffs": {
+    "02-dos-paneles.html": {
+      "status": "in_progress",
+      "queued": false,
+      "sentAt": "2026-11-03T16:48:31.582Z",
+      "startedAt": "2026-11-03T16:50:45.351Z",
+      "implementedAt": null,
+      "feature": "odd/tasks/portfolio-page-redesign.md",
+      "note": "Worktree feat/portfolio-two-panel; optimizador real con PyPortfolioOpt"
+    }
+  }
+}

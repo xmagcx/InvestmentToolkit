@@ -1,0 +1,10 @@
+{
+  "title": "Portafolio (rediseño)",
+  "brief": "Rediseño de la página Portafolio: hoy las 13 tenencias no tienen valoración guardada, así que fair value, rango, reward:risk, soporte, check y potencial salen vacíos. Cada artboard convierte ese vacío en trabajo accionable ('Sin valoración · Analizar'), separa Ganancia (precio − costo promedio) de Potencial a valor justo (valor justo − precio), muestra la caja como tarjeta y no como fila, y omite los tickers vendidos (MCD, PEP).",
+  "feature": "odd/tasks/portfolio-page-redesign.md",
+  "artboards": [
+    { "file": "01-decision-primero.html", "title": "Decisión primero", "tradeoff": "Responde '¿qué hago hoy?' con tarjetas por acción y barra bear–base–bull; es el más legible, pero hoy los cuatro carriles de acción están vacíos y la comparación numérica entre posiciones exige la vista analista", "width": 1440, "height": 1700 },
+    { "file": "02-dos-paneles.html", "title": "Posiciones | Valoración", "tradeoff": "La tabla queda con 7 columnas contables y los ~20 elementos de valoración viven en un panel por ticker; ordena la información, pero comparar valoraciones entre tickers obliga a cambiar de selección", "width": 1440, "height": 1150 },
+    { "file": "03-tablero-de-salud.html", "title": "Tablero de salud", "tradeoff": "Hace visible la causa raíz (cobertura 0/13) y convierte el vacío en una cola de trabajo priorizada por peso; dedica espacio a KPIs de datos que dejan de importar cuando todo esté valorado", "width": 1440, "height": 1360 }
+  ]
+}

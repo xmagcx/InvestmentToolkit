@@ -1,0 +1,256 @@
+<!DOCTYPE html>
+<html lang="es">
+<head>
+<meta charset="utf-8">
+<meta name="viewport" content="width=1440, initial-scale=1">
+<title>Portafolio — Decisión primero</title>
+<style>
+:root{--background:#020617;--surface:#0f172a;--primary:#f59e0b;--secondary:#94a3b8;--text:#e2e8f0;--accent:#fbbf24;
+--slate-800:#1e293b;--slate-700:#334155;--slate-600:#475569;--slate-400:#94a3b8;--slate-300:#cbd5e1;--slate-200:#e2e8f0;--slate-100:#f1f5f9;
+--emerald-400:#34d399;--emerald-300:#6ee7b7;--red-400:#f87171;--zinc-800:#27272a;--zinc-300:#d4d4d8;--zinc-700:#3f3f46;
+--font-sans:Inter,system-ui,-apple-system,"Segoe UI",Roboto,"Helvetica Neue",Arial,sans-serif;
+--mono:ui-monospace,SFMono-Regular,Menlo,Consolas,"Liberation Mono",monospace}
+*{box-sizing:border-box}
+body{margin:0;width:1440px;background:var(--background);color:var(--text);font-family:var(--font-sans);font-size:14px;-webkit-font-smoothing:antialiased}
+a,button,summary{transition:all .2s ease-in-out}
+:focus-visible{outline:2px solid var(--primary);outline-offset:2px;box-shadow:0 0 0 2px rgba(245,158,11,.3)}
+@media (prefers-reduced-motion:reduce){*{transition:none!important;animation:none!important}}
+.app{display:flex;min-height:100vh}
+.sidebar{width:240px;flex:0 0 240px;background:var(--surface);border-right:1px solid var(--slate-800);display:flex;flex-direction:column;padding:20px 12px 12px}
+.logo{color:var(--primary);font-weight:700;font-size:18px;padding:0 8px 12px;display:flex;gap:8px;align-items:center}
+.search{margin:0 4px 12px}
+.search input{width:100%;background:var(--surface);border:1px solid var(--slate-700);border-radius:8px;padding:10px 12px;color:#fff;font-size:14px;font-family:inherit;min-height:44px}
+.search input::placeholder{color:var(--slate-400)}
+.sidebar nav{display:flex;flex-direction:column;gap:2px;flex:1}
+.sidebar nav a{display:flex;align-items:center;gap:12px;padding:11px 16px;border-radius:8px;text-decoration:none;font-size:14px;font-weight:500;color:var(--secondary);min-height:44px}
+.sidebar nav a:hover{background:var(--slate-800);color:var(--slate-200)}
+.sidebar nav a[aria-current="page"]{background:var(--slate-800);color:var(--primary)}
+.sidebar nav a i{font-style:normal;width:18px;text-align:center}
+.sidefoot{border-top:1px solid var(--slate-800);padding-top:8px;margin-top:8px}
+main{flex:1;min-width:0;padding:20px 24px 32px;display:flex;flex-direction:column;gap:16px}
+h1{font-size:20px;font-weight:700;color:#fff;margin:0 0 2px}
+h2{font-size:18px;font-weight:600;color:var(--slate-100);margin:0}
+h3{font-size:14px;font-weight:600;color:var(--slate-100);margin:0}
+.sub{font-size:14px;color:var(--slate-400);margin:0}
+.label{font-size:12px;font-weight:700;color:var(--slate-400);text-transform:uppercase;letter-spacing:.1em}
+.card{background:rgba(15,23,42,.8);border:1px solid var(--slate-800);border-radius:12px;padding:16px;box-shadow:0 10px 15px -3px rgba(0,0,0,.4)}
+.pos{color:var(--emerald-400)}.neg{color:var(--red-400)}.muted{color:var(--slate-400)}.mono{font-family:var(--mono)}
+.stamp{font-size:12px;color:var(--slate-400)}
+.head{display:flex;justify-content:space-between;align-items:flex-start;gap:16px}
+.head .actions{display:flex;align-items:center;gap:8px}
+button{font-family:inherit;cursor:pointer}
+.btn-utility{background:var(--zinc-800);color:var(--zinc-300);border:0;border-radius:4px;padding:0 14px;min-height:44px;font-size:12px;font-weight:600}
+.btn-utility:hover{background:var(--zinc-700);transform:translateY(-1px)}
+.btn-primary{background:#047857;color:#fff;border:0;border-radius:4px;padding:0 16px;min-height:44px;font-size:14px;font-weight:600}
+.btn-primary:hover{background:#059669;transform:translateY(-1px)}
+.btn-sm{background:rgba(245,158,11,.1);color:var(--accent);border:1px solid rgba(245,158,11,.3);border-radius:4px;padding:0 10px;min-height:32px;font-size:12px;font-weight:700;white-space:nowrap}
+.btn-sm:hover{background:rgba(245,158,11,.2)}
+.btn-ghost{background:var(--slate-800);color:var(--slate-200);border:0;border-radius:4px;padding:0 14px;min-height:44px;font-size:13px;font-weight:600}
+.btn-ghost:hover{background:var(--slate-700)}
+.kpis{display:grid;gap:12px}
+.kpi .v{font-family:var(--mono);font-size:24px;font-weight:700;color:#fff;margin-top:6px;line-height:1.1}
+.kpi .v small{font-size:13px;font-weight:500;color:var(--slate-400)}
+.kpi .d{font-size:12px;color:var(--slate-400);margin-top:4px;font-family:var(--mono)}
+.seg{display:inline-flex;border:1px solid var(--slate-700);border-radius:8px;overflow:hidden}
+.seg button{background:var(--surface);color:var(--slate-400);border:0;padding:0 14px;min-height:44px;font-size:13px;font-weight:700}
+.seg button[aria-pressed="true"]{background:var(--slate-800);color:var(--primary)}
+.seg button:hover{color:var(--slate-200)}
+.seg .c{font-family:var(--mono);font-size:11px;margin-left:6px;opacity:.9}
+.controls{display:flex;align-items:center;gap:12px;flex-wrap:wrap}
+.controls .grow{margin-left:auto;display:flex;gap:8px;align-items:center}
+.pending{display:inline-flex;align-items:center;gap:6px;color:var(--accent);font-size:12px;font-weight:700}
+.dot{width:8px;height:8px;border-radius:50%;background:var(--primary);display:inline-block}
+.tablewrap{overflow:auto;border:1px solid var(--slate-700);border-radius:8px;background:rgba(15,23,42,.8)}
+table{width:100%;border-collapse:collapse;font-size:13px}
+thead th{background:var(--slate-800);color:var(--slate-400);font-weight:600;text-align:left;padding:9px 12px;white-space:nowrap}
+td{padding:8px 12px;color:var(--slate-300);white-space:nowrap}
+tbody tr{border-top:1px solid var(--slate-700)}
+tbody tr:hover{background:rgba(30,41,59,.4)}
+tfoot td{background:var(--slate-800);color:#fff;font-weight:700;border-top:1px solid var(--slate-700)}
+.num{text-align:right;font-family:var(--mono)}
+th.num{font-family:var(--font-sans)}
+.tick{font-family:var(--mono);color:var(--slate-200);font-weight:600}
+.bar{height:6px;border-radius:3px;background:var(--slate-800);overflow:hidden;display:block}
+.bar i{display:block;height:100%;background:var(--secondary);border-radius:3px}
+.range{position:relative;height:10px;border-radius:5px;border:1px dashed var(--slate-600);background:repeating-linear-gradient(90deg,rgba(148,163,184,.08) 0 8px,transparent 8px 16px);margin:18px 0 6px}
+.range .mk{position:absolute;top:-5px;width:2px;height:18px;background:#fff;border-radius:1px}
+.range .mk b{position:absolute;top:-17px;left:50%;transform:translateX(-50%);font-family:var(--mono);font-size:11px;color:#fff;white-space:nowrap}
+.range .zone{position:absolute;top:0;height:100%;border-radius:5px}
+.rl{display:flex;justify-content:space-between;font-size:11px;color:var(--slate-400);font-family:var(--mono)}
+.empty{border:1px dashed var(--slate-700);border-radius:8px;padding:14px 16px;color:var(--slate-400);font-size:13px}
+.callout{border:1px solid rgba(245,158,11,.3);background:rgba(245,158,11,.1);border-radius:8px;padding:14px 16px}
+.sr{position:absolute;left:-9999px}
+.cashline{display:flex;justify-content:space-between;align-items:baseline}
+
+.lanes{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.lane{padding:12px 16px}.lane .lv{font-size:24px;font-weight:700;color:var(--slate-300);margin:2px 0}.lane p{margin:0;font-size:12px;color:var(--slate-400)}
+.grid4{display:grid;grid-template-columns:repeat(4,1fr);gap:12px}
+.pc{display:flex;flex-direction:column;gap:8px;padding:14px}
+.pc .top{display:flex;justify-content:space-between;align-items:flex-start}
+.pc .plain{margin:4px 0 0;font-size:12px;color:var(--slate-300)}
+.pc .acc{display:flex;flex-direction:column;gap:2px;font-size:12px;border-top:1px solid var(--slate-800);padding-top:8px}
+.pc .btn-sm{align-self:flex-start}
+.ex{border-color:rgba(52,211,153,.3)}
+.ex .z1{left:0;width:30%;background:rgba(248,113,113,.35)}.ex .z2{left:30%;width:30%;background:rgba(148,163,184,.35)}.ex .z3{left:60%;width:40%;background:rgba(52,211,153,.35)}
+</style>
+</head>
+<body>
+<div class="app">
+  <aside class="sidebar">
+    <div class="logo"><span aria-hidden="true">⚡</span> Investment Toolkit</div>
+    <div class="search"><label for="s" class="sr">Buscar ticker</label><input id="s" type="text" placeholder="Buscar ticker…"></div>
+    <nav aria-label="Navegación principal"><a href="#"><i aria-hidden="true">▦</i> Heatmap</a><a href="#"><i aria-hidden="true">◴</i> Resumen de portafolio</a><a href="#" aria-current="page"><i aria-hidden="true">▤</i> Portafolio</a><a href="#"><i aria-hidden="true">◫</i> Análisis de acciones</a><a href="#"><i aria-hidden="true">⚡</i> Brief diario</a><a href="#"><i aria-hidden="true">✎</i> Tesis de inversión</a><a href="#"><i aria-hidden="true">▣</i> Fuentes</a></nav>
+    <div class="sidefoot"><nav aria-label="Ajustes"><a href="#"><i aria-hidden="true">⚙</i> Ajustes</a></nav></div>
+  </aside>
+  <main><header class="head">
+  <div>
+    <h1>Portafolio</h1>
+    <p class="sub">13 posiciones abiertas · valores en USD</p>
+  </div>
+  <div class="actions">
+    <span class="stamp" role="status">Precios de TradingView · hace 5 min · 13 de 13 con precio</span>
+    <button class="btn-utility" type="button">↻ Actualizar precios</button>
+    <button class="btn-utility" type="button" aria-haspopup="menu">Tesis · Última revisión · Guía ▾</button>
+  </div>
+</header>
+<section aria-label="Totales del portafolio" class="kpis" style="grid-template-columns:1.4fr 1fr 1fr 1.1fr 1fr">
+  <div class="card kpi"><span class="label">Valor total</span><div class="v">3.908,80 <small>USD</small></div><div class="d">acciones + caja</div></div>
+  <div class="card kpi"><span class="label">Acciones</span><div class="v">3.784,42 <small>USD</small></div><div class="d">costo 3.986,35</div></div>
+  <div class="card kpi"><span class="label" title="Precio actual menos costo promedio">Ganancia</span><div class="v neg">−201,93 <small>USD</small></div><div class="d neg">−5,07 % sobre costo</div></div>
+  <div class="card kpi" style="border-style:dashed;border-color:var(--slate-700)"><span class="label">Caja · no es una posición</span><div class="v">124,38 <small>USD</small></div><div class="d">3,2 % del total</div></div>
+  <div class="card kpi"><span class="label">Potencial a valor justo</span><div class="v" style="font-size:16px;color:var(--accent);line-height:1.3">Sin valoración</div><div class="d" style="font-family:var(--font-sans)"><a href="#" style="color:var(--accent)">Analizar 13 posiciones</a></div></div>
+</section>
+<section class="controls" aria-label="Controles">
+  <div class="seg" role="group" aria-label="Alcance"><button type="button" aria-pressed="true">Tenencias<span class="c">13</span></button><button type="button" aria-pressed="false">Watchlist</button><button type="button" aria-pressed="false">Todo</button></div>
+  <div class="seg" role="group" aria-label="Vista"><button type="button" aria-pressed="true">Decisión</button><button type="button" aria-pressed="false" title="Muestra la tabla con las 35 columnas">Vista analista · 35 columnas</button></div>
+  <div class="grow"><label class="muted" style="font-size:12px" for="o">Ordenar</label>
+    <select id="o" style="background:var(--surface);color:var(--slate-300);border:1px solid var(--slate-700);border-radius:8px;min-height:44px;padding:0 10px;font-family:inherit"><option>Mayor peso primero</option><option>Mayor potencial primero</option><option>Peor ganancia primero</option></select></div>
+</section>
+<section aria-labelledby="h-dec">
+  <div style="display:flex;align-items:baseline;justify-content:space-between;margin-bottom:8px"><h2 id="h-dec">¿Qué hago hoy?</h2><span class="muted" style="font-size:12px">Decisión = precio frente a valor justo. Sin valor justo no hay decisión.</span></div>
+  <div class="lanes"><div class="card lane"><div class="label" style="color:var(--red-400)">Vender</div><div class="lv mono">0</div><p>Se llena cuando la posición tiene valoración.</p></div><div class="card lane"><div class="label" style="color:var(--accent)">Recortar</div><div class="lv mono">0</div><p>Se llena cuando la posición tiene valoración.</p></div><div class="card lane"><div class="label" style="color:var(--emerald-400)">Acumular</div><div class="lv mono">0</div><p>Se llena cuando la posición tiene valoración.</p></div><div class="card lane"><div class="label" style="color:var(--slate-300)">Mantener</div><div class="lv mono">0</div><p>Se llena cuando la posición tiene valoración.</p></div></div>
+</section>
+<section aria-labelledby="h-sv" class="card" style="border-color:rgba(245,158,11,.3)">
+  <div style="display:grid;grid-template-columns:1fr 330px;gap:24px;align-items:center">
+    <div>
+      <div style="display:flex;align-items:center;gap:10px"><span class="dot" aria-hidden="true"></span><h2 id="h-sv">Sin valoración <span class="mono" style="color:var(--accent)">(13)</span></h2></div>
+      <p style="margin:8px 0 12px;color:var(--slate-300);max-width:640px">Ninguna de tus 13 posiciones tiene un valor justo guardado, así que hoy no hay señal de vender, recortar o acumular. Analízalas para que cada tarjeta suba al carril que le corresponde.</p>
+      <div style="display:flex;gap:10px;align-items:center"><button class="btn-primary" type="button">Analizar las 13 posiciones</button><button class="btn-ghost" type="button">Empezar por la de mayor peso (APP)</button></div>
+    </div>
+    <article class="card ex" aria-label="Ejemplo ilustrativo de tarjeta valorada" style="padding:12px;background:var(--surface)">
+      <div class="label" style="font-size:11px;color:var(--emerald-400)">Así se verá · ejemplo ilustrativo, no es dato real</div>
+      <div style="display:flex;justify-content:space-between;margin-top:6px"><span class="tick">XXXX</span><span class="mono" style="color:#fff">100,00</span></div>
+      <div class="range" style="border-style:solid"><span class="zone z1"></span><span class="zone z2"></span><span class="zone z3"></span><span class="mk" style="left:38%"><b>100</b></span></div>
+      <div class="rl"><span>Bear 80</span><span>Base 118</span><span>Bull 150</span></div>
+      <p style="margin:6px 0 0;font-size:12px;color:var(--slate-300)">Potencial a valor justo: +18 %. Por cada 1 que puedes perder, puedes ganar 2,5.</p>
+    </article>
+  </div>
+</section>
+<section aria-label="Posiciones sin valoración"><div class="grid4"><article class="card pc" aria-label="APP, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">APP</div><div class="muted" style="font-size:12px">Applovin</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">238,51</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>238,51</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">3,4015 acc. · peso 20,8 %</span><span class="mono neg">Ganancia −153,07 (−15,9 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="SFD, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">SFD</div><div class="muted" style="font-size:12px">Smithfield Foods</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">18,40</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>18,40</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">28,5653 acc. · peso 13,4 %</span><span class="mono neg">Ganancia −36,28 (−6,5 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="NFLX, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">NFLX</div><div class="muted" style="font-size:12px">Netflix</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">62,40</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>62,40</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">6,6108 acc. · peso 10,6 %</span><span class="mono neg">Ganancia −27,50 (−6,2 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="AXP, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">AXP</div><div class="muted" style="font-size:12px">American Express</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">326,30</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>326,30</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">1,0003 acc. · peso 8,4 %</span><span class="mono pos">Ganancia +23,39 (+7,7 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="SFM, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">SFM</div><div class="muted" style="font-size:12px">Sprouts Farmers Market</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">53,27</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>53,27</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">5,6138 acc. · peso 7,7 %</span><span class="mono neg">Ganancia −11,06 (−3,6 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="GOOGL, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">GOOGL</div><div class="muted" style="font-size:12px">Alphabet</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">277,29</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>277,29</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">1 acc. · peso 7,1 %</span><span class="mono neg">Ganancia −0,71 (−0,3 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="VICI, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">VICI</div><div class="muted" style="font-size:12px">VICI Properties</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">24,64</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>24,64</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">10,283 acc. · peso 6,5 %</span><span class="mono pos">Ganancia +0,31 (+0,1 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="VITL, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">VITL</div><div class="muted" style="font-size:12px">Vital Farms</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">9,05</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>9,05</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">20,8589 acc. · peso 4,8 %</span><span class="mono pos">Ganancia +3,75 (+2,0 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="DECK, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">DECK</div><div class="muted" style="font-size:12px">Deckers Outdoor</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">83,49</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>83,49</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">2 acc. · peso 4,3 %</span><span class="mono pos">Ganancia +0,98 (+0,6 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="TMUS, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">TMUS</div><div class="muted" style="font-size:12px">T-Mobile US</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">157,12</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>157,12</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">1 acc. · peso 4,0 %</span><span class="mono pos">Ganancia +7,21 (+4,8 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="BKNG, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">BKNG</div><div class="muted" style="font-size:12px">Booking Holdings</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">152,26</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>152,26</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">1 acc. · peso 3,9 %</span><span class="mono neg">Ganancia −4,74 (−3,0 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="UBER, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">UBER</div><div class="muted" style="font-size:12px">Uber Technologies</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">66,43</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>66,43</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">1,999 acc. · peso 3,4 %</span><span class="mono neg">Ganancia −5,20 (−3,8 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article><article class="card pc" aria-label="NVO, sin valoración">
+  <div class="top"><div><div class="tick" style="font-size:16px">NVO</div><div class="muted" style="font-size:12px">Novo Nordisk</div></div>
+    <div style="text-align:right"><div class="mono" style="color:#fff;font-weight:700">40,49</div><div class="muted" style="font-size:11px">precio</div></div></div>
+  <div class="range" aria-hidden="true"><span class="mk" style="left:50%"><b>40,49</b></span></div>
+  <div class="rl" aria-hidden="true"><span>Bear ?</span><span>Base ?</span><span>Bull ?</span></div>
+  <p class="plain">Sin valor justo no podemos decir si está cara o barata.</p>
+  <div class="acc"><span class="muted">2 acc. · peso 2,1 %</span><span class="mono pos">Ganancia +0,98 (+1,2 %)</span></div>
+  <button class="btn-sm" type="button">Sin valoración · Analizar</button>
+</article></div></section></main>
+</div>
+</body>
+</html>
