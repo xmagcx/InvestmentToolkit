@@ -24,6 +24,7 @@
  *   - GET /api/tv-status - Checks whether TradingView CDP client is online
  *   - POST /api/analysis/valuation - Standalone AI Valuation calculation request
  *   - app.use('/api/portfolio', portfolioRouter)
+ *   - app.use('/api/portfolio', portfolioRiskRouter) - /api/portfolio/risk, /optimize
  *   - app.use('/api/portfolio', profilesSummaryRouter) - /api/portfolio/profiles-summary
  *   - app.use('/api/projections', projectionsRouter)
  *   - app.use('/api/theses', thesesRouter)
@@ -63,6 +64,7 @@ import sentimentRouter from './routes/sentiment';
 import { SourceScheduler } from './services/SourceScheduler';
 import portfolioMaintainerRouter from './routes/portfolioMaintainer';
 import profilesSummaryRouter from './routes/profilesSummary';
+import portfolioRiskRouter from './routes/portfolioRisk';
 
 const app = express();
 const port = process.env.PORT || 3001;
@@ -106,6 +108,7 @@ app.post('/api/analysis/valuation', async (req, res) => {
 // ── Route registration ────────────────────────────────────────────────────────
 
 app.use('/api/portfolio', portfolioRouter);   // /api/portfolio/** (CRUD, sync, summary, strategy-allocation)
+app.use('/api/portfolio', portfolioRiskRouter); // /api/portfolio/risk, /optimize
 app.use('/api/portfolio', profilesSummaryRouter); // /api/portfolio/profiles-summary (per-profile currencies + USD total)
 app.use('/api/projections', projectionsRouter);
 app.use('/api/theses', thesesRouter);
