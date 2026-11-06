@@ -86,6 +86,17 @@ describe('ValueChart', () => {
         expect(screen.getByTestId('resistance-line').getAttribute('class')).toContain('red');
     });
 
+    it('keeps in-chart level tags at least 13px apart and lists the full levels below the chart', () => {
+        const h = hist();
+        const near = { ...h, levels: { supports: [{ price: 104, basis: 'Fibonacci 0.618' }, { price: 103.9, basis: 'EMA 50 días' }], resistances: h.levels!.resistances } };
+        const { container } = show(near);
+        const ys = [...container.querySelectorAll('[data-testid="level-tag"]')].map((t) => Number(t.getAttribute('y'))).sort((a, b) => a - b);
+        expect(ys.length).toBe(3);
+        ys.slice(1).forEach((v, i) => expect(v - ys[i]).toBeGreaterThanOrEqual(13));
+        const list = screen.getByRole('list', { name: 'Soportes y resistencias' });
+        expect(list.textContent).toContain('Soporte $104 · Fibonacci 0.618');
+    });
+
     it('without a 200-day mean shows the price only plus the note', () => {
         const h = hist({ points: CROSSING.map((p) => ({ ...p, sma200: null })) },
             { sma200: null, zone: null, distance_pct: null, confirmation: null });

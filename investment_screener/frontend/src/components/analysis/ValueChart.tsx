@@ -18,7 +18,7 @@ import { fmtLevelEs, fmtNumEs, levelsInRange, valueReading, zoneRuns } from '../
 import { HelpTip } from './HelpTip';
 
 const RANGES: Array<[ValueHistoryRange, string]> = [['1y', '1A'], ['3y', '3A'], ['5y', '5A'], ['max', 'MÁX']];
-const W = 640, H = 270, L = 36, R = 96, T = 14, B = 26;
+const W = 680, H = 270, L = 36, R = 136, T = 14, B = 26;
 
 interface Props { history: ValueHistory | null; range: ValueHistoryRange; onRangeChange: (r: ValueHistoryRange) => void; currency: string }
 
@@ -69,6 +69,7 @@ export function ValueChart({ history, range, onRangeChange, currency }: Props) {
         ...lv.supports.map((l) => ({ ...l, kind: 'Soporte', test: 'support-line', cls: 'stroke-emerald-400 fill-emerald-300' })),
         ...lv.resistances.map((l) => ({ ...l, kind: 'Resistencia', test: 'resistance-line', cls: 'stroke-red-400 fill-red-300' })),
     ];
+    const tagYs = spreadLabels(levelLines.map((l) => Math.round(y(l.price) - 3)));
     const reading = valueReading(cur);
     const ctx = {
         company: history?.ticker ?? '', currency, price: priceNow, fairValue: valueNow, upside: null,
@@ -102,7 +103,7 @@ export function ValueChart({ history, range, onRangeChange, currency }: Props) {
                     {levelLines.map((l) => (
                         <g key={`${l.kind}-${l.price}`}>
                             <line data-testid={l.test} x1={L} x2={W - R} y1={y(l.price)} y2={y(l.price)} className={l.cls.split(' ')[0]} strokeWidth={1} strokeDasharray="4 3" />
-                            <text x={L + 4} y={y(l.price) - 3} className={l.cls.split(' ')[1]} fontSize={10}>{`${l.kind} ${fmtLevelEs(l.price)} · ${l.basis}`}</text>
+                            <text data-testid="level-tag" x={L + 4} y={tagYs[levelLines.indexOf(l)]} className={l.cls.split(' ')[1]} fontSize={10}>{`${l.kind} ${fmtLevelEs(l.price)}`}</text>
                         </g>
                     ))}
                     {hasSma && <path data-testid="sma-line" d={smaPath} fill="none" className="stroke-sky-300" strokeWidth={1.5} strokeDasharray="6 4" />}
@@ -116,6 +117,13 @@ export function ValueChart({ history, range, onRangeChange, currency }: Props) {
                 </svg>
             )}
 
+            {levelLines.length > 0 && (
+                <ul aria-label="Soportes y resistencias" className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs">
+                    {levelLines.map((l) => (
+                        <li key={`li-${l.kind}-${l.price}`} className={l.cls.split(' ')[1].replace('fill-', 'text-')}>{`${l.kind} ${fmtLevelEs(l.price)} · ${l.basis}`}</li>
+                    ))}
+                </ul>
+            )}
             <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-300">
                 <span><span aria-hidden="true" className="text-slate-100">━</span> Precio ({currency})</span>
                 {hasSma && <span><span aria-hidden="true" className="text-sky-300">╍</span> Media 200 días<HelpTip term="sma200" ctx={{ ...ctx, value: smaNow }} /></span>}
