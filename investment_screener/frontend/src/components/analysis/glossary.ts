@@ -5,9 +5,9 @@
  *     En <empresa> (the live value interpreted) / Fuente-cálculo. Copy from design/analysis-svi/01-svi-explicado.html.
  * Layer: Frontend / Components / Analysis. Key Functions: GLOSSARY, GlossaryCtx.
  */
-import { fmtMoneyEs, fmtPctEs } from '../../utils/analysisFormat';
+import { fmtLevelEs, fmtMoneyEs, fmtNumEs, fmtPctEs } from '../../utils/analysisFormat';
 
-export type GlossaryKey = 'signal' | 'valuation' | 'mos' | 'roic' | 'roe' | 'roa' | 'fcfy' | 'augdiv' | 'divy' | 'buyback' | 'beta' | 'de';
+export type GlossaryKey = 'signal' | 'valuation' | 'mos' | 'roic' | 'roe' | 'roa' | 'fcfy' | 'augdiv' | 'divy' | 'buyback' | 'beta' | 'de' | 'sma200' | 'levels';
 
 export interface GlossaryCtx {
     company: string;
@@ -122,5 +122,23 @@ export const GLOSSARY: Record<GlossaryKey, GlossaryEntry> = {
         read: 'Menos de 0,5 es conservador; más de 2 implica apalancamiento alto y más sensibilidad a los tipos de interés.',
         inCompany: withValue((c, v) => `${v.toFixed(2).replace('.', ',')} en ${c.company}: ${v <= 0.5 ? 'deuda baja frente a su patrimonio' : v <= 2 ? 'apalancamiento moderado' : 'apalancamiento alto'}.`),
         source: 'Balance del ticker (yfinance): deuda total ÷ patrimonio.',
+    },
+    sma200: {
+        name: 'Media de 200 días',
+        what: 'Promedio simple de los últimos 200 cierres diarios: el "precio medio" que el mercado ha pagado por la acción en cerca de un año.',
+        read: 'Precio bajo la media: zona infravalorada (la acción cotiza más barata que su promedio reciente). Precio sobre la media: zona sobrevalorada. Es una referencia de precio, no un valor justo.',
+        inCompany: (c) => c.value == null || c.price == null
+            ? `${c.company} tiene menos de 200 sesiones de historia: aún no hay media de 200 días.`
+            : `${c.company} cotiza a ${fmtMoneyEs(c.price, c.currency)} frente a una media de ${fmtMoneyEs(c.value, c.currency)}: ${fmtNumEs(Math.abs((c.price - c.value) / c.value * 100))}% ${c.price < c.value ? 'bajo' : 'sobre'} su media.`,
+        source: 'value_history.py: media simple de 200 cierres diarios, calculada con toda la historia antes de recortar el rango (market_regime._sma).',
+    },
+    levels: {
+        name: 'Soportes y resistencias',
+        what: 'Precios donde la acción suele frenar: un soporte es un nivel bajo el precio donde han entrado compradores; una resistencia, uno sobre el precio donde han aparecido vendedores.',
+        read: 'Bajo la media de 200 días, un soporte cercano confirma la zona de oportunidad. Sobre la media, una resistencia cercana confirma que el precio está exigente. Si no hay niveles cerca, la señal queda sin confirmar.',
+        inCompany: (c) => c.value == null || c.price == null
+            ? `No hay un nivel de confirmación cercano para ${c.company}.`
+            : `Nivel más próximo de ${c.company}: ${fmtLevelEs(c.value)}, a ${fmtNumEs(Math.abs((c.value - c.price) / c.price * 100))}% ${c.value < c.price ? 'bajo' : 'sobre'} el precio actual.`,
+        source: 'chart_levels.py: retrocesos de Fibonacci del último tramo alcista (swing), zonas de volumen del último año y medias exponenciales (EMA 50 y 200).',
     },
 };

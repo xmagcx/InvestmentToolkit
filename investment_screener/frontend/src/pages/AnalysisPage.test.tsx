@@ -35,10 +35,12 @@ const stock = {
 const history = (fairValue: number | null): ValueHistory => ({
     ticker: 'MSFT', currency: 'USD',
     points: [
-        { date: '2025-01-01', price: 400, fair_value: fairValue === null ? null : 420 },
-        { date: '2026-01-01', price: 535.93, fair_value: fairValue },
+        { date: '2025-01-01', price: 400, fair_value: fairValue === null ? null : 420, sma200: 380 },
+        { date: '2026-01-01', price: 535.93, fair_value: fairValue, sma200: 450 },
     ],
-    current: { price: 535.93, fair_value: fairValue, date: '2026-01-01' },
+    current: { price: 535.93, fair_value: fairValue, date: '2026-01-01', sma200: 450, zone: 'sobrevalorada', distance_pct: 19.09,
+        confirmation: { price: 560, basis: 'Fibonacci 0.382', distance_pct: 4.49 } },
+    levels: { supports: [], resistances: [{ price: 560, basis: 'Fibonacci 0.382' }] },
 });
 
 const rec = (over: Partial<RecommendationRecord> = {}): RecommendationRecord => ({

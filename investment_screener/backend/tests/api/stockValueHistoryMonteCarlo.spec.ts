@@ -40,6 +40,22 @@ describe('GET /stock/:ticker/value-history and /montecarlo', () => {
         expect(called).to.deep.equal({ script: 'value_history.py', args: ['ZZZ', '--range', '1y'] });
     });
 
+    it('value-history passes sma200, levels and the current zone/confirmation through unchanged', async () => {
+        const payload = {
+            ticker: 'ZZZ', currency: 'USD',
+            points: [{ date: '2024-01-02', price: 90, fair_value: null, sma200: 100 }],
+            current: {
+                price: 90, fair_value: null, date: '2024-01-02', sma200: 100, zone: 'infravalorada', distance_pct: -10,
+                confirmation: { price: 88, basis: 'Fibonacci 0.618', distance_pct: -2.22 },
+            },
+            levels: { supports: [{ price: 88, basis: 'Fibonacci 0.618' }], resistances: [{ price: 112, basis: 'EMA 200 días' }] },
+        };
+        stub(payload);
+        const res = await fetch(`${base}/stock/ZZZ/value-history?range=1y`);
+        expect(res.status).to.equal(200);
+        expect(await res.json()).to.deep.equal(payload);
+    });
+
     it('value-history forwards a valid range and rejects an invalid one', async () => {
         stub({ ticker: 'ZZZ', currency: 'USD', points: [], current: { price: null, fair_value: null, date: null } });
         expect((await fetch(`${base}/stock/ZZZ/value-history?range=max`)).status).to.equal(200);

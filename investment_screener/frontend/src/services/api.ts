@@ -353,12 +353,26 @@ export const fetchTechnicalAnalysis = async (ticker: string): Promise<TechnicalA
 
 export type ValueHistoryRange = '1y' | '3y' | '5y' | 'max';
 
-/** Price vs projection fair value over time (value_history.py); fair_value is null before the first revision or without a projection. */
+/** A chart support or resistance from chart_levels.py with its short basis (e.g. "Fibonacci 0.618"). */
+export interface ChartLevel { price: number; basis: string }
+
+export type ValueZone = 'sobrevalorada' | 'infravalorada';
+
+/**
+ * Price vs projection fair value over time plus the 200-day mean and chart levels (value_history.py).
+ * fair_value is null before the first revision or without a projection; sma200 is null under 200 sessions.
+ */
 export interface ValueHistory {
     ticker: string;
     currency: string;
-    points: Array<{ date: string; price: number; fair_value: number | null }>;
-    current: { price: number | null; fair_value: number | null; date: string | null };
+    points: Array<{ date: string; price: number; fair_value: number | null; sma200: number | null }>;
+    current: {
+        price: number | null; fair_value: number | null; date: string | null;
+        sma200: number | null; zone: ValueZone | null; distance_pct: number | null;
+        /** Nearest support below (infravalorada) or resistance above (sobrevalorada); distance_pct is level vs price. */
+        confirmation: (ChartLevel & { distance_pct: number }) | null;
+    };
+    levels: { supports: ChartLevel[]; resistances: ChartLevel[] };
 }
 
 export const fetchValueHistory = async (ticker: string, range: ValueHistoryRange = '1y'): Promise<ValueHistory | null> => {

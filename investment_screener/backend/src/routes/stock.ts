@@ -10,7 +10,7 @@
  * 
  * Routes Index:
  *   - GET /stock/lookup - Builds search dictionaries for tickers
- *   - GET /stock/:ticker/value-history - Price vs projection fair-value series (value_history.py)
+ *   - GET /stock/:ticker/value-history - Price vs projection fair-value series + SMA200 and chart levels (value_history.py)
  *   - GET /stock/:ticker/montecarlo - Monte Carlo fair-value distribution (stock_montecarlo.py)
  *   - GET /stock/:ticker/news-sentiment - finviz headlines + VADER sentiment, 1M/3M/6M/1Y counts (news_sentiment.py, cached 30 min)
  *   - GET /stock/:ticker/filings - SEC EDGAR filings list + earnings-call placeholder (sec_filings.py, cached 12h)

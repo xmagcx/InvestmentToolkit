@@ -3,53 +3,76 @@
  * =====================================
  *
  * Purpose:
- *     Nivel 2 · Entender (S6, S16): price line and fair-value line over time (inline SVG; recharts is not a dependency),
- *     shaded Sobrevalorada / Infravalorada areas with a text legend, labels of the current price and value,
- *     range buttons 1A / 3A / 5A / MÁX and an "Ocultar valoración" toggle. No fair-value history: price only plus a note.
+ *     Nivel 2 · Entender (S6, S16): the price as an area against its 200-day mean (SMA200, inline SVG; recharts is not a
+ *     dependency). The area between them is Infravalorada (emerald, price under the mean) or Sobrevalorada (red, over it),
+ *     cut at the interpolated crossing; supports (emerald dashed) and resistances (red dashed) from chart_levels.py are
+ *     labelled horizontal lines; a reading line states the zone and its confirming level. Our projection fair value stays
+ *     an optional amber line ("Ocultar valoración"). Range buttons 1A / 3A / 5A / MÁX. Under 200 sessions: price only plus a note.
  *
  * Layer: Frontend / Components / Analysis
  * Usage Examples: <ValueChart history={h} range="1y" onRangeChange={setRange} currency="USD" />
  */
 import { useState } from 'react';
 import type { ValueHistory, ValueHistoryRange } from '../../services/api';
-import { fmtNumEs } from '../../utils/analysisFormat';
+import { fmtLevelEs, fmtNumEs, levelsInRange, valueReading, zoneRuns } from '../../utils/analysisFormat';
+import { HelpTip } from './HelpTip';
 
 const RANGES: Array<[ValueHistoryRange, string]> = [['1y', '1A'], ['3y', '3A'], ['5y', '5A'], ['max', 'MÁX']];
 const W = 640, H = 270, L = 36, R = 96, T = 14, B = 26;
 
 interface Props { history: ValueHistory | null; range: ValueHistoryRange; onRangeChange: (r: ValueHistoryRange) => void; currency: string }
 
+/** Push right-edge labels apart so they stay readable: each at least 13px below the one before it. */
+function spreadLabels(ys: number[]): number[] {
+    const order = ys.map((v, i) => [v, i] as const).sort((p, q) => p[0] - q[0]);
+    const out = [...ys];
+    order.forEach(([, i], k) => { if (k && out[i] < out[order[k - 1][1]] + 13) out[i] = out[order[k - 1][1]] + 13; });
+    return out;
+}
+
 export function ValueChart({ history, range, onRangeChange, currency }: Props) {
     const [hideValue, setHideValue] = useState(false);
     const points = history?.points ?? [];
+    const cur = history?.current;
     const hasValue = points.some((p) => p.fair_value != null);
     const showValue = hasValue && !hideValue;
+    const hasSma = points.some((p) => p.sma200 != null);
 
-    const values = points.flatMap((p) => (showValue && p.fair_value != null ? [p.price, p.fair_value] : [p.price]));
-    const min = Math.min(...values) * 0.97, max = Math.max(...values) * 1.03;
+    const values = points.flatMap((p) => [p.price, ...(hasSma && p.sma200 != null ? [p.sma200] : []), ...(showValue && p.fair_value != null ? [p.fair_value] : [])]);
+    const lv = levelsInRange(hasSma ? history?.levels : undefined, Math.min(...values) * 0.97, Math.max(...values) * 1.03);
+    const { lo: min, hi: max } = lv;
     const x = (i: number) => L + (points.length < 2 ? 0 : (i * (W - L - R)) / (points.length - 1));
     const y = (v: number) => T + ((max - v) / (max - min || 1)) * (H - T - B);
+    const xy = ([i, v]: [number, number]) => `${x(i).toFixed(1)} ${y(v).toFixed(1)}`;
 
     const pricePath = points.map((p, i) => `${i ? 'L' : 'M'}${x(i).toFixed(1)} ${y(p.price).toFixed(1)}`).join(' ');
-    let valuePath = '';
-    points.forEach((p, i) => {
-        if (p.fair_value == null) return;
-        valuePath += `${points[i - 1]?.fair_value == null ? 'M' : 'L'}${x(i).toFixed(1)} ${y(p.fair_value).toFixed(1)} `;
-    });
-
-    // shortcut: a segment is shaded by the sign of its average gap, so a crossing inside one segment is not split; upgrade if the series gets sparse.
-    const areas = showValue ? points.slice(1).flatMap((b, k) => {
-        const a = points[k];
-        if (a.fair_value == null || b.fair_value == null) return [];
-        const over = (a.price - a.fair_value + b.price - b.fair_value) > 0;
-        const d = `M${x(k)} ${y(a.price)} L${x(k + 1)} ${y(b.price)} L${x(k + 1)} ${y(b.fair_value)} L${x(k)} ${y(a.fair_value)} Z`;
-        return [{ d, over, key: k }];
-    }) : [];
+    const linePath = (get: (p: ValueHistory['points'][number]) => number | null) => {
+        let d = '';
+        points.forEach((p, i) => { const v = get(p); if (v != null) d += `${d && get(points[i - 1]) != null ? 'L' : 'M'}${x(i).toFixed(1)} ${y(v).toFixed(1)} `; });
+        return d;
+    };
+    const smaPath = hasSma ? linePath((p) => p.sma200) : '';
+    const valuePath = linePath((p) => p.fair_value);
+    const areas = hasSma ? zoneRuns(points).map((r, key) => ({
+        key, over: r.over, d: `M${r.price.map(xy).join(' L')} L${[...r.sma].reverse().map(xy).join(' L')} Z`,
+    })) : [];
 
     const last = points[points.length - 1];
-    const cur = history?.current;
     const priceNow = cur?.price ?? last?.price ?? null;
     const valueNow = cur?.fair_value ?? null;
+    const smaNow = cur?.sma200 ?? null;
+    const labelX = x(points.length - 1) + 6;
+    const [priceY, smaY, valueY] = spreadLabels([
+        last ? y(last.price) : 0, smaNow != null ? y(smaNow) : 1e6, valueNow != null ? y(valueNow) : 1e6,
+    ]);
+    const levelLines = [
+        ...lv.supports.map((l) => ({ ...l, kind: 'Soporte', test: 'support-line', cls: 'stroke-emerald-400 fill-emerald-300' })),
+        ...lv.resistances.map((l) => ({ ...l, kind: 'Resistencia', test: 'resistance-line', cls: 'stroke-red-400 fill-red-300' })),
+    ];
+    const reading = valueReading(cur);
+    const ctx = {
+        company: history?.ticker ?? '', currency, price: priceNow, fairValue: valueNow, upside: null,
+    };
 
     return (
         <section aria-label="Precio vs valor" className="bg-slate-900/80 border border-slate-800 rounded-xl p-5 shadow-lg">
@@ -69,25 +92,37 @@ export function ValueChart({ history, range, onRangeChange, currency }: Props) {
                 </div>
             </div>
 
+            {reading && <p data-testid="value-reading" className="mb-2 text-sm text-slate-200">{reading}</p>}
+
             {points.length === 0 ? (
                 <p className="text-slate-600 text-sm text-center py-10">Sin historial de precios</p>
             ) : (
-                <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Gráfico de precio y valor justo" className="w-full h-auto">
-                    {areas.map((a) => <path key={a.key} d={a.d} className={a.over ? 'fill-red-500/20' : 'fill-emerald-500/20'} />)}
+                <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Gráfico de precio contra su media de 200 días" className="w-full h-auto">
+                    {areas.map((a) => <path key={a.key} data-zone={a.over ? 'sobrevalorada' : 'infravalorada'} d={a.d} className={a.over ? 'fill-red-500/25' : 'fill-emerald-500/25'} />)}
+                    {levelLines.map((l) => (
+                        <g key={`${l.kind}-${l.price}`}>
+                            <line data-testid={l.test} x1={L} x2={W - R} y1={y(l.price)} y2={y(l.price)} className={l.cls.split(' ')[0]} strokeWidth={1} strokeDasharray="4 3" />
+                            <text x={L + 4} y={y(l.price) - 3} className={l.cls.split(' ')[1]} fontSize={10}>{`${l.kind} ${fmtLevelEs(l.price)} · ${l.basis}`}</text>
+                        </g>
+                    ))}
+                    {hasSma && <path data-testid="sma-line" d={smaPath} fill="none" className="stroke-sky-300" strokeWidth={1.5} strokeDasharray="6 4" />}
                     <path data-testid="price-line" d={pricePath} fill="none" className="stroke-slate-100" strokeWidth={2} />
                     {showValue && <path data-testid="value-line" d={valuePath} fill="none" className="stroke-amber-400" strokeWidth={2} strokeDasharray="5 3" />}
                     <text x={L} y={H - 8} className="fill-slate-400" fontSize={11}>{points[0].date}</text>
                     <text x={W - R} y={H - 8} textAnchor="end" className="fill-slate-400" fontSize={11}>{last.date}</text>
-                    {priceNow != null && last && <text x={x(points.length - 1) + 6} y={y(last.price) + 4} className="fill-slate-100" fontSize={12}>{`Precio ${fmtNumEs(priceNow, 2)}`}</text>}
-                    {showValue && valueNow != null && <text x={x(points.length - 1) + 6} y={y(valueNow) + 4} className="fill-amber-400" fontSize={12}>{`Valor ${fmtNumEs(valueNow, 2)}`}</text>}
+                    {priceNow != null && last && <text x={labelX} y={priceY + 4} className="fill-slate-100" fontSize={12}>{`Precio ${fmtNumEs(priceNow, 2)}`}</text>}
+                    {hasSma && smaNow != null && <text x={labelX} y={smaY + 4} className="fill-sky-300" fontSize={12}>{`Media 200 días ${fmtNumEs(smaNow, 2)}`}</text>}
+                    {showValue && valueNow != null && <text x={labelX} y={valueY + 4} className="fill-amber-400" fontSize={12}>{`Valor ${fmtNumEs(valueNow, 2)}`}</text>}
                 </svg>
             )}
 
-            <div className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs text-slate-300">
+            <div className="mt-2 flex flex-wrap items-center gap-x-6 gap-y-1 text-xs text-slate-300">
                 <span><span aria-hidden="true" className="text-slate-100">━</span> Precio ({currency})</span>
+                {hasSma && <span><span aria-hidden="true" className="text-sky-300">╍</span> Media 200 días<HelpTip term="sma200" ctx={{ ...ctx, value: smaNow }} /></span>}
+                {hasSma && <span><span aria-hidden="true" className="text-red-400">■</span> Sobrevalorada (precio sobre su media)</span>}
+                {hasSma && <span><span aria-hidden="true" className="text-emerald-400">■</span> Infravalorada (precio bajo su media)</span>}
+                {hasSma && <span><span aria-hidden="true" className="text-emerald-400">╍</span> Soportes <span aria-hidden="true" className="text-red-400">╍</span> Resistencias<HelpTip term="levels" ctx={{ ...ctx, value: cur?.confirmation?.price ?? null }} /></span>}
                 {showValue && <span><span aria-hidden="true" className="text-amber-400">╍</span> Valor justo</span>}
-                {showValue && <span><span aria-hidden="true" className="text-red-400">■</span> Sobrevalorada (precio sobre el valor)</span>}
-                {showValue && <span><span aria-hidden="true" className="text-emerald-400">■</span> Infravalorada (precio bajo el valor)</span>}
             </div>
             {points.length > 0 && !hasValue && <p className="text-xs text-slate-400 mt-2">Sin historial de valoración</p>}
         </section>

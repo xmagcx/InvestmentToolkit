@@ -18,7 +18,7 @@ Usage Examples:
 Key Functions (Index):
     - fetch_daily_bars(): two years of daily OHLCV per ticker (batch download, SQLite cache)
     - compute_chart_levels(): swing, Fibonacci levels, volume shelves, EMAs
-    - supports_below() / resistances_above(): candidate levels around a price
+    - supports_below() / resistances_above(): candidate levels around a price (short=True: Spanish UI labels)
 
 Key Input Dependencies:
     - yfinance (daily bars), cache.py (fetch_cache table in domain_model.sqlite)
@@ -106,31 +106,37 @@ def compute_chart_levels(bars: pd.DataFrame) -> dict[str, Any] | None:
         "shelves": [{"low": round(float(i.left), 2), "high": round(float(i.right), 2), "volume": float(v)}
                     for i, v in shelves.items()],
         "ema50": round(float(close.ewm(span=50).mean().iloc[-1]), 2),
-        "ema200": round(float(close.ewm(span=200).mean().iloc[-1]), 2),
+        # no 200-day EMA before 200 sessions: a shorter seed is not that average (None, never a level)
+        "ema200": None if len(close) < 200 else round(float(close.ewm(span=200, min_periods=200).mean().iloc[-1]), 2),
     }
 
 
-def _candidates(chart: dict[str, Any]) -> list[tuple[float, str]]:
+def _candidates(chart: dict[str, Any], short: bool = False) -> list[tuple[float, str]]:
+    """Every level with its label: the stored-level wording, or the short Spanish UI wording."""
     swing = f"{chart['swingLow']['date'][:7]} to {chart['swingHigh']['date'][:7]} advance"
-    out = [(p, f"Chart: Fibonacci {r * 100:.1f}% retracement of the {swing}") for r, p in chart["fib"].items()]
+    out = [(p, f"Fibonacci {r:.3f}" if short else f"Chart: Fibonacci {r * 100:.1f}% retracement of the {swing}")
+           for r, p in chart["fib"].items()]
     for s in chart["shelves"]:
-        out.append((s["high"], f"Chart: top of the ${s['low']:.0f}-${s['high']:.0f} high-volume shelf"))
-        out.append((s["low"], f"Chart: bottom of the ${s['low']:.0f}-${s['high']:.0f} high-volume shelf"))
-    out.append((chart["ema200"], "Chart: 200-day EMA"))
-    out.append((chart["ema50"], "Chart: 50-day EMA"))
+        rng = f"${s['low']:.0f}-${s['high']:.0f}"
+        out.append((s["high"], f"Zona de volumen ${s['low']:.0f}–${s['high']:.0f} (techo)" if short
+                    else f"Chart: top of the {rng} high-volume shelf"))
+        out.append((s["low"], f"Zona de volumen ${s['low']:.0f}–${s['high']:.0f} (base)" if short
+                    else f"Chart: bottom of the {rng} high-volume shelf"))
+    if chart["ema200"] is not None:
+        out.append((chart["ema200"], "EMA 200 días" if short else "Chart: 200-day EMA"))
+    out.append((chart["ema50"], "EMA 50 días" if short else "Chart: 50-day EMA"))
     return out
 
 
-def supports_below(chart: dict[str, Any] | None, price: float) -> list[tuple[float, str]]:
+def supports_below(chart: dict[str, Any] | None, price: float, short: bool = False) -> list[tuple[float, str]]:
     """Chart levels below price, nearest first."""
     if not chart:
         return []
-    return sorted([c for c in _candidates(chart) if c[0] < price], key=lambda c: -c[0])
+    return sorted([c for c in _candidates(chart, short) if c[0] < price], key=lambda c: -c[0])
 
 
-def resistances_above(chart: dict[str, Any] | None, price: float) -> list[tuple[float, str]]:
+def resistances_above(chart: dict[str, Any] | None, price: float, short: bool = False) -> list[tuple[float, str]]:
     """Chart levels above price, nearest first."""
     if not chart:
         return []
-    return sorted([c for c in _candidates(chart) if c[0] > price], key=lambda c: c[0])
-
+    return sorted([c for c in _candidates(chart, short) if c[0] > price], key=lambda c: c[0])
