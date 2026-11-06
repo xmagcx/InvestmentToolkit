@@ -4,7 +4,7 @@
  *
  * Purpose:
  *     Análisis (/analysis): the SVI-explained view of one ticker, in three levels —
- *     Nivel 1 · Escanear (header card), Nivel 2 · Entender (signal + price-vs-value chart), Nivel 3 · Investigar (tabs, filled by T7b).
+ *     Nivel 1 · Escanear (header card), Nivel 2 · Entender (signal + price-vs-value chart), Nivel 3 · Investigar (the eight tabs, data fetched when each opens).
  *
  * Layer: Frontend / Pages
  *
@@ -15,12 +15,21 @@
  *     - AnalysisPage() - reads ?ticker=, loads fetchStockData + fetchValueHistory(range), takes the call from useRecommendations()
  * Key Input Dependencies: fair value = recommendation entry fair_value, else the value-history current fair value (our saved projection).
  */
-import { useEffect, useState } from 'react';
+import { useEffect, useMemo, useRef, useState } from 'react';
 import { useSearchParams } from 'react-router-dom';
 import { useRecommendations } from '../contexts/useRecommendations';
 import { useRecentTickers } from '../hooks/useRecentTickers';
 import { fetchStockData, fetchValueHistory, type StockData, type ValueHistory, type ValueHistoryRange } from '../services/api';
-import { AnalysisTabs } from '../components/analysis/AnalysisTabs';
+import { AnalysisTabs, type AnalysisTab } from '../components/analysis/AnalysisTabs';
+import { DescriptionTab } from '../components/analysis/DescriptionTab';
+import { FilingsTab } from '../components/analysis/FilingsTab';
+import { FinancialsTab } from '../components/analysis/FinancialsTab';
+import { InvestorsTab } from '../components/analysis/InvestorsTab';
+import { MonteCarloTab } from '../components/analysis/MonteCarloTab';
+import { NewsTab } from '../components/analysis/NewsTab';
+import { TechnicalTab } from '../components/analysis/TechnicalTab';
+import { ValuationTab } from '../components/analysis/ValuationTab';
+import { makeLoader } from '../components/analysis/useResource';
 import { HeaderCard } from '../components/analysis/HeaderCard';
 import { SignalCard } from '../components/analysis/SignalCard';
 import { ValueChart } from '../components/analysis/ValueChart';
@@ -57,6 +66,10 @@ export default function AnalysisPage() {
 
     // Changing the ticker drops the previous ticker's history so its fair value never shows on the new one.
     useEffect(() => { setHistory(null); setRange('1y'); }, [ticker]);
+
+    // Tab data is fetched when a tab first opens; this cache keeps it for the rest of the page visit.
+    const cache = useRef(new Map<string, Promise<unknown>>());
+    const load = useMemo(() => makeLoader(cache.current), []);
 
     const searchBox = (placeholder: string) => (
         <input
@@ -105,7 +118,18 @@ export default function AnalysisPage() {
             <HeaderCard stock={stock} fairValue={fairValue} priceDate={history?.current.date ?? null} />
             <SignalCard rec={rec} company={company} />
             <ValueChart history={history} range={range} onRangeChange={setRange} currency={currency} />
-            <AnalysisTabs />
+            <AnalysisTabs renderPanel={(tab: AnalysisTab) => {
+                switch (tab) {
+                    case 'Descripción': return <DescriptionTab stock={stock} />;
+                    case 'Financieros': return <FinancialsTab stock={stock} />;
+                    case 'Valoración': return <ValuationTab stock={stock} fairValue={fairValue} />;
+                    case 'Inversores': return <InvestorsTab stock={stock} ticker={ticker} load={load} />;
+                    case 'Filings': return <FilingsTab ticker={ticker} load={load} />;
+                    case 'Monte Carlo': return <MonteCarloTab ticker={ticker} company={company} load={load} />;
+                    case 'Técnico': return <TechnicalTab stock={stock} load={load} />;
+                    case 'Noticias': return <NewsTab ticker={ticker} load={load} />;
+                }
+            }} />
         </div>
     );
 }

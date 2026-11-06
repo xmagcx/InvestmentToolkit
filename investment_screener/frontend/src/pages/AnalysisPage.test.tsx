@@ -9,11 +9,14 @@ import { afterEach, beforeEach, describe, expect, it, vi } from 'vitest';
 import { cleanup, fireEvent, render, screen, waitFor, within } from '@testing-library/react';
 import { MemoryRouter } from 'react-router-dom';
 
-vi.mock('../services/api', () => ({ fetchStockData: vi.fn(), fetchValueHistory: vi.fn() }));
+vi.mock('../services/api', () => ({
+    fetchStockData: vi.fn(), fetchValueHistory: vi.fn(), fetchMonteCarlo: vi.fn(), fetchNewsSentiment: vi.fn(), fetchFilings: vi.fn(),
+    fetchSuperinvestors: vi.fn(), fetchTechnicalAnalysis: vi.fn(),
+}));
 
 import AnalysisPage from './AnalysisPage';
 import { RecommendationsContext } from '../contexts/useRecommendations';
-import { fetchStockData, fetchValueHistory, type RecommendationRecord, type StockData, type ValueHistory } from '../services/api';
+import { fetchFilings, fetchMonteCarlo, fetchNewsSentiment, fetchStockData, fetchSuperinvestors, fetchTechnicalAnalysis, fetchValueHistory, type RecommendationRecord, type StockData, type ValueHistory } from '../services/api';
 
 const stock = {
     symbol: 'MSFT', price: 535.93, currency: 'USD',
@@ -63,8 +66,9 @@ describe('header card (Nivel 1 · Escanear)', () => {
         renderPage({ MSFT: rec() });
         expect(await screen.findByText('Microsoft Corporation')).toBeTruthy();
         expect(screen.getByText('MSFT')).toBeTruthy();
-        expect(screen.getByText(/Technology · Software—Infrastructure/)).toBeTruthy();
-        expect(screen.getByText(/United States · USD · 3,98 T USD/)).toBeTruthy();
+        const header = within(screen.getByRole('region', { name: 'Nivel 1 · Escanear' }));
+        expect(header.getByText(/Technology · Software—Infrastructure/)).toBeTruthy();
+        expect(header.getByText(/United States · USD · 3,98 T USD/)).toBeTruthy();
         expect(screen.getByText('535,93 USD')).toBeTruthy();
         expect(screen.getByTestId('price-date').textContent).toContain('2026-01-01');
         expect(screen.getByText('Nivel 1 · Escanear')).toBeTruthy();
@@ -163,12 +167,41 @@ describe('value chart', () => {
     });
 });
 
-describe('tabs shell', () => {
-    it('renders the 8 tab buttons and an empty panel slot', async () => {
+describe('tabs (Nivel 3)', () => {
+    it('renders the 8 tab buttons and opens on Descripción with the organization facts', async () => {
         renderPage({});
         await screen.findByText('Microsoft Corporation');
         const tabs = within(screen.getByRole('tablist')).getAllByRole('tab').map(t => t.textContent);
         expect(tabs).toEqual(['Descripción', 'Financieros', 'Valoración', 'Inversores', 'Filings', 'Monte Carlo', 'Técnico', 'Noticias']);
-        expect(screen.getByRole('tabpanel').textContent).toBe('');
+        expect(screen.getByRole('tab', { name: 'Descripción' }).getAttribute('aria-selected')).toBe('true');
+        expect(screen.getByRole('table', { name: 'Datos generales de la organización' })).toBeTruthy();
+    });
+
+    it('Valoración uses the same fair value as the header', async () => {
+        renderPage({ MSFT: rec() });
+        await screen.findByText('Microsoft Corporation');
+        fireEvent.click(screen.getByRole('tab', { name: 'Valoración' }));
+        const row = within(screen.getByRole('table', { name: 'Métodos de valoración' })).getByText('Proyección propia').closest('tr')!;
+        expect(row.textContent).toContain('468,90 USD');
+        expect(row.textContent).toContain('Escenarios DCF');
+    });
+
+    it('fetches tab data only after the tab opens, once per ticker (reopening reuses it)', async () => {
+        vi.mocked(fetchMonteCarlo).mockResolvedValue(null);
+        vi.mocked(fetchNewsSentiment).mockResolvedValue(null);
+        renderPage({});
+        await screen.findByText('Microsoft Corporation');
+        for (const f of [fetchMonteCarlo, fetchNewsSentiment, fetchFilings, fetchSuperinvestors, fetchTechnicalAnalysis]) expect(f).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('tab', { name: 'Monte Carlo' }));
+        expect(await screen.findByText(/Sin proyección guardada/)).toBeTruthy();
+        expect(fetchMonteCarlo).toHaveBeenCalledTimes(1);
+        expect(fetchMonteCarlo).toHaveBeenCalledWith('MSFT');
+        expect(fetchNewsSentiment).not.toHaveBeenCalled();
+        fireEvent.click(screen.getByRole('tab', { name: 'Noticias' }));
+        expect(await screen.findByText('No se pudieron cargar las noticias.')).toBeTruthy();
+        fireEvent.click(screen.getByRole('tab', { name: 'Monte Carlo' }));
+        expect(await screen.findByText(/Sin proyección guardada/)).toBeTruthy();
+        expect(fetchMonteCarlo).toHaveBeenCalledTimes(1);
+        expect(fetchSuperinvestors).not.toHaveBeenCalled();
     });
 });
