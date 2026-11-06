@@ -18,7 +18,7 @@ const n2 = (v: number | null | undefined) => (v == null ? DASH : fmtNumEs(v, 2))
 export function ValuationTab({ stock, fairValue }: { stock: StockData; fairValue: number | null }) {
     const o = stock.overview;
     const cur = o?.profile?.currency || stock.currency || 'USD';
-    const company = o?.profile?.name || stock.symbol;
+    const company = stock.symbol; // short column header; the full name is in the page header
     const upside = fairValue != null && stock.price > 0 ? ((fairValue - stock.price) / stock.price) * 100 : null;
     const bench = o?.benchmarks ?? null;
     // Sector / industry benchmarks are null in the payload today; the lookup keeps the columns ready for when they arrive.

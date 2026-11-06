@@ -12,7 +12,7 @@ export const Note = ({ children }: { children: ReactNode }) => <p className="tex
 export const Loading = ({ children }: { children: ReactNode }) => <p role="status" className="text-slate-500 text-sm animate-pulse">{children}</p>;
 export const Empty = ({ children }: { children: ReactNode }) => <p className="text-slate-400 text-sm text-center py-8">{children}</p>;
 export const Pill = ({ tone = '', children }: { tone?: string; children: ReactNode }) => (
-    <span className={`inline-block rounded px-2 py-0.5 text-xs font-semibold bg-slate-800 border border-slate-700 ${tone || 'text-slate-200'}`}>{children}</span>
+    <span className={`inline-block whitespace-nowrap shrink-0 rounded px-2 py-0.5 text-xs font-semibold bg-slate-800 border border-slate-700 ${tone || 'text-slate-200'}`}>{children}</span>
 );
 export const SectionTitle = ({ children }: { children: ReactNode }) => <h3 className="text-lg font-semibold text-slate-100 mb-2">{children}</h3>;
 

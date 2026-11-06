@@ -128,7 +128,7 @@ describe('Valoración (S10)', () => {
     it('renders multiples and profitability with Sector / Industria "—" and null cells "—"', () => {
         render(<ValuationTab stock={stock} fairValue={125} />);
         const mult = screen.getByRole('table', { name: 'Múltiplos de valoración' });
-        expect(within(mult).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Múltiplo', 'Acme Corp', 'Sector', 'Industria']);
+        expect(within(mult).getAllByRole('columnheader').map((h) => h.textContent)).toEqual(['Múltiplo', 'ACME', 'Sector', 'Industria']);
         const per = within(mult).getByText('PER').closest('tr')!;
         expect([...per.querySelectorAll('td')].map((c) => c.textContent)).toEqual(['16,8x', '—', '—']);
         expect([...within(mult).getByText('P/VC').closest('tr')!.querySelectorAll('td')].map((c) => c.textContent)).toEqual(['—', '—', '—']);
