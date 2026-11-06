@@ -18,6 +18,7 @@ Key Functions (Index):
     - save_to_cache(ticker, data) - Save data to cache
     - sanitize_json_data(val) - Clean floats/nans for valid JSON serialization
     - compute_performance(hist) - 1D..5Y % changes via shared price_changes.period_changes
+    - build_overview(stock) - (company_overview.py) adds the `overview` block to the payload
     - overlay_ttm(annual, quarterly, kind) - Appends a TTM column when quarterly data is newer than the last fiscal year
     - fetch_financial_data(ticker_symbol, no_cache) - Primary orchestrator for data retrieval, caching, and transformation
     - main() - Main CLI entry point
@@ -42,6 +43,7 @@ import pandas as pd
 import numpy as np
 
 from price_changes import PERIODS, period_changes
+from company_overview import build_overview
 
 # --- Caching Configuration ---
 # Cache lives in SQLite (cache.py -> fetch_cache), never in JSON files next to the script.
@@ -574,6 +576,13 @@ def fetch_financial_data(ticker_symbol: str, no_cache: bool = False) -> None:
                 "years, so Piotroski year-over-year comparisons overlap by ~9 months."
             ] if ttm_applied else [])
         }
+
+        # Analysis page overview (company_overview.py); never allowed to break the payload
+        try:
+            result["overview"] = build_overview(stock)
+        except Exception as e:
+            print(f"Overview build failed: {e}", file=sys.stderr)
+            result["overview"] = None
 
         # 3. Save to Cache
         result = sanitize_json_data(result)

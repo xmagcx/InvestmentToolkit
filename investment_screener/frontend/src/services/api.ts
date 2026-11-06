@@ -21,6 +21,32 @@
  *     - optimizePortfolio() - Suggested target weights and orders for one objective (POST /api/portfolio/optimize)
  */
 import { normalizePositionRows, type PositionRow } from '../components/positions/positionMath';
+type Num = number | null;
+export interface StockOverviewIncome {
+    period: string; revenue: Num; cost_of_revenue: Num; gross_profit: Num; research_development: Num;
+    sga: Num; operating_income: Num; tax: Num; net_income: Num; segments: null;
+}
+export interface StockOverview {
+    profile: {
+        name: string | null; sector: string | null; industry: string | null; country: string | null;
+        currency: string | null; market_cap: Num; employees: Num;
+        hq: { city: string | null; state: string | null; country: string | null };
+        website: string | null; fiscal_year_end: Num; ceo: string | null; cfo: string | null;
+        description: string | null; isin: string | null;
+    } | null;
+    income_quarter: StockOverviewIncome | null;
+    income_annual: StockOverviewIncome | null;
+    balance: Record<'total_assets' | 'total_equity' | 'long_term_debt' | 'total_debt' | 'cash_and_short_term'
+        | 'net_debt' | 'net_debt_per_share' | 'debt_to_equity', Num> | null;
+    multiples: Record<'pe' | 'pb' | 'ev_ebitda' | 'ev_ebit' | 'ev_sales' | 'ev_fcf', Num> | null;
+    profitability: Record<'roe' | 'roic' | 'roa' | 'rona' | 'gross_margin' | 'ebitda_margin' | 'ebit_margin'
+        | 'net_margin' | 'fcf_margin', Num> | null;
+    cost_of_capital: Record<'beta' | 'levered_beta' | 'cost_of_equity' | 'cost_of_debt' | 'wacc' | 'discount_rate', Num> | null;
+    growth: Record<'revenue_hist' | 'ebit_hist' | 'net_income_hist' | 'terminal', Num> | null;
+    ownership: Record<'insiders_pct' | 'institutions_pct' | 'public_pct', Num> | null;
+    yields: Record<'fcf_yield' | 'dividend_yield' | 'buyback_yield' | 'augmented_yield', Num> | null;
+    benchmarks: { sector: null; industry: null };
+}
 export interface StockData {
     symbol: string;
     price: number;
@@ -42,6 +68,8 @@ export interface StockData {
         revenue_growth?: number;
         profit_margin?: number;
     };
+    /** Descripción / Financieros / Valoración data (company_overview.py); every leaf is a number, string or null. */
+    overview?: StockOverview | null;
     /** % change per period from the shared price_changes calculation; null when history doesn't reach. */
     performance?: Record<'1d' | '1w' | '1m' | '3m' | 'ytd' | '1y' | '5y', number | null>;
     expert_metrics: {
