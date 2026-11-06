@@ -8,7 +8,8 @@ Purpose:
     (growthRate x exitPE), and a Monte Carlo simulation sampling growth/
     margin/exitPE from triangular distributions anchored on the existing
     bear/base/bull scenario params, producing P10/P50/P90 fair value and
-    P(fairValue < currentPrice).
+    P(fairValue < currentPrice), plus the full
+    distribution (24-bin histogram, mean, min, max, P25, P75, P(undervalued)).
 
 Layer: Backend / Python Services / Valuation Math
 
@@ -35,6 +36,8 @@ import numpy as np
 
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from dcf_scenarios import compute_scenario  # noqa: E402
+
+HISTOGRAM_BINS = 24
 
 
 def sensitivity_grid(
@@ -115,8 +118,9 @@ def monte_carlo(
         seed: RNG seed for reproducibility (None = nondeterministic).
 
     Returns:
-        {"p10": float, "p50": float, "p90": float,
-         "probabilityOvervalued": float, "n": int, "seed": int | None}
+        {"p10", "p50", "p90", "probabilityOvervalued", "n", "seed",
+         "histogram": {"bins": [24 + 1 edges], "counts": [24 ints]},
+         "mean", "min", "max", "p25", "p75", "probabilityUndervalued"}
     """
     rng = np.random.default_rng(seed)
     fair_values = []
@@ -137,10 +141,20 @@ def monte_carlo(
     p90 = float(np.percentile(fair_values, 90))
     probability_overvalued = sum(1 for fv in fair_values if fv < current_price) / n
 
+    counts, edges = np.histogram(fair_values, bins=HISTOGRAM_BINS)
+    probability_overvalued = round(probability_overvalued, 4)
+
     return {
         "p10": round(p10, 2), "p50": round(p50, 2), "p90": round(p90, 2),
-        "probabilityOvervalued": round(probability_overvalued, 4),
+        "probabilityOvervalued": probability_overvalued,
         "n": n, "seed": seed,
+        "histogram": {"bins": [round(float(e), 2) for e in edges], "counts": [int(c) for c in counts]},
+        "mean": round(float(np.mean(fair_values)), 2),
+        "min": round(float(np.min(fair_values)), 2),
+        "max": round(float(np.max(fair_values)), 2),
+        "p25": round(float(np.percentile(fair_values, 25)), 2),
+        "p75": round(float(np.percentile(fair_values, 75)), 2),
+        "probabilityUndervalued": round(1 - probability_overvalued, 4),
     }
 
 

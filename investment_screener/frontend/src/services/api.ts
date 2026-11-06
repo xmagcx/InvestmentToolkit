@@ -351,6 +351,62 @@ export const fetchTechnicalAnalysis = async (ticker: string): Promise<TechnicalA
     }
 };
 
+export type ValueHistoryRange = '1y' | '3y' | '5y' | 'max';
+
+/** Price vs projection fair value over time (value_history.py); fair_value is null before the first revision or without a projection. */
+export interface ValueHistory {
+    ticker: string;
+    currency: string;
+    points: Array<{ date: string; price: number; fair_value: number | null }>;
+    current: { price: number | null; fair_value: number | null; date: string | null };
+}
+
+export const fetchValueHistory = async (ticker: string, range: ValueHistoryRange = '1y'): Promise<ValueHistory | null> => {
+    try {
+        const response = await fetch(`/api/stock/${ticker}/value-history?range=${range}`);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (e) {
+        console.warn('Failed to fetch value history:', e);
+        return null;
+    }
+};
+
+export interface MonteCarloScenario {
+    growthRate: number;
+    netMargin: number;
+    exitPE: number;
+    presentValue: number;
+}
+
+/** Monte Carlo fair-value distribution on the latest projection (stock_montecarlo.py). */
+export interface MonteCarloData {
+    ticker: string;
+    n: number;
+    seed: number;
+    price: number;
+    scenarios: { bear: MonteCarloScenario; base: MonteCarloScenario; bull: MonteCarloScenario };
+    result: {
+        p10: number; p25: number; p50: number; p75: number; p90: number;
+        mean: number; min: number; max: number;
+        probabilityOvervalued: number; probabilityUndervalued: number;
+        n: number; seed: number | null;
+        histogram: { bins: number[]; counts: number[] };
+    };
+}
+
+/** null when the ticker has no projection (404 no_projection) or no stored price. */
+export const fetchMonteCarlo = async (ticker: string): Promise<MonteCarloData | null> => {
+    try {
+        const response = await fetch(`/api/stock/${ticker}/montecarlo`);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (e) {
+        console.warn('Failed to fetch Monte Carlo:', e);
+        return null;
+    }
+};
+
 export const fetchStockData = async (ticker: string): Promise<StockData> => {
     try {
         const response = await fetch(`/api/stock/${ticker}`);

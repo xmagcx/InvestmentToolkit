@@ -184,3 +184,8 @@ def get_projection_scenarios(conn: sqlite3.Connection, projection_id: str) -> li
         "SELECT * FROM projection_scenario WHERE projection_id = ?;", (projection_id,),
     )
     return [dict(row) for row in cursor.fetchall()]
+
+
+def get_preferred_projection(conn: sqlite3.Connection, investment_id: str) -> dict | None:
+    """The projection every valuation call uses: latest AI_AGENT, else the highest version."""
+    return get_latest_projection_by_source(conn, investment_id, "AI_AGENT") or get_latest_projection(conn, investment_id)

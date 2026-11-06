@@ -10,6 +10,8 @@
  * 
  * Routes Index:
  *   - GET /stock/lookup - Builds search dictionaries for tickers
+ *   - GET /stock/:ticker/value-history - Price vs projection fair-value series (value_history.py)
+ *   - GET /stock/:ticker/montecarlo - Monte Carlo fair-value distribution (stock_montecarlo.py)
  *   - GET /stock/:ticker - Fetches financial metrics or ETF profile details
  *   - POST /portfolio-heatmap - Fetches aggregated heatmap data for portfolio positions
  *   - GET /market/quotes - Batch quote (bid/ask/price/change) for a comma-separated list of tickers
@@ -268,6 +270,40 @@ router.get('/stock/:ticker/technical-analysis', async (req, res) => {
     } catch (err: any) {
         console.error(`[API] Error generating TA summary for ${cleanSym}:`, err);
         res.status(500).json({ error: 'Failed to generate technical analysis summary' });
+    }
+});
+
+const VALUE_HISTORY_RANGES = ['1y', '3y', '5y', 'max'];
+
+router.get('/stock/:ticker/value-history', async (req, res) => {
+    const { ticker } = req.params;
+    if (!isValidTicker(ticker)) { res.status(400).json({ error: 'Invalid ticker symbol' }); return; }
+    const range = typeof req.query.range === 'string' ? req.query.range : '1y';
+    if (!VALUE_HISTORY_RANGES.includes(range)) { res.status(400).json({ error: 'Invalid range' }); return; }
+    try {
+        const data = await spawnPythonScript('value_history.py', [ticker.toUpperCase(), '--range', range]);
+        if (data.error) { res.status(502).json({ error: data.error }); return; }
+        res.json(data);
+    } catch (e: any) {
+        console.error(`[API] value-history failed for ${ticker}:`, e);
+        res.status(500).json({ error: 'Failed to build value history' });
+    }
+});
+
+router.get('/stock/:ticker/montecarlo', async (req, res) => {
+    const { ticker } = req.params;
+    if (!isValidTicker(ticker)) { res.status(400).json({ error: 'Invalid ticker symbol' }); return; }
+    try {
+        const data = await spawnPythonScript('stock_montecarlo.py', [ticker.toUpperCase()]);
+        if (data.error) {
+            const missing = data.error === 'no_projection' || data.error === 'no_price';
+            res.status(missing ? 404 : 500).json({ error: data.error, message: data.message });
+            return;
+        }
+        res.json(data);
+    } catch (e: any) {
+        console.error(`[API] montecarlo failed for ${ticker}:`, e);
+        res.status(500).json({ error: 'Failed to run Monte Carlo' });
     }
 });
 

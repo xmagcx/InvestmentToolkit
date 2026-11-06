@@ -114,10 +114,9 @@ def _triggered_tickers(db_path: str | Path | None) -> set[str]:
 def _valuation_inputs(conn: Any, inv_id: str, prices: dict[str, float], symbol: str) -> tuple:
     """Return the preferred projection, fair value, price, provenance and upside."""
     from domain_model.investment_price_repository import get_investment_price
-    from domain_model.projection_repository import get_latest_projection, get_latest_projection_by_source
+    from domain_model.projection_repository import get_preferred_projection
 
-    entry = (get_latest_projection_by_source(conn, inv_id, "AI_AGENT")
-             or get_latest_projection(conn, inv_id))
+    entry = get_preferred_projection(conn, inv_id)
     fv = entry.get("fair_value") if entry else None
     current_price = get_investment_price(conn, inv_id)
     price = current_price.get("price") if current_price else prices.get(symbol)
