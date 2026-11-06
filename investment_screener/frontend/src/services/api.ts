@@ -441,6 +441,72 @@ export const fetchNewsSentiment = async (ticker: string): Promise<NewsSentiment 
     }
 };
 
+export interface SecFiling {
+    form: string;
+    title: string;
+    filed: string;
+    period: string | null;
+    fiscal_year: number | null;
+    fiscal_quarter: number | null;
+    url: string;
+}
+
+/** EDGAR filings (sec_filings.py): total counts the tracked forms in EDGAR's recent list; cik null = non-US or unknown ticker. */
+export interface Filings {
+    ticker: string;
+    cik: string | null;
+    sec_filings: { total: number; items: SecFiling[] };
+    earnings_calls: { available: boolean; reason: string };
+}
+
+export const fetchFilings = async (ticker: string): Promise<Filings | null> => {
+    try {
+        const response = await fetch(`/api/stock/${ticker}/filings`);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (e) {
+        console.warn('Failed to fetch filings:', e);
+        return null;
+    }
+};
+
+export type SuperinvestorAction = 'add' | 'new' | 'reduce' | 'sold_out' | 'hold';
+
+export interface SuperinvestorHolding {
+    manager: string;
+    fund: string;
+    cik: string;
+    portfolio_pct: number;
+    shares: number;
+    quarter: string;
+    change_pct: number | null;
+    action: SuperinvestorAction;
+}
+
+/** 13F-HR holders among the curated managers (superinvestors.py); cusip null = not resolvable, errors = managers skipped after a fetch failure. */
+export interface Superinvestors {
+    ticker: string;
+    cusip: string | null;
+    holders: number;
+    buying: number;
+    selling: number;
+    quarter_latest: string | null;
+    items: SuperinvestorHolding[];
+    errors: Array<{ manager: string; error: string }>;
+    delay_note: string;
+}
+
+export const fetchSuperinvestors = async (ticker: string): Promise<Superinvestors | null> => {
+    try {
+        const response = await fetch(`/api/stock/${ticker}/superinvestors`);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (e) {
+        console.warn('Failed to fetch superinvestors:', e);
+        return null;
+    }
+};
+
 export const fetchStockData = async (ticker: string): Promise<StockData> => {
     try {
         const response = await fetch(`/api/stock/${ticker}`);

@@ -15,6 +15,9 @@ Usage Examples:
 
 Key Functions (Index):
     - _throttled_get()
+    - get_json() / get_text() - throttled GET helpers shared by sec_filings.py and superinvestors.py
+    - lookup_cik() / lookup_company_name() - ticker -> CIK / title from SEC company_tickers.json
+    - get_submissions() / accession_url() - filings list and archive document URL
     - _extract_metric()
     - get_company_facts()
     - main()
@@ -25,6 +28,7 @@ Key Input Dependencies:
 Key Output Dependencies:
     None
 """
+import os
 import sys
 import time
 from pathlib import Path
@@ -34,7 +38,10 @@ import requests
 sys.path.insert(0, str(Path(__file__).resolve().parent))
 from cache import cache_get, cache_set  # noqa: E402
 
-USER_AGENT = "InvestmentToolkit research@localhost"
+# www.sec.gov (company_tickers.json, Archives/) answers 403 to a contact without a
+# dotted domain such as "@localhost"; data.sec.gov accepts it. Override with
+# SEC_EDGAR_USER_AGENT="Name you@email.com" (same variable the 13F skill reads).
+USER_AGENT = os.environ.get("SEC_EDGAR_USER_AGENT", "InvestmentToolkit research@localhost.local")
 
 # revenue tries "Revenues" first; many large issuers (including real recent
 # Apple filings) report top-line revenue under
@@ -78,6 +85,56 @@ def _throttled_get(url: str):
     resp = requests.get(url, headers={"User-Agent": USER_AGENT})
     _last_request_time = time.monotonic()
     return resp
+
+
+def get_json(url: str) -> dict | None:
+    """Throttled GET returning the parsed JSON body, or None on any non-200 status."""
+    resp = _throttled_get(url)
+    return resp.json() if resp.status_code == 200 else None
+
+
+def get_text(url: str) -> str | None:
+    """Throttled GET returning the body text, or None on any non-200 status."""
+    resp = _throttled_get(url)
+    return resp.text if resp.status_code == 200 else None
+
+
+def _company_row(ticker: str) -> list | None:
+    """[zero-padded CIK, company title] for a ticker from SEC company_tickers.json, or None."""
+    mapping = cache_get("company-tickers-v2", "edgar")
+    if mapping is None:
+        payload = get_json("https://www.sec.gov/files/company_tickers.json")
+        if payload is None:
+            return None
+        mapping = {row["ticker"].upper(): [str(row["cik_str"]).zfill(10), row["title"]] for row in payload.values()}
+        cache_set("company-tickers-v2", "edgar", mapping)
+    return mapping.get(ticker.upper().replace(".", "-"))
+
+
+def lookup_cik(ticker: str) -> str | None:
+    """Zero-padded 10-digit CIK for a US-listed ticker, or None (non-US / unknown).
+
+    EDGAR writes share classes with a dash (BRK-B), so dots are mapped to dashes. The whole
+    ticker map is cached with the "edgar" TTL, so a lookup costs one request per week.
+    """
+    row = _company_row(ticker)
+    return row[0] if row else None
+
+
+def lookup_company_name(ticker: str) -> str | None:
+    """EDGAR company title for a US-listed ticker (e.g. "MICROSOFT CORP"), or None."""
+    row = _company_row(ticker)
+    return row[1] if row else None
+
+
+def get_submissions(cik: str) -> dict | None:
+    """The company's EDGAR submissions payload (recent filings), uncached so new filings show up."""
+    return get_json(f"https://data.sec.gov/submissions/CIK{cik.zfill(10)}.json")
+
+
+def accession_url(cik: str, accession: str, document: str) -> str:
+    """EDGAR archive URL of one filing document."""
+    return f"https://www.sec.gov/Archives/edgar/data/{int(cik)}/{accession.replace('-', '')}/{document}"
 
 
 def _extract_metric(gaap: dict, tags: tuple) -> dict | None:
