@@ -125,3 +125,17 @@ def test_set_members_replaces_the_previous_list(dbs):
     domain, ledger = dbs
     set_members(domain, "ai", ["NVDA"])
     assert "AMD" not in build_context(domain, ledger, "ai", today=TODAY, days=14).split("## Events")[0]
+
+
+class _NeutralAnalyzer:
+    def polarity_scores(self, _title):
+        return {"compound": 0.0}
+
+
+def test_finviz_headlines_are_not_thesis_events(dbs):
+    from news_sentiment import build_news_sentiment
+    domain, ledger = dbs
+    rows = [("2026-10-09 10:00:00", "Nvidia ships new chips", "https://example.test/nvda-1", "Reuters")]
+    build_news_sentiment("NVDA", str(ledger), fetcher=lambda _s: rows, analyzer=_NeutralAnalyzer(), today=TODAY)
+    stale = {s["document_id"]: s for s in stale_documents(domain, ledger, today=TODAY, max_age_days=7)}
+    assert stale["ai"]["new_events"] == 1

@@ -12,6 +12,7 @@
  *   - GET /stock/lookup - Builds search dictionaries for tickers
  *   - GET /stock/:ticker/value-history - Price vs projection fair-value series (value_history.py)
  *   - GET /stock/:ticker/montecarlo - Monte Carlo fair-value distribution (stock_montecarlo.py)
+ *   - GET /stock/:ticker/news-sentiment - finviz headlines + VADER sentiment, 1M/3M/6M/1Y counts (news_sentiment.py, cached 30 min)
  *   - GET /stock/:ticker - Fetches financial metrics or ETF profile details
  *   - POST /portfolio-heatmap - Fetches aggregated heatmap data for portfolio positions
  *   - GET /market/quotes - Batch quote (bid/ask/price/change) for a comma-separated list of tickers
@@ -304,6 +305,27 @@ router.get('/stock/:ticker/montecarlo', async (req, res) => {
     } catch (e: any) {
         console.error(`[API] montecarlo failed for ${ticker}:`, e);
         res.status(500).json({ error: 'Failed to run Monte Carlo' });
+    }
+});
+
+const NEWS_SENTIMENT_TTL_MS = 30 * 60 * 1000;
+const newsSentimentCache = new Map<string, { value: any; expiresAt: number }>();
+
+router.get('/stock/:ticker/news-sentiment', async (req, res) => {
+    const { ticker } = req.params;
+    if (!isValidTicker(ticker)) { res.status(400).json({ error: 'Invalid ticker symbol' }); return; }
+    const key = ticker.toUpperCase();
+    const hit = newsSentimentCache.get(key);
+    if (hit && hit.expiresAt > Date.now()) { res.json(hit.value); return; }
+    try {
+        const data = await spawnPythonScript('news_sentiment.py', [key]);
+        if (data.error) { res.status(502).json({ error: data.error, message: data.message }); return; }
+        // A stale result (finviz failed) is served but not cached, so the next request retries the source.
+        if (!data.stale) newsSentimentCache.set(key, { value: data, expiresAt: Date.now() + NEWS_SENTIMENT_TTL_MS });
+        res.json(data);
+    } catch (e: any) {
+        console.error(`[API] news-sentiment failed for ${ticker}:`, e);
+        res.status(500).json({ error: 'Failed to build news sentiment' });
     }
 });
 

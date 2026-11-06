@@ -4,6 +4,12 @@
 #
 #    pip-compile --output-file=requirements.txt requirements.in
 #
+aiohappyeyeballs==2.7.1
+    # via aiohttp
+aiohttp==3.14.5
+    # via finviz
+aiosignal==1.4.0
+    # via aiohttp
 annotated-doc==0.0.4
     # via
     #   fastapi
@@ -12,6 +18,8 @@ annotated-types==0.7.0
     # via pydantic
 anyio==4.13.0
     # via starlette
+attrs==26.1.0
+    # via aiohttp
 backports-tarfile==1.2.0
     # via jaraco-context
 beautifulsoup4==4.14.3
@@ -31,6 +39,7 @@ clarabel==0.11.1
     # via cvxpy
 click==8.3.3
     # via
+    #   nltk
     #   typer
     #   uvicorn
 cloudpickle==3.1.2
@@ -39,16 +48,26 @@ cryptography==47.0.0
     # via
     #   -r requirements.in
     #   secretstorage
+cssselect==1.6.0
+    # via finviz
 curl-cffi==0.15.0
     # via
     #   -r requirements.in
     #   yfinance
 cvxpy==1.9.3
     # via pyportfolioopt
+defusedxml==0.7.1
+    # via nltk
 fastapi==0.136.1
+    # via -r requirements.in
+finviz==2.1.0
     # via -r requirements.in
 frozendict==2.4.7
     # via yfinance
+frozenlist==1.8.0
+    # via
+    #   aiohttp
+    #   aiosignal
 h11==0.16.0
     # via uvicorn
 highspy==1.15.1
@@ -57,6 +76,7 @@ idna==3.13
     # via
     #   anyio
     #   requests
+    #   yarl
 importlib-metadata==10.1.0
     # via keyring
 jaraco-classes==3.4.0
@@ -73,10 +93,13 @@ jinja2==3.1.6
     # via osqp
 joblib==1.6.0
     # via
+    #   nltk
     #   osqp
     #   scikit-learn
 keyring==25.7.0
     # via -r requirements.in
+lxml==6.1.3
+    # via finviz
 markdown-it-py==4.0.0
     # via rich
 markupsafe==3.0.4
@@ -87,10 +110,16 @@ more-itertools==11.0.2
     # via
     #   jaraco-classes
     #   jaraco-functools
+multidict==7.2.1
+    # via
+    #   aiohttp
+    #   yarl
 multitasking==0.0.13
     # via yfinance
 narwhals==2.28.0
     # via scikit-learn
+nltk==3.10.4
+    # via -r requirements.in
 numpy==2.4.4
     # via
     #   -r requirements.in
@@ -117,6 +146,10 @@ peewee==4.0.5
     # via yfinance
 platformdirs==4.9.6
     # via yfinance
+propcache==0.5.4
+    # via
+    #   aiohttp
+    #   yarl
 protobuf==7.34.1
     # via yfinance
 pycparser==3.0
@@ -143,9 +176,12 @@ pyyaml==6.0.3
     # via -r requirements.in
 qdldl==0.1.9.post1
     # via cvxpy
+regex==2026.11.7
+    # via nltk
 requests==2.33.1
     # via
     #   -r requirements.in
+    #   finviz
     #   yfinance
 rich==15.0.0
     # via
@@ -179,12 +215,20 @@ sparsediffpy==0.6.1
     # via cvxpy
 starlette==1.0.0
     # via fastapi
+tenacity==9.2.1
+    # via finviz
 threadpoolctl==3.7.0
     # via scikit-learn
+tqdm==4.70.1
+    # via
+    #   finviz
+    #   nltk
 typer==0.25.1
     # via -r requirements.in
 typing-extensions==4.15.0
     # via
+    #   aiohttp
+    #   aiosignal
     #   anyio
     #   beautifulsoup4
     #   fastapi
@@ -202,6 +246,8 @@ uvicorn==0.46.0
     # via -r requirements.in
 websockets==16.0
     # via yfinance
+yarl==1.25.1
+    # via aiohttp
 yfinance==1.3.0
     # via -r requirements.in
 zipp==4.1.2

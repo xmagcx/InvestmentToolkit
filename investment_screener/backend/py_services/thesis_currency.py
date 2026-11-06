@@ -68,6 +68,10 @@ def _members_by_document(conn: sqlite3.Connection) -> dict[str, list[str]]:
     return {d: sorted(s) for d, s in out.items()}
 
 
+# Raw finviz headlines (news_sentiment.SOURCE_ID) share NEWS_SWEEP but are not thesis findings.
+HEADLINE_SOURCE = "finviz"
+
+
 def _events(ledger_db: Path, tickers: list[str], since: str, after_ingested: str | None = None, same_day: str | None = None) -> list[dict]:
     """ACTIVE events for ``tickers`` dated after ``since`` (and same-day ones ingested after ``after_ingested``)."""
     if not tickers or not Path(ledger_db).exists():
@@ -79,10 +83,11 @@ def _events(ledger_db: Path, tickers: list[str], since: str, after_ingested: str
         sql = (
             "SELECT i.ticker, e.event_type, substr(e.effective_at, 1, 10), e.title, e.body_markdown "
             "FROM intelligence_event e JOIN instrument i ON i.instrument_id = e.instrument_id "
-            f"WHERE e.status = 'ACTIVE' AND e.event_type IN ({types}) AND i.ticker IN ({marks}) AND ("
+            f"WHERE e.status = 'ACTIVE' AND e.event_type IN ({types}) AND i.ticker IN ({marks}) "
+            "AND COALESCE(e.source_id, '') != ? AND ("
             "substr(e.effective_at, 1, 10) > ?"
         )
-        params: list = [*EVENT_TYPES, *tickers, since]
+        params: list = [*EVENT_TYPES, *tickers, HEADLINE_SOURCE, since]
         if same_day is not None and after_ingested is not None:
             sql += " OR (substr(e.effective_at, 1, 10) = ? AND e.ingested_at > ?)"
             params += [same_day, after_ingested]

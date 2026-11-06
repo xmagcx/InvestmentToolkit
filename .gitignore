@@ -189,3 +189,6 @@ heartbeat.md
 
 # APM dependencies
 apm_modules/
+
+# VADER lexicon downloaded on first news-sentiment run (news_sentiment.py)
+investment_screener/backend/data/nltk_data/

@@ -407,6 +407,40 @@ export const fetchMonteCarlo = async (ticker: string): Promise<MonteCarloData | 
     }
 };
 
+export type NewsSentimentLabel = 'positive' | 'neutral' | 'negative';
+export type NewsSentimentPeriod = '1M' | '3M' | '6M' | '1Y';
+
+export interface NewsArticle {
+    title: string;
+    date: string;
+    source: string;
+    url: string;
+    sentiment: NewsSentimentLabel;
+    score: number;
+}
+
+/** finviz headlines scored with VADER (news_sentiment.py); counts come from stored headlines, coverage_since is the earliest one. stale = finviz failed, stored data served. */
+export interface NewsSentiment {
+    ticker: string;
+    periods: Record<NewsSentimentPeriod, Record<NewsSentimentLabel, number>>;
+    articles: NewsArticle[];
+    total: number;
+    stale: boolean;
+    fetched_at: string;
+    coverage_since: string | null;
+}
+
+export const fetchNewsSentiment = async (ticker: string): Promise<NewsSentiment | null> => {
+    try {
+        const response = await fetch(`/api/stock/${ticker}/news-sentiment`);
+        if (!response.ok) return null;
+        return await response.json();
+    } catch (e) {
+        console.warn('Failed to fetch news sentiment:', e);
+        return null;
+    }
+};
+
 export const fetchStockData = async (ticker: string): Promise<StockData> => {
     try {
         const response = await fetch(`/api/stock/${ticker}`);

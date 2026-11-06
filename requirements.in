@@ -18,3 +18,6 @@ curl-cffi>=0.15.0
 pyyaml
 # Portfolio optimization (min-volatility, HRP, max-Sharpe) for the Portafolio page
 PyPortfolioOpt
+# News headlines + VADER sentiment for the Analysis Noticias tab (news_sentiment.py)
+finviz
+nltk
