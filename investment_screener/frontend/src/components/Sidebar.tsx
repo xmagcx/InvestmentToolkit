@@ -19,7 +19,7 @@ const NAV_ITEMS = [
     { name: 'Heatmap',          icon: Grid3X3,        path: '/' },
     { name: 'Portfolio Summary', icon: PieChart,       path: '/portfolio-summary' },
     { name: 'Portfolio',         icon: TableProperties, path: '/portfolio' },
-    { name: 'Stock Analysis',    icon: BarChart3,       path: '/analysis' },
+    { name: 'Análisis',          icon: BarChart3,       path: '/analysis' },
     { name: 'Oportunidades',     icon: Target,          path: '/opportunities' },
     { name: 'Brief diario',       icon: Zap,             path: '/daily-brief' },
     { name: 'Investment Theses', icon: BookOpen,        path: '/theses' },

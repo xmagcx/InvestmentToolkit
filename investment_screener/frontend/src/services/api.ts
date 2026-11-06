@@ -1185,6 +1185,10 @@ export interface RecommendationRecord {
     recent_trades?: RecentTrades;
     decision_check?: DecisionCheck;
     debt?: DebtView;
+    /** Set when the call was withheld (stale valuation, NEEDS_ANALYSIS) by apply_review_gate. */
+    review_gate?: { withheld: boolean; why: string; detail?: string | null };
+    /** Set when a recent opposite trade held the call back (flip_hold_note). */
+    flip_check?: { held: boolean; note: string };
 }
 
 /** How debt was handled in the saved valuation (leverage.py grade and rate check, via risk_reward.debt_view). */

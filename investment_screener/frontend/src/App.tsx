@@ -15,7 +15,7 @@
  */
 import { BrowserRouter, Navigate, Routes, Route } from 'react-router-dom';
 import MainLayout from './layouts/MainLayout';
-import Dashboard from './pages/Dashboard';
+import AnalysisPage from './pages/AnalysisPage';
 import Settings from './pages/Settings';
 import Heatmap from './pages/Heatmap';
 import PortfolioSummaryPage from './pages/PortfolioSummaryPage';
@@ -44,7 +44,7 @@ function App() {
               {/* The old Portfolio Table and Portfolio Advisor pages are one page now. */}
               <Route path="portfolio-table" element={<Navigate to="/portfolio" replace />} />
               <Route path="screener" element={<Navigate to="/portfolio" replace />} />
-              <Route path="analysis" element={<Dashboard />} />
+              <Route path="analysis" element={<AnalysisPage />} />
               <Route path="theses" element={<ThesesPage />} />
               <Route path="opportunities" element={<OpportunitiesPage />} />
               <Route path="daily-brief" element={<DailyBriefPage />} />
