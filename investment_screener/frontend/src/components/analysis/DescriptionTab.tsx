@@ -11,6 +11,14 @@ import { fmtCapEs, fmtGroupedEs, sankeyReading } from '../../utils/analysisForma
 import { SankeyChart } from './SankeyChart';
 import { Note } from './tabUi';
 
+const MOATS: Array<[string, string]> = [
+    ['Activos intangibles', 'Patentes, marcas o licencias que impiden copiar el producto.'],
+    ['Costes de cambio', 'Cambiar de proveedor cuesta tiempo, dinero o riesgo operativo.'],
+    ['Efecto red', 'El producto vale más cuantos más usuarios lo usan.'],
+    ['Ventaja en costes', 'Produce o distribuye más barato por escala, insumos o procesos.'],
+    ['Escala eficiente', 'El mercado solo es rentable para uno o pocos actores.'],
+];
+
 const MONTHS = ['enero', 'febrero', 'marzo', 'abril', 'mayo', 'junio', 'julio', 'agosto', 'septiembre', 'octubre', 'noviembre', 'diciembre'];
 
 export function DescriptionTab({ stock }: { stock: StockData }) {
@@ -49,6 +57,18 @@ export function DescriptionTab({ stock }: { stock: StockData }) {
                 ) : (
                     <p className="text-slate-400 text-sm mt-2">Sin resultados trimestrales para dibujar el flujo de ingresos.</p>
                 )}
+            </section>
+            <section aria-labelledby="h-moat">
+                <h3 id="h-moat" className="text-lg font-semibold text-slate-100 mb-2">Tipos de foso</h3>
+                <ul className="grid md:grid-cols-5 gap-3">
+                    {MOATS.map(([name, def]) => (
+                        <li key={name} className="rounded-lg bg-slate-800 p-3">
+                            <p className="text-sm font-semibold text-slate-100">{name}</p>
+                            <p className="text-xs text-slate-400 mt-1">{def}</p>
+                        </li>
+                    ))}
+                </ul>
+                <Note>Foso de {company}: sin clasificar. Aún no hay una fuente que asigne el tipo de foso a cada empresa.</Note>
             </section>
             <div className="grid md:grid-cols-2 gap-6">
                 <section aria-labelledby="h-org">

@@ -57,6 +57,15 @@ beforeEach(() => vi.useRealTimers());
 afterEach(() => { cleanup(); vi.clearAllMocks(); });
 
 describe('Descripción (S8)', () => {
+    it('lists the five moat types and says the company is not classified yet', () => {
+        render(<DescriptionTab stock={stock} />);
+        const moat = screen.getByRole('region', { name: 'Tipos de foso' });
+        for (const n of ['Activos intangibles', 'Costes de cambio', 'Efecto red', 'Ventaja en costes', 'Escala eficiente']) {
+            expect(within(moat).getByText(n)).toBeTruthy();
+        }
+        expect(within(moat).getByText(/sin clasificar/i)).toBeTruthy();
+    });
+
     it('renders the Sankey with title, desc, legend, the reading and the facts table without null rows', () => {
         render(<DescriptionTab stock={stock} />);
         expect(screen.getByRole('heading', { name: '¿De dónde vienen los ingresos y a dónde van?' })).toBeTruthy();
