@@ -24,6 +24,14 @@ env/
 prisma/dev.db
 prisma/*.db
 
+# SQLite databases are local state, never source (ADR-029/030). This is a
+# catch-all: the explicit paths below stay for documentation, but a new DB in
+# any directory must never be able to slip into a commit.
+**/*.sqlite
+**/*.sqlite-wal
+**/*.sqlite-shm
+**/*.sqlite-journal
+
 # Logs
 logs/
 temp/logs/
@@ -192,3 +200,9 @@ apm_modules/
 
 # VADER lexicon downloaded on first news-sentiment run (news_sentiment.py)
 investment_screener/backend/data/nltk_data/
+
+# CodeGraph local index and runtime state: rebuilt per checkout, machine-local,
+# never source. Keeps the nested .codegraph/.gitignore as the tracked spec while
+# this rule protects the whole directory (the index alone is tens of MB).
+.codegraph/*
+!.codegraph/.gitignore
