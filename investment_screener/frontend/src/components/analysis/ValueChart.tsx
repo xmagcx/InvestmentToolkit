@@ -101,7 +101,7 @@ export function ValueChart({ history, range, onRangeChange, currency }: Props) {
                 <svg viewBox={`0 0 ${W} ${H}`} role="img" aria-label="Gráfico de precio contra su media de 200 días" className="w-full h-auto">
                     {areas.map((a) => <path key={a.key} data-zone={a.over ? 'sobrevalorada' : 'infravalorada'} d={a.d} className={a.over ? 'fill-red-500/25' : 'fill-emerald-500/25'} />)}
                     {levelLines.map((l) => (
-                        <g key={`${l.kind}-${l.price}`}>
+                        <g key={`${l.kind}-${l.price}-${l.basis}`}>
                             <line data-testid={l.test} x1={L} x2={W - R} y1={y(l.price)} y2={y(l.price)} className={l.cls.split(' ')[0]} strokeWidth={1} strokeDasharray="4 3" />
                             <text data-testid="level-tag" x={L + 4} y={tagYs[levelLines.indexOf(l)]} className={l.cls.split(' ')[1]} fontSize={10}>{`${l.kind} ${fmtLevelEs(l.price)}`}</text>
                         </g>
@@ -120,7 +120,7 @@ export function ValueChart({ history, range, onRangeChange, currency }: Props) {
             {levelLines.length > 0 && (
                 <ul aria-label="Soportes y resistencias" className="mt-2 flex flex-wrap gap-x-6 gap-y-1 text-xs">
                     {levelLines.map((l) => (
-                        <li key={`li-${l.kind}-${l.price}`} className={l.cls.split(' ')[1].replace('fill-', 'text-')}>{`${l.kind} ${fmtLevelEs(l.price)} · ${l.basis}`}</li>
+                        <li key={`li-${l.kind}-${l.price}-${l.basis}`} className={l.cls.split(' ')[1].replace('fill-', 'text-')}>{`${l.kind} ${fmtLevelEs(l.price)} · ${l.basis}`}</li>
                     ))}
                 </ul>
             )}

@@ -123,7 +123,13 @@ def build_series(closes: list[tuple[str, float]], revisions: list[tuple[str, flo
 def current_block_levels(bars: pd.DataFrame | None, price: float | None) -> dict:
     """Nearest supports below and resistances above price (short UI labels), from chart_levels."""
     chart = compute_chart_levels(bars) if bars is not None and price is not None else None
-    pick = lambda found: [{"price": p, "basis": b} for p, b in found[:NEAREST_LEVELS]]  # noqa: E731
+    def pick(found):  # contiguous volume shelves share an edge: one slot per price, nearest basis wins
+        seen, out = set(), []
+        for p, b in found:
+            if p not in seen and len(out) < NEAREST_LEVELS:
+                seen.add(p)
+                out.append({"price": p, "basis": b})
+        return out
     if not chart:
         return {"supports": [], "resistances": []}
     return {"supports": pick(supports_below(chart, price, short=True)),
