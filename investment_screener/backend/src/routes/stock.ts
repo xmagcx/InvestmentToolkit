@@ -10,7 +10,7 @@
  * 
  * Routes Index:
  *   - GET /stock/lookup - Builds search dictionaries for tickers
- *   - GET /stock/:ticker/value-history - Price vs projection fair-value series + SMA200 and chart levels (value_history.py)
+ *   - GET /stock/:ticker/value-history - Price vs projection fair-value series + SMA200, volume, navigator overview and chart levels (value_history.py; ranges ytd/1y/3y/5y/10y/max)
  *   - GET /stock/:ticker/montecarlo - Monte Carlo fair-value distribution (stock_montecarlo.py)
  *   - GET /stock/:ticker/news-sentiment - finviz headlines + VADER sentiment, 1M/3M/6M/1Y counts (news_sentiment.py, cached 30 min)
  *   - GET /stock/:ticker/filings - SEC EDGAR filings list + earnings-call placeholder (sec_filings.py, cached 12h)
@@ -276,7 +276,7 @@ router.get('/stock/:ticker/technical-analysis', async (req, res) => {
     }
 });
 
-const VALUE_HISTORY_RANGES = ['1y', '3y', '5y', 'max'];
+const VALUE_HISTORY_RANGES = ['ytd', '1y', '3y', '5y', '10y', 'max'];
 
 router.get('/stock/:ticker/value-history', async (req, res) => {
     const { ticker } = req.params;

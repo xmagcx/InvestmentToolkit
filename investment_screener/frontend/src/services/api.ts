@@ -351,7 +351,7 @@ export const fetchTechnicalAnalysis = async (ticker: string): Promise<TechnicalA
     }
 };
 
-export type ValueHistoryRange = '1y' | '3y' | '5y' | 'max';
+export type ValueHistoryRange = 'ytd' | '1y' | '3y' | '5y' | '10y' | 'max';
 
 /** A chart support or resistance from chart_levels.py with its short basis (e.g. "Fibonacci 0.618"). */
 export interface ChartLevel { price: number; basis: string }
@@ -365,7 +365,9 @@ export type ValueZone = 'sobrevalorada' | 'infravalorada';
 export interface ValueHistory {
     ticker: string;
     currency: string;
-    points: Array<{ date: string; price: number; fair_value: number | null; sma200: number | null }>;
+    points: Array<{ date: string; price: number; fair_value: number | null; sma200: number | null; volume?: number | null }>;
+    /** Full-history weekly closes (at most 600) for the chart navigator, whatever the selected range. */
+    overview?: Array<{ date: string; price: number }>;
     current: {
         price: number | null; fair_value: number | null; date: string | null;
         sma200: number | null; zone: ValueZone | null; distance_pct: number | null;

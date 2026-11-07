@@ -146,6 +146,10 @@ describe('value chart', () => {
         await waitFor(() => expect(fetchValueHistory).toHaveBeenCalledWith('MSFT', '3y'));
         fireEvent.click(screen.getByRole('button', { name: 'MÁX' }));
         await waitFor(() => expect(fetchValueHistory).toHaveBeenCalledWith('MSFT', 'max'));
+        fireEvent.click(screen.getByRole('button', { name: 'YTD' }));
+        await waitFor(() => expect(fetchValueHistory).toHaveBeenCalledWith('MSFT', 'ytd'));
+        fireEvent.click(screen.getByRole('button', { name: '10A' }));
+        await waitFor(() => expect(fetchValueHistory).toHaveBeenCalledWith('MSFT', '10y'));
     });
 
     it('"Ocultar valoración" hides the fair-value line', async () => {

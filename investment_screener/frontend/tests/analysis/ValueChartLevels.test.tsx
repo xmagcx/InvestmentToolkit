@@ -2,7 +2,7 @@
  * @vitest-environment jsdom
  */
 import { afterEach, describe, it, expect, vi } from 'vitest';
-import { cleanup, render, screen } from '@testing-library/react';
+import { cleanup, fireEvent, render, screen } from '@testing-library/react';
 afterEach(cleanup);
 import { ValueChart } from '../../src/components/analysis/ValueChart';
 import type { ValueHistory } from '../../src/services/api';
@@ -19,6 +19,7 @@ describe('ValueChart probes', () => {
     it('duplicate level prices do not trigger a React key warning', () => {
         const err = vi.spyOn(console, 'error').mockImplementation(() => {});
         render(<ValueChart history={hist()} range="1y" onRangeChange={() => {}} currency="USD" />);
+        fireEvent.click(screen.getByRole('button', { name: 'Niveles' }));
         const msgs = err.mock.calls.map((c) => String(c[0]));
         err.mockRestore();
         expect(msgs.join('\n')).not.toMatch(/same key|unique "key"/i);

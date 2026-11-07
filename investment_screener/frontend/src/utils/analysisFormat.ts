@@ -88,6 +88,14 @@ export function sankeyReading(company: string, income: StockOverviewIncome | nul
 /** "$412" from 100 up, "$12,34" below: whole dollars are enough for a level on an expensive stock. */
 export const fmtLevelEs = (v: number): string => `$${fmtNumEs(v, v >= 100 ? 0 : 2)}`;
 
+/** Compact volume: 174,24M, 6,98M, 12,3K, 2,50B; under 1.000 the plain integer. */
+export function fmtVolumeEs(v: number): string {
+    if (v >= 1e9) return `${fmtNumEs(v / 1e9, 2)}B`;
+    if (v >= 1e6) return `${fmtNumEs(v / 1e6, 2)}M`;
+    if (v >= 1e3) return `${fmtNumEs(v / 1e3, 1)}K`;
+    return String(Math.round(v));
+}
+
 export interface ZoneRun {
     over: boolean;
     /** Price and SMA200 boundaries as [fractional point index, value]; the ends at a crossing are interpolated. */

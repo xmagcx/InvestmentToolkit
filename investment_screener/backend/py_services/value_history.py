@@ -27,13 +27,19 @@ Key Functions (Index):
     - find_investment_id(conn, ticker) - investment_id for a (normalized) ticker, or None
     - preferred_projection(conn, investment_id) - latest AI_AGENT projection, else highest version
     - load_revisions(db_path, ticker) - [(YYYY-MM-DD, fair_value)] ascending
-    - build_series(closes, revisions, range_key, today, daily) - chart points (price, fair_value, sma200)
+    - range_start(range_key, today) - first date of a range (ytd = Jan 1 of the current year)
+    - downsample(rows, cap) - evenly spaced rows keeping first and last
+    - build_series(closes, revisions, range_key, today, daily, volumes) - chart points (price, fair_value, sma200, volume)
     - current_block(price, sma200, levels) - zone, distance to the mean, level confirmation
     - build_value_history(ticker, range_key, db_path, ...) - full endpoint payload
 
 Key Input Dependencies:
     - yfinance history (price), domain_model.sqlite projection_version (fair value)
     - market_regime._sma (the one rolling-mean helper), chart_levels (supports / resistances)
+
+Ranges: ytd, 1y (daily), 3y, 5y, 10y, max (weekly). Each point carries `volume` (daily volume, or the weekly bar's
+    volume = the week's sum). `overview` = full-history weekly closes [{date, price}] (<= 600 points) for the
+    navigator, whatever the range.
 
 SMA200 / zone rule (S6, L12): sma200 is the simple 200-session mean of DAILY closes, computed on
     the full daily history before the range cut (null under 200 sessions; weekly ranges read it
@@ -66,7 +72,10 @@ from ticker_aliases import normalize_ticker  # noqa: E402
 
 DEFAULT_DB = str(Path(__file__).resolve().parent.parent / "data" / "domain_model.sqlite")
 # range -> (days of history or None for all, yfinance interval)
-RANGES = {"1y": (365, "1d"), "3y": (3 * 365, "1wk"), "5y": (5 * 365, "1wk"), "max": (None, "1wk")}
+# ytd is cut at Jan 1 of the current year (see range_start); its 366 days only size the download window.
+RANGES = {"ytd": (366, "1d"), "1y": (365, "1d"), "3y": (3 * 365, "1wk"), "5y": (5 * 365, "1wk"),
+          "10y": (3650, "1wk"), "max": (None, "1wk")}
+OVERVIEW_POINTS = 600       # navigator line: full weekly history, downsampled to at most this many points
 SMA_PERIOD = 200
 LEVEL_BARS = 504            # two years of sessions: the history chart_levels' swing/Fibonacci rules assume
 NEAREST_LEVELS = 3
@@ -103,10 +112,27 @@ def _sma_by_date(daily: list[tuple[str, float]]) -> tuple[list[str], list[float 
     return [d for d, _ in daily], [None if pd.isna(v) else round(float(v), 4) for v in values]
 
 
-def build_series(closes: list[tuple[str, float]], revisions: list[tuple[str, float]],
-                 range_key: str, today: date, daily: list[tuple[str, float]] | None = None) -> list[dict]:
+def range_start(range_key: str, today: date) -> str:
+    """First date (YYYY-MM-DD) shown for a range; "" for max."""
+    if range_key == "ytd":
+        return date(today.year, 1, 1).isoformat()
     days = RANGES[range_key][0]
-    start = (today - timedelta(days=days)).isoformat() if days else ""
+    return (today - timedelta(days=days)).isoformat() if days else ""
+
+
+def downsample(rows: list[dict], cap: int) -> list[dict]:
+    """At most `cap` evenly spaced rows, always keeping the first and the last."""
+    if len(rows) <= cap:
+        return rows
+    step = (len(rows) - 1) / (cap - 1)
+    return [rows[round(i * step)] for i in range(cap)]
+
+
+def build_series(closes: list[tuple[str, float]], revisions: list[tuple[str, float]],
+                 range_key: str, today: date, daily: list[tuple[str, float]] | None = None,
+                 volumes: dict[str, float] | None = None) -> list[dict]:
+    start = range_start(range_key, today)
+    volumes = volumes or {}
     dates = [r[0] for r in revisions]
     sma_dates, sma_values = _sma_by_date(daily if daily is not None else closes)
     points = []
@@ -116,7 +142,7 @@ def build_series(closes: list[tuple[str, float]], revisions: list[tuple[str, flo
         i = bisect.bisect_right(dates, d)
         j = bisect.bisect_right(sma_dates, d)
         points.append({"date": d, "price": close, "fair_value": revisions[i - 1][1] if i else None,
-                       "sma200": sma_values[j - 1] if j else None})
+                       "sma200": sma_values[j - 1] if j else None, "volume": volumes.get(d)})
     return points
 
 
@@ -158,6 +184,10 @@ def _closes_of(hist: pd.DataFrame) -> list[tuple[str, float]]:
     return [(idx.strftime("%Y-%m-%d"), round(float(v), 4)) for idx, v in hist["Close"].dropna().items()]
 
 
+def _volumes_of(hist: pd.DataFrame) -> dict[str, float]:
+    return {idx.strftime("%Y-%m-%d"): float(v) for idx, v in hist["Volume"].dropna().items()}
+
+
 def _fetch_market(ticker: str, range_key: str, today: date) -> dict:
     """Daily OHLCV (one download: SMA200 and chart levels) plus weekly closes for the weekly ranges."""
     import yfinance as yf
@@ -170,27 +200,35 @@ def _fetch_market(ticker: str, range_key: str, today: date) -> dict:
     daily = _closes_of(hist)
     bars = hist.rename(columns=str.lower)[["open", "high", "low", "close", "volume"]].tail(LEVEL_BARS)
     if interval == "1d":
-        closes = daily
+        closes, volumes = daily, _volumes_of(hist)
     else:
-        wkw = {"start": (today - timedelta(days=days)).isoformat()} if days else {"period": "max"}
-        closes = _closes_of(stock.history(interval=interval, auto_adjust=False, **wkw))
+        wkw = {"start": range_start(range_key, today)} if days else {"period": "max"}
+        weekly = stock.history(interval=interval, auto_adjust=False, **wkw)
+        closes, volumes = _closes_of(weekly), _volumes_of(weekly)  # a weekly bar's volume is the week's sum
+    if days is None:
+        full_weekly = closes
+    else:  # the navigator always shows the full history, whatever the selected range
+        full_weekly = _closes_of(stock.history(interval="1wk", auto_adjust=False, period="max"))
+    overview = downsample([{"date": d, "price": c} for d, c in full_weekly], OVERVIEW_POINTS)
     try:
         currency = stock.fast_info.get("currency") or "USD"
     except Exception:
         currency = "USD"
-    return {"closes": closes, "daily": daily, "bars": bars, "currency": currency}
+    return {"closes": closes, "daily": daily, "bars": bars, "currency": currency,
+            "volumes": volumes, "overview": overview}
 
 
 def build_value_history(ticker: str, range_key: str, db_path: str, closes=None, currency=None,
-                        today: date | None = None, daily=None, bars=None) -> dict:
-    """closes/daily/bars are injectable for tests; without bars there are no chart levels."""
+                        today: date | None = None, daily=None, bars=None, volumes=None, overview=None) -> dict:
+    """closes/daily/bars/volumes/overview are injectable for tests; without bars there are no chart levels."""
     today = today or date.today()
     symbol = normalize_ticker(ticker.upper())
     if closes is None:
         market = _fetch_market(symbol, range_key, today)
         closes, currency, daily, bars = market["closes"], market["currency"], market["daily"], market["bars"]
+        volumes, overview = market["volumes"], market["overview"]
     revisions = load_revisions(db_path, symbol)
-    points = build_series(closes, revisions, range_key, today, daily)
+    points = build_series(closes, revisions, range_key, today, daily, volumes)
     _, sma_values = _sma_by_date(daily if daily is not None else closes)
 
     fair_value = None
@@ -215,6 +253,7 @@ def build_value_history(ticker: str, range_key: str, db_path: str, closes=None, 
             **current_block(price, sma_values[-1] if sma_values else None, levels),
         },
         "levels": levels,
+        "overview": overview if overview is not None else downsample([{"date": d, "price": c} for d, c in closes], OVERVIEW_POINTS),
     }
 
 

@@ -61,10 +61,19 @@ describe('GET /stock/:ticker/value-history and /montecarlo', () => {
         expect((await fetch(`${base}/stock/ZZZ/value-history?range=max`)).status).to.equal(200);
         expect(called!.args).to.deep.equal(['ZZZ', '--range', 'max']);
         called = null;
-        const bad = await fetch(`${base}/stock/ZZZ/value-history?range=10y`);
+        const bad = await fetch(`${base}/stock/ZZZ/value-history?range=2y`);
         expect(bad.status).to.equal(400);
         expect(await bad.json()).to.deep.equal({ error: 'Invalid range' });
         expect(called).to.equal(null);
+    });
+
+    it('value-history accepts the ytd and 10y ranges (T9)', async () => {
+        stub({ ticker: 'ZZZ', currency: 'USD', points: [], current: { price: null, fair_value: null, date: null } });
+        for (const r of ['ytd', '10y']) {
+            called = null;
+            expect((await fetch(`${base}/stock/ZZZ/value-history?range=${r}`)).status).to.equal(200);
+            expect(called!.args).to.deep.equal(['ZZZ', '--range', r]);
+        }
     });
 
     it('value-history maps a script error to 502 and a bad ticker to 400', async () => {

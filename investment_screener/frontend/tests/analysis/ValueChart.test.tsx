@@ -62,12 +62,12 @@ describe('ValueChart', () => {
         const over = container.querySelectorAll('[data-zone="sobrevalorada"]');
         expect(under.length).toBe(1);
         expect(over.length).toBe(1);
-        expect(under[0].getAttribute('class')).toContain('emerald');
-        expect(over[0].getAttribute('class')).toContain('red');
-        expect(screen.getByText(/Infravalorada \(precio bajo/)).toBeTruthy();
-        expect(screen.getByText(/Sobrevalorada \(precio sobre/)).toBeTruthy();
-        expect(screen.getByTestId('sma-line').getAttribute('stroke-dasharray')).toBeTruthy();
-        expect(screen.getAllByText('Media 200 días').length).toBeGreaterThan(0);
+        // T9: the band is a hatch pattern per state (the pattern carries the colour), the legend is the short SVI one
+        expect(under[0].getAttribute('fill')).toContain('hatch-under');
+        expect(over[0].getAttribute('fill')).toContain('hatch-over');
+        expect(screen.getByText('Infravalorada')).toBeTruthy();
+        expect(screen.getByText('Sobrevalorada')).toBeTruthy();
+        expect(screen.getAllByTestId('sma-line')[0].getAttribute('stroke-dasharray')).toBeTruthy();
     });
 
     it('shows the reading line above the chart', () => {
@@ -75,8 +75,9 @@ describe('ValueChart', () => {
         expect(screen.getByTestId('value-reading').textContent).toContain('Precio 8,9% sobre su media de 200 días (sobrevalorada)');
     });
 
-    it('draws labelled levels inside the range and leaves out the far one', () => {
+    it('draws labelled levels inside the range and leaves out the far one (after turning "Niveles" on)', () => {
         const { container } = show(hist());
+        fireEvent.click(screen.getByRole('button', { name: 'Niveles' }));
         expect(container.querySelectorAll('[data-testid="support-line"]').length).toBe(1);
         expect(container.querySelectorAll('[data-testid="resistance-line"]').length).toBe(1);
         expect(screen.getByText('Soporte $104 · Fibonacci 0.618')).toBeTruthy();
@@ -90,6 +91,7 @@ describe('ValueChart', () => {
         const h = hist();
         const near = { ...h, levels: { supports: [{ price: 104, basis: 'Fibonacci 0.618' }, { price: 103.9, basis: 'EMA 50 días' }], resistances: h.levels!.resistances } };
         const { container } = show(near);
+        fireEvent.click(screen.getByRole('button', { name: 'Niveles' }));
         const ys = [...container.querySelectorAll('[data-testid="level-tag"]')].map((t) => Number(t.getAttribute('y'))).sort((a, b) => a - b);
         expect(ys.length).toBe(3);
         ys.slice(1).forEach((v, i) => expect(v - ys[i]).toBeGreaterThanOrEqual(13));
@@ -104,7 +106,7 @@ describe('ValueChart', () => {
         expect(screen.getByTestId('price-line')).toBeTruthy();
         expect(screen.queryByTestId('sma-line')).toBeNull();
         expect(container.querySelectorAll('[data-zone]').length).toBe(0);
-        expect(container.querySelectorAll('[data-testid$="-line"]:not([data-testid="price-line"])').length).toBe(0);
+        expect(container.querySelectorAll('[data-testid$="-line"]:not([data-testid="price-line"]):not([data-testid="overview-line"])').length).toBe(0);
         expect(screen.getAllByText('Menos de 200 sesiones: sin media de 200 días.').length).toBeGreaterThan(0);
     });
 
@@ -124,7 +126,7 @@ describe('ValueChart', () => {
         expect(screen.getByTestId('value-line')).toBeTruthy();
         fireEvent.click(screen.getByRole('button', { name: 'Ocultar valoración' }));
         expect(screen.queryByTestId('value-line')).toBeNull();
-        expect(screen.getByTestId('sma-line')).toBeTruthy();
+        expect(screen.getAllByTestId('sma-line').length).toBeGreaterThan(0);
         expect(screen.getByTestId('price-line')).toBeTruthy();
     });
 });
